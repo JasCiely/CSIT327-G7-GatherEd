@@ -30,7 +30,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'apps.landing_page',
-    'apps.register_page'
+    'apps.register_page',
+    'apps.login_page',
 ]
 
 MIDDLEWARE = [

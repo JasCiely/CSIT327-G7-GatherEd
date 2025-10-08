@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to GatherEd</title>
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/login_css.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="logo">
+                <i class="fas fa-calendar-check"></i> GatherEd
+            </div>
+            <h2>Log In to Your Account</h2>
+            <form action="{% url 'login' %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="john.doe@school.edu" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full-width">Log In</button>
+            </form>
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="{% url 'register' %}">Sign Up</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            {% if messages %}
+                {% for message in messages %}
+                    var messageType = "{{ message.tags }}";
+                    var backgroundColor;
+
+                    switch(messageType) {
+                        case 'success':
+                            backgroundColor = 'linear-gradient(to right, #28a745, #218838)';
+                            break;
+                        case 'error':
+                            backgroundColor = 'linear-gradient(to right, #dc3545, #c82333)';
+                            break;
+                        case 'info':
+                            backgroundColor = 'linear-gradient(to right, #17a2b8, #138496)';
+                            break;
+                        case 'warning':
+                            backgroundColor = 'linear-gradient(to right, #ffc107, #e0a800)';
+                            break;
+                        default:
+                            backgroundColor = 'linear-gradient(to right, #6c757d, #5a6268)';
+                            break;
+                    }
+
+                    Toastify({
+                        text: "{{ message|escapejs }}",
+                        duration: 5000,
+                        newWindow: true,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        stopOnFocus: true,
+                        style: {
+                            background: backgroundColor,
+                        },
+                        onClick: function(){}
+                    }).showToast();
+                {% endfor %}
+            {% endif %}
+        });
+    </script>
+</body>
+</html>
