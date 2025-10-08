@@ -1,0 +1,233 @@
+/*
+ * File: static/css/create_event_css.css
+ * Description: Styles for the New Event form fragment, harmonized with main theme.
+ */
+
+/* ---------------------------------------------------------------------- */
+/* 1. THEME VARIABLE DEFINITIONS (Matching styles.css)                    */
+/* ---------------------------------------------------------------------- */
+:root {
+    --primary-color: #00A9FF;        /* Main Accent Blue */
+    --secondary-color: #2F93FF;      /* Secondary Blue */
+    --background-dark: #121212;      /* Main dark background */
+    --background-card: #1F1F1F;      /* Card background (background-medium) */
+
+    --text-light: #E0E0E0;           /* Light text for contrast */
+    --text-muted: #BDBDBD;           /* Muted text color */
+    --text-heading: var(--text-light);
+
+    --border-color: #333;            /* Border color */
+    --shadow-small: 0 4px 12px rgba(0, 0, 0, 0.3); /* Darker shadow for contrast */
+    --primary-color-dark: #0087CC;   /* Custom dark hover state for primary */
+}
+/* NOTE: The variable names are simplified where possible to match your existing pattern. */
+
+
+/* ---------------------------------------------------------------------- */
+/* 2. GENERAL FORM CONTAINER STYLES                                       */
+/* ---------------------------------------------------------------------- */
+.event-form-container {
+    background-color: var(--background-card);
+    border-radius: 10px; /* Matching the 10px from feature-card/contact-info */
+    padding: 30px;
+    box-shadow: var(--shadow-small);
+    margin-bottom: 30px;
+}
+
+.event-form-container .card-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 20px;
+}
+
+.event-form-container .card-header h2 {
+    color: var(--text-heading);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.event-form-container .card-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 3. FORM GRID LAYOUT & INPUTS                                           */
+/* ---------------------------------------------------------------------- */
+.event-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+/* Form Labels */
+.event-form label {
+    display: block;
+    margin-bottom: 10px;
+    margin-top: 20px;
+    color: var(--text-light);
+    font-weight: 500; /* Adjusted font-weight to match general theme */
+    font-size: 0.95rem;
+}
+
+.event-form label:first-child {
+    margin-top: 0;
+}
+
+/* Form Inputs, Textareas, Selects */
+.event-form input[type="text"],
+.event-form input[type="date"],
+.event-form input[type="time"],
+.event-form input[type="number"],
+.event-form textarea {
+    width: 100%;
+    padding: 14px;
+    border-radius: 6px; /* Slightly smaller radius for inputs */
+    border: 1px solid var(--border-color);
+    background: var(--background-dark);
+    color: var(--text-light);
+    font-family: 'Roboto', sans-serif; /* Matching main body font */
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.event-form input:focus,
+.event-form textarea:focus {
+    border-color: var(--primary-color);
+    /* Simplified focus box-shadow */
+    box-shadow: 0 0 0 3px rgba(0, 169, 255, 0.2);
+    outline: none;
+}
+
+.event-form textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Placeholder styling */
+.event-form input::placeholder,
+.event-form textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+/* --- File Input (Picture Holder) Styling --- */
+.event-form input[type="file"] {
+    /* Reset background and border for a clean look */
+    background: var(--background-dark);
+    border: 1px solid var(--border-color);
+    padding: 14px;
+    cursor: pointer;
+}
+
+/* Style the file selector button part */
+.event-form input[type="file"]::-webkit-file-upload-button {
+    background: var(--secondary-color);
+    color: var(--background-dark);
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    margin-right: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.event-form input[type="file"]::-webkit-file-upload-button:hover {
+    background: var(--primary-color); /* Use primary color on hover */
+}
+
+/* Hide file text on small screens if necessary (advanced) */
+/* @media (max-width: 500px) {
+    .event-form input[type="file"] {
+        padding: 0;
+    }
+    .event-form input[type="file"]::before {
+        content: 'Upload Image';
+        display: inline-block;
+        padding: 14px;
+        background: var(--background-dark);
+        border-radius: 6px;
+    }
+    .event-form input[type="file"]::-webkit-file-upload-button {
+        visibility: hidden;
+        width: 0;
+    }
+} */
+
+
+/* ---------------------------------------------------------------------- */
+/* 4. FORM ACTIONS (BUTTON)                                               */
+/* ---------------------------------------------------------------------- */
+.form-actions {
+    grid-column: 1 / -1;
+    margin-top: 40px;
+    text-align: right;
+}
+
+/* Applying primary button styles from the main theme */
+.form-actions .btn.btn-secondary {
+    padding: 14px 30px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 50px; /* Matching the main theme's button radius */
+    cursor: pointer;
+
+    /* Using btn-primary styles for the main action button */
+    background-color: var(--primary-color);
+    color: var(--background-dark);
+    border: 2px solid transparent;
+
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.form-actions .btn.btn-secondary:hover {
+    background-color: var(--primary-color-dark); /* Slightly darker custom primary color */
+    transform: translateY(-3px); /* Matching main theme hover effect */
+}
+
+.form-actions .btn.btn-secondary i {
+    margin-right: 8px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 5. RESPONSIVE ADJUSTMENTS                                              */
+/* ---------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .event-form {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .form-actions {
+        text-align: center;
+    }
+}
+
+/* Add these styles to your existing create_event_css.css */
+
+/* Custom styling for the column headers */
+.event-form .form-column h3 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+/* Ensure labels after headers don't have extra top margin */
+.event-form .form-column h3 + label {
+    margin-top: 0;
+}
+
+/* Style the date/time group for better visual flow */
+.time-date-group {
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+    margin-top: 30px;
+}
+
+/* Reduce top margin for the first label in the date/time group */
+.time-date-group label:first-child {
+    margin-top: 0;
+}

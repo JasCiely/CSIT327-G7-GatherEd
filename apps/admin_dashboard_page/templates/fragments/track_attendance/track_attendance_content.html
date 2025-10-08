@@ -1,0 +1,31 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/track_attendance_css.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+
+<div class="full-width-card attendance-container">
+    <div class="card-header">
+        <h2>Live Attendance Tracker</h2>
+        <p class="card-subtitle">Select an event to start recording or view historical attendance data.</p>
+    </div>
+
+    <div class="attendance-controls">
+        <label for="event-select" class="control-label">Select Event:</label>
+        <select id="event-select" class="control-select">
+            <option value="">-- Choose an Event --</option>
+            {% for event in events_list %}
+            <option value="{{ event.id }}" data-status="{{ event.status }}">{{ event.name }}</option>
+            {% endfor %}
+        </select>
+        <button id="start-live-mode" class="btn btn-secondary start-button" disabled>
+            <i class="fas fa-play-circle"></i> Start Live Mode
+        </button>
+    </div>
+
+    <div class="placeholder-attendance-table">
+        <p class="text-center">
+            <i class="fas fa-qrcode"></i>
+            Attendance Log: QR code scanner view or manual check-in form will load here based on event status.
+        </p>
+    </div>
+</div>

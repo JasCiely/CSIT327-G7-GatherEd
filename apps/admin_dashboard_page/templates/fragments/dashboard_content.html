@@ -1,0 +1,39 @@
+<div class="dashboard-grid">
+
+    <div class="card summary-card events">
+        <div class="card-icon"><i class="fas fa-calendar-alt"></i></div>
+        <div class="card-content">
+            <span class="card-label">Total Events Managed</span>
+            <span class="card-value">{{ total_events }}</span>
+        </div>
+    </div>
+
+    <div class="card summary-card attendance">
+        <div class="card-icon"><i class="fas fa-check-double"></i></div>
+        <div class="card-content">
+            <span class="card-label">Total Attendance Recorded</span>
+            <span class="card-value">{{ total_attendance }}</span>
+        </div>
+    </div>
+
+    <div class="card summary-card feedback">
+        <div class="card-icon"><i class="fas fa-star"></i></div>
+        <div class="card-content">
+            <span class="card-label">New Feedback Received</span>
+            <span class="card-value">{{ new_feedback }}</span>
+        </div>
+    </div>
+
+</div>
+<div class="full-width-card" style="margin-top: 40px;">
+    <div class="card-header">
+        <h2>Upcoming Events</h2>
+        <a href="javascript:void(0);" data-url="{% url 'create_event' %}?is_ajax=true" class="btn btn-secondary" onclick="handleNavClick(this)"><i class="fas fa-plus"></i> Create New Event</a>
+    </div>
+    <p class="text-center" style="font-size: 1rem; color: var(--text-muted); padding-bottom: 20px;">
+        A summary of your upcoming events will be displayed here. Click 'View/Modify Events' for the full management table.
+    </p>
+    <div class="placeholder-content">
+        <i class="fas fa-table" style="font-size: 24px; color: var(--text-muted);"></i> Data table placeholder.
+    </div>
+</div>

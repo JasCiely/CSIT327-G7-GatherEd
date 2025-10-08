@@ -1,0 +1,77 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/manage_feedback_css.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+
+<div class="full-width-card feedback-container">
+    <div class="card-header">
+        <h2>Event Feedback and Reviews</h2>
+        <p class="card-subtitle">Review feedback submissions, track ratings, and identify areas for improvement.</p>
+    </div>
+
+    {# --- FEEDBACK STATISTICS CARDS --- #}
+    <div class="feedback-stats">
+        <div class="stat-box">
+            <p class="stat-label">Avg. Rating</p>
+            <h3 class="stat-value primary-text"><i class="fas fa-star"></i> {{ avg_rating|default:"N/A" }}/5</h3>
+        </div>
+        <div class="stat-box">
+            <p class="stat-label">Total Submissions</p>
+            <h3 class="stat-value">{{ total_submissions|default:"0" }}</h3>
+        </div>
+        <div class="stat-box">
+            <p class="stat-label">New Unread</p>
+            <h3 class="stat-value attention-text">{{ new_feedback|default:"0" }}</h3>
+        </div>
+        <div class="stat-box">
+            <p class="stat-label">Events Reviewed</p>
+            <h3 class="stat-value secondary-text">{{ events_reviewed|default:"0" }}</h3>
+        </div>
+    </div>
+
+    {# --- FILTER AND SORT BAR --- #}
+    <div class="feedback-controls">
+        <select class="control-select">
+            <option value="">All Events</option>
+            {% for event in events_list %}
+            <option value="{{ event.id }}">{{ event.name }}</option>
+            {% empty %}
+            {# Optionally show this if no events are found, though 'All Events' covers it #}
+            {% endfor %}
+        </select>
+        <select class="control-select">
+            <option>Sort by Date (Newest)</option>
+            <option>Sort by Rating (High)</option>
+            <option>Sort by Rating (Low)</option>
+        </select>
+        <button class="control-button btn-secondary"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+
+    {# --- FEEDBACK LIST --- #}
+    <div class="feedback-list">
+        {% if feedback_list %}
+            {% for feedback in feedback_list %}
+            <div class="feedback-card {% if feedback.is_new %} new-feedback-card {% endif %}">
+                <div class="card-rating">
+                    <span class="rating-value">{{ feedback.rating }}/5</span>
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="card-content">
+                    <p class="comment-text">{{ feedback.comment|default:"No comment provided." }}</p>
+                    <div class="card-meta">
+                        <span class="event-name"><i class="fas fa-calendar-alt"></i> {{ feedback.event_name }}</span>
+                        <span class="user-id"><i class="fas fa-user-circle"></i> User ID: {{ feedback.user_id }}</span>
+                        <span class="submission-date"><i class="fas fa-clock"></i> {{ feedback.submission_date }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-comments"></i>
+                <p>No feedback submissions found yet.</p>
+                <p class="muted">Start collecting reviews after your next event!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
