@@ -1,0 +1,46 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/submit_feedback_css.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<div class="full-width-card feedback-submission-container">
+    <div class="card-header">
+        <h2>Submit Event Feedback</h2>
+        <p class="card-subtitle">Your opinions help us improve future events. Please select an event to review.</p>
+    </div>
+
+    <form id="feedback-form">
+        <div class="form-group">
+            <label for="event-select">Event to Review:</label>
+            <select id="event-select" name="event_id" required>
+                <option value="">-- Choose a Completed Event --</option>
+                {% for event in events_for_feedback %}
+                    <option value="{{ event.id }}">{{ event.name }} ({{ event.date }})</option>
+                {% empty %}
+                    <option disabled>No events available for feedback.</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="rating">Overall Rating:</label>
+            <div id="rating" class="star-rating">
+                <i class="far fa-star" data-rating="1"></i>
+                <i class="far fa-star" data-rating="2"></i>
+                <i class="far fa-star" data-rating="3"></i>
+                <i class="far fa-star" data-rating="4"></i>
+                <i class="far fa-star" data-rating="5"></i>
+                <span class="rating-text">(Select stars)</span>
+            </div>
+            <input type="hidden" name="rating_value" id="rating-value" required>
+        </div>
+
+        <div class="form-group">
+            <label for="comments">Comments (Optional):</label>
+            <textarea id="comments" name="comments" rows="5" placeholder="What did you enjoy, and what could be improved?"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary submit-btn"><i class="fas fa-paper-plane"></i> Submit Feedback</button>
+    </form>
+
+    <div id="feedback-message" class="hidden-message"></div>
+</div>

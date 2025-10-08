@@ -1,0 +1,50 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/dashboard_content_css.css' %}">
+
+<div class="student-dashboard-overview">
+    <div class="welcome-card">
+        <h2>Welcome Back, {% if user.is_authenticated %}{{ user.first_name|default:'Student' }}{% else %}GatherEd User{% endif %}!</h2>
+        <p class="subtitle">Quick overview of your upcoming events and latest notifications.</p>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-box upcoming">
+            <i class="fas fa-calendar-check"></i>
+            <p>Upcoming Events</p>
+            <h3>{{ upcoming_events_count|default:"0" }}</h3>
+        </div>
+        <div class="stat-box registered">
+            <i class="fas fa-users"></i>
+            <p>Total Registered</p>
+            <h3>{{ total_registered_count|default:"0" }}</h3>
+        </div>
+        <div class="stat-box completed">
+            <i class="fas fa-trophy"></i>
+            <p>Events Attended</p>
+            <h3>{{ events_attended_count|default:"0" }}</h3>
+        </div>
+    </div>
+
+    <div class="my-events-section">
+        <h3>My Next Event</h3>
+        {% if next_event %}
+        <div class="next-event-card">
+            <p class="event-title">{{ next_event.name }}</p>
+            <p class="event-details"><i class="fas fa-clock"></i> {{ next_event.date }} at {{ next_event.time }}</p>
+            <p class="event-school"><i class="fas fa-university"></i> {{ next_event.school }}</p>
+            <a href="javascript:void(0);"
+               data-url="{% url 'my_events' %}?is_ajax=true"
+               data-clean-url="{% url 'my_events' %}"
+               class="btn btn-primary"
+               onclick="handleNavClick(this)">
+                View Details & QR Code
+            </a>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>You are not registered for any upcoming events.</p>
+            <p class="muted">Check the **View Events** tab to find something new!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>

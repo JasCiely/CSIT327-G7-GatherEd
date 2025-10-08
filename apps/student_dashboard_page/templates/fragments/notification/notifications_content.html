@@ -1,0 +1,36 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/notification_css.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<div class="full-width-card notifications-container">
+    <div class="card-header">
+        <h2>Notifications</h2>
+        <p class="card-subtitle">All system alerts, event reminders, and status updates.</p>
+    </div>
+
+    <div class="notification-controls">
+        <button class="btn btn-secondary mark-all-btn"><i class="fas fa-check-double"></i> Mark All as Read</button>
+    </div>
+
+    <div class="notification-list-full">
+        {% if notifications_list %}
+            {% for note in notifications_list %}
+            <a href="{{ note.link }}" class="notification-item-full {% if not note.is_read %} unread {% endif %}">
+                <div class="icon-section">
+                    <i class="fas fa-circle {% if not note.is_read %} unread-dot {% else %} read-dot {% endif %}"></i>
+                </div>
+                <div class="content-section">
+                    <p class="message-text">{{ note.message }}</p>
+                    <span class="timestamp-full"><i class="fas fa-clock"></i> {{ note.timestamp }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-bell-slash"></i>
+                <p>You're all caught up!</p>
+                <p class="muted">No new notifications.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
