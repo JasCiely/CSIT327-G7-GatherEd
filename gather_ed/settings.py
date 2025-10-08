@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     'apps.landing_page',
     'apps.register_page',
     'apps.login_page',
+    'apps.admin_dashboard_page',
+
 ]
 
 MIDDLEWARE = [

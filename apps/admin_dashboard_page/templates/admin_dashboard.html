@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - GatherEd</title>
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/admin_dashboard_css.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-o6EwG/hR63c9LpL6/q4I8T6X5C8p0Tz3Z1P5y0Y9oW0="
+            crossorigin="anonymous"></script>
+
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-calendar-check"></i> GatherEd
+            </div>
+            <nav class="sidebar-nav">
+                <a href="javascript:void(0);" data-url="{% url 'admin_dashboard' %}?is_ajax=true" data-clean-url="{% url 'admin_dashboard' %}" class="nav-item active" onclick="handleNavClick(this)">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="javascript:void(0);" data-url="{% url 'manage_event' %}?is_ajax=true" data-clean-url="{% url 'manage_event' %}" class="nav-item" onclick="handleNavClick(this)">
+                    <i class="fas fa-calendar-alt"></i> View/Modify Events
+                </a>
+                <a href="javascript:void(0);" data-url="{% url 'create_event' %}?is_ajax=true" data-clean-url="{% url 'create_event' %}" class="nav-item" onclick="handleNavClick(this)">
+                    <i class="fas fa-plus-circle"></i> Create New Event
+                </a>
+                <a href="javascript:void(0);" data-url="{% url 'track_attendance' %}?is_ajax=true" data-clean-url="{% url 'track_attendance' %}" class="nav-item" onclick="handleNavClick(this)">
+                    <i class="fas fa-user-check"></i> Track Attendance
+                </a>
+                <a href="javascript:void(0);" data-url="{% url 'manage_feedback' %}?is_ajax=true" data-clean-url="{% url 'manage_feedback' %}" class="nav-item" onclick="handleNavClick(this)">
+                    <i class="fas fa-comments"></i> View Feedback
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="nav-item logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <h1 class="page-title" id="page-title">Dashboard Overview</h1>
+
+                <div class="header-actions">
+                    <div class="notification-icon" onclick="toggleNotifications()">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge" id="notification-count">{{ notification_count }}</span>
+                    </div>
+
+                    <div class="user-profile">
+                        <span class="profile-name">Admin Name</span>
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div id="content-area">
+                {% include 'fragments/dashboard_content.html' %}
+            </div>
+
+        </main>
+    </div>
+
+    <div id="notification-drawer" class="notification-drawer">
+        <h3>Notifications</h3>
+        <div id="notification-list">
+            <p style="color: var(--text-muted);">Notifications will load here from the backend.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- Helper Function Declarations ---
+        window.toggleNotifications = function() {
+            const drawer = document.getElementById('notification-drawer');
+            drawer.classList.toggle('open');
+            const badge = document.getElementById('notification-count');
+            const count = parseInt(badge.textContent || '0');
+
+            if (drawer.classList.contains('open') && count > 0) {
+                badge.style.display = 'none';
+            } else if (!drawer.classList.contains('open') && count > 0) {
+                badge.style.display = 'block';
+            }
+        };
+
+        window.loadContent = function(url, linkElement) {
+            const contentArea = document.getElementById('content-area');
+            const pageTitleElement = document.getElementById('page-title');
+            const activeClass = 'active';
+
+            document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
+                item.classList.remove(activeClass);
+            });
+            linkElement.classList.add(activeClass);
+
+            contentArea.innerHTML = '<div class="loader-placeholder"><i class="fas fa-sync-alt fa-spin"></i> Loading content...</div>';
+
+            const titleText = linkElement.textContent.replace(/[\s\r\n]+/g, ' ').trim();
+            pageTitleElement.textContent = titleText;
+            const cleanUrl = linkElement.getAttribute('data-clean-url');
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    contentArea.innerHTML = '';
+
+                    while (tempDiv.firstChild) {
+                        contentArea.appendChild(tempDiv.firstChild);
+                    }
+
+                    const scripts = contentArea.getElementsByTagName('script');
+                    for (let i = 0; i < scripts.length; i++) {
+                        if (scripts[i].innerHTML) {
+                            eval(scripts[i].innerHTML);
+                        }
+                    }
+                    history.pushState(null, titleText, cleanUrl);
+                })
+                .catch(e => {
+                    console.error('Error loading content:', e);
+                    contentArea.innerHTML = '<div class="error-message">Failed to load content. Please try again.</div>';
+                });
+        };
+
+        window.handleNavClick = function(element) {
+            const url = element.getAttribute('data-url');
+            loadContent(url, element);
+        };
+
+        // --- JQUERY READY BLOCK FOR FORM SUBMISSION (TOAST NOTIFICATION) ---
+        $(document).ready(function() {
+
+            const count = parseInt(document.getElementById('notification-count').textContent || '0');
+            document.getElementById('notification-count').style.display = count > 0 ? 'block' : 'none';
+            document.querySelector('.sidebar-nav .nav-item.active').setAttribute('data-initial-href', window.location.pathname);
+
+            // Style injection... (omitted for brevity, assume this is correct)
+
+            // --- GLOBAL JQUERY EVENT DELEGATION FOR FORM SUBMISSION ---
+            $(document).on('submit', '#create-event-form', function(e) {
+                e.preventDefault();
+
+                const form = $(this);
+                const url = form.attr('action');
+                const formData = new FormData(form[0]);
+
+                const submitButton = form.find('button[type="submit"]');
+                submitButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Scheduling...');
+
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+
+                    success: function(response) {
+                        // The success handler runs when status is 200 or 204 (our new status)
+
+                        // We must check if response exists before trying to access it
+                        if (response && response.status === 'success') {
+                            // --- TOAST NOTIFICATION LOGIC ---
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'success',
+                                title: response.message,
+                                showConfirmButton: false,
+                                timer: 4000,
+                                timerProgressBar: true,
+                                didOpen: (toast) => {
+                                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                }
+                            });
+                        } else if (response && response.status === 'error') {
+                            // Handle logical errors returned by the view with status 204 (unlikely, but safe)
+                            Swal.fire('Error', response.message, 'error');
+                        } else {
+                            // Handle success when response body is empty (due to status 204)
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'success',
+                                title: 'Event scheduled successfully!',
+                                showConfirmButton: false,
+                                timer: 4000,
+                                timerProgressBar: true
+                            });
+                        }
+                    },
+
+                    error: function(xhr) {
+                        let errorMessage = "An unknown server error occurred.";
+                        try {
+                            const errorResponse = JSON.parse(xhr.responseText);
+                            errorMessage = errorResponse.message || "A required field is missing or data is invalid.";
+                        } catch (e) {
+                            errorMessage = `Server Error (${xhr.status}). Check your console.`;
+                        }
+
+                        Swal.fire('Failed to Schedule', errorMessage, 'error');
+                    },
+
+                    // --- FINAL STEP: ENSURE RESET RUNS ---
+                    complete: function() {
+                        // Reset the button and the form regardless of success/fail
+                        submitButton.prop('disabled', false).html('<i class="fas fa-calendar-plus"></i> Schedule Event');
+                        form[0].reset();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
