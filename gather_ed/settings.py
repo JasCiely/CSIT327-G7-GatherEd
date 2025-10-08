@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 import dj_database_url
 from django.contrib import staticfiles
-from django.core.management import templates
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -29,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'apps',
     'apps.landing_page',
     'apps.register_page',
     'apps.login_page',
@@ -66,10 +66,11 @@ WSGI_APPLICATION = 'gather_ed.wsgi.application'
 
 # Database configuration using Supabase Session Pooler
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    "default": dj_database_url.config(
+        default="sqlite:///db.sqlite3",
+        conn_max_age=600, # persistent connections
+        ssl_require=True # enforce SSL
+    )
 }
 
 # Password validation
@@ -101,5 +102,41 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# This is where Django will look for your static files
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'apps/landing_page'),
+    os.path.join(BASE_DIR, 'apps/register_page'),
+    os.path.join(BASE_DIR, 'apps/login_page'),
+
+]
+
+# This is the destination folder for collect static
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Login URLs
+LOGIN_URL = 'events:login'
+LOGIN_REDIRECT_URL = 'events:dashboard'
+LOGOUT_REDIRECT_URL = 'events:login'
+
+#Prints emails to console
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'support@gathered.edu'  # Any dummy for console
+
+# Get the URL
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+if not SUPABASE_URL:
+    # Use a method that logs an error or raises an exception if the key is mandatory
+    print("FATAL ERROR: SUPABASE_URL is missing in environment variables.")
+
+# 2. Get the Public/Anon Key (Used for read-only RLS checks)
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
+
+# 3. Get the Service Role Key (Used for database writes in Django backend)
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
