@@ -121,9 +121,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login URLs
-LOGIN_URL = 'events:login'
-LOGIN_REDIRECT_URL = 'events:dashboard'
-LOGOUT_REDIRECT_URL = 'events:login'
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'admin_dashboard'
+LOGOUT_REDIRECT_URL = 'login'
 
 #Prints emails to console
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
