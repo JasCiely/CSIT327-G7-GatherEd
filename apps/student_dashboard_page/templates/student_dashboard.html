@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - GatherEd</title>
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/student_dashboard_css.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-calendar-check"></i> GatherEd
+            </div>
+            <nav class="sidebar-nav">
+
+                <a href="javascript:void(0);"
+                   data-url="{% url 'student_dashboard' %}?is_ajax=true"
+                   data-clean-url="{% url 'student_dashboard' %}"
+                   class="nav-item active"
+                   onclick="handleNavClick(this)">
+                    <i class="fas fa-home"></i> Home
+                </a>
+
+                <a href="javascript:void(0);"
+                   data-url="{% url 'event_list' %}?is_ajax=true"
+                   data-clean-url="{% url 'event_list' %}"
+                   class="nav-item"
+                   onclick="handleNavClick(this)">
+                    <i class="fas fa-calendar-alt"></i> View Events
+                </a>
+
+                <a href="javascript:void(0);"
+                   data-url="{% url 'my_events' %}?is_ajax=true"
+                   data-clean-url="{% url 'my_events' %}"
+                   class="nav-item"
+                   onclick="handleNavClick(this)">
+                    <i class="fas fa-user-check"></i> My Registrations
+                </a>
+
+                <a href="javascript:void(0);"
+                   data-url="{% url 'submit_feedback' %}?is_ajax=true"
+                   data-clean-url="{% url 'submit_feedback' %}"
+                   class="nav-item"
+                   onclick="handleNavClick(this)">
+                    <i class="fas fa-comment-dots"></i> Submit Feedback
+                </a>
+
+                <a href="javascript:void(0);"
+                   data-url="{% url 'get_notifications' %}?is_ajax=true"
+                   data-clean-url="{% url 'get_notifications' %}"
+                   class="nav-item"
+                   onclick="handleNavClick(this)">
+                    <i class="fas fa-bell"></i> Notifications
+                    <span class="notification-count" id="notification-count">0</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="nav-item logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-nav">
+                <h1 class="page-title" id="page-title">Home</h1>
+                <div class="user-profile">
+                    <span class="profile-name">{% if user.is_authenticated %}{{ user.email }}{% else %}Student{% endif %}</span>
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </header>
+
+            <div id="content-area">
+                {% include 'fragments/dashboard_content.html' %}
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        function loadContent(url, linkElement) {
+            const contentArea = document.getElementById('content-area');
+            const pageTitleElement = document.getElementById('page-title');
+            const activeClass = 'active';
+
+            // Get the clean URL for history/URL bar update
+            const cleanUrl = linkElement.getAttribute('data-clean-url');
+
+            // 1. Update Active State in Sidebar
+            document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
+                item.classList.remove(activeClass);
+            });
+            linkElement.classList.add(activeClass);
+
+            // 2. Loading State
+            contentArea.innerHTML = '<div class="loader-placeholder"><i class="fas fa-sync-alt fa-spin"></i> Loading content...</div>';
+
+            // 3. Extract Title & Update URL
+            // Note: We strip the notification count from the title extraction
+            const titleText = linkElement.textContent.replace(/[\s\r\n]+/g, ' ').replace(/\d+$/, '').trim();
+            pageTitleElement.textContent = titleText;
+            if (cleanUrl) {
+                history.pushState(null, titleText, cleanUrl);
+            }
+
+            // 4. Fetch New Content
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    contentArea.innerHTML = html;
+                })
+                .catch(e => {
+                    console.error('Error loading content:', e);
+                    contentArea.innerHTML = '<div class="error-message">Failed to load content. Please try again.</div>';
+                });
+        }
+
+        function handleNavClick(element) {
+            // No modal to close in this full-page navigation version
+            const url = element.getAttribute('data-url');
+            loadContent(url, element);
+        }
+
+        // Handle Back/Forward button history for graceful navigation
+        window.onpopstate = function(event) {
+            // A simpler approach for the prototype: reload the page to match the new URL state
+            window.location.reload();
+        };
+    </script>
+</body>
+</html>

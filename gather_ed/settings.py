@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'apps.register_page',
     'apps.login_page',
     'apps.admin_dashboard_page',
+    'apps.student_dashboard_page'
 
 ]
 
