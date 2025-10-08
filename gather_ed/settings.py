@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import dj_database_url
 from django.contrib import staticfiles
+from django.core.management import templates
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -29,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'apps.landing_page',
+    'apps.register_page'
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up for GatherEd</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/register_css.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="logo">
+                <i class="fas fa-calendar-check"></i> GatherEds
+            </div>
+            <h2>Create Your Account</h2>
+            <form action="/submit-registration" method="post">
+                <div class="form-group">
+                    <label for="user_type">I am a...</label>
+                    <select id="user_type" name="user_type" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="student">Student</option>
+                        <option value="administrator">Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group" id="cit-id-group" style="display:none;">
+                    <label id="cit-id-label" for="cit_id"></label>
+                    <input type="text" id="cit_id" name="cit_id" placeholder="00-0000-000" required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="john.doe@cit.edu" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full-width">Sign Up</button>
+            </form>
+            <div class="auth-footer">
+                <p>Already have an account? <a href="{% url 'login' %}"> Log In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Removed the entire Django 'messages' block.
+            // The following function can be used to manually display a test toast for demonstration:
+            /*
+            Toastify({
+                text: "Frontend-only demo message!",
+                duration: 5000,
+                newWindow: true,
+                close: true,
+                gravity: "top",
+                position: "right",
+                stopOnFocus: true,
+                style: {
+                    background: 'linear-gradient(to right, #6c757d, #5a6268)',
+                },
+                onClick: function(){}
+            }).showToast();
+            */
+
+            // Dynamic form fields based on user type
+            const userTypeSelect = document.getElementById('user_type');
+            const citIdGroup = document.getElementById('cit-id-group');
+            const citIdLabel = document.getElementById('cit-id-label');
+            const citIdInput = document.getElementById('cit_id');
+
+            userTypeSelect.addEventListener('change', function() {
+                citIdGroup.style.display = 'block';
+                // Ensure required attribute is set when visible
+                citIdInput.required = true;
+
+                if (this.value === 'administrator') {
+                    citIdLabel.textContent = 'Employee ID';
+                    citIdInput.placeholder = '00-0000-000';
+                } else if (this.value === 'student') {
+                    citIdLabel.textContent = 'Student ID';
+                    citIdInput.placeholder = '00-0000-000';
+                } else {
+                    citIdGroup.style.display = 'none';
+                    // Ensure required attribute is removed when hidden
+                    citIdInput.required = false;
+                }
+            });
+
+            // Initial check to hide the field on load
+            if (userTypeSelect.value === '') {
+                citIdGroup.style.display = 'none';
+                citIdInput.required = false;
+            }
+        });
+    </script>
+</body>
+</html>
