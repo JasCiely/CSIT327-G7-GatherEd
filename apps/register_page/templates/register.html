@@ -8,10 +8,49 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    {% load static %}
     <link rel="stylesheet" href="{% static 'css/register_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        /* Inline CSS fix for eye icon positioning (add this to your register_css.css or keep inline) */
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-input {
+            width: 100%;
+            padding-right: 40px; /* Make space for the eye icon */
+            box-sizing: border-box;
+        }
+        .toggle-eye {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+        .toggle-eye:hover {
+            color: #333;
+        }
+        .toggle-eye i {
+            font-size: 16px;
+        }
+        /* Ensure form-group doesn't interfere */
+        .form-group.password-container {
+            position: relative;
+        }
+    </style>
 </head>
 <body>
     <div class="auth-container">
@@ -20,8 +59,10 @@
                 <i class="fas fa-calendar-check"></i> GatherEd
             </div>
             <h2>Create Your Account</h2>
+
             <form action="{% url 'register' %}" method="post">
                 {% csrf_token %}
+
                 <div class="form-group">
                     <label for="user_type">I am a...</label>
                     <select id="user_type" name="user_type" required>
@@ -30,93 +71,152 @@
                         <option value="administrator">Administrator</option>
                     </select>
                 </div>
+
                 <div class="form-group" id="cit-id-group" style="display:none;">
                     <label id="cit-id-label" for="cit_id"></label>
-                    <input type="text" id="cit_id" name="cit_id" placeholder="00-0000-000" required>
+                    <input type="text" id="cit_id" name="cit_id" placeholder="00-0000-000" maxlength="11" required>
                 </div>
+
                 <div class="form-group">
                     <label for="name">Full Name</label>
                     <input type="text" id="name" name="name" placeholder="John Doe" required>
                 </div>
+
                 <div class="form-group">
                     <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" placeholder="john.doe@cit.edu" required>
                 </div>
-                <div class="form-group">
+
+                <!-- Password -->
+                <div class="form-group password-container">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" class="password-input" required>
+                        <button type="button" class="toggle-eye" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div id="password-requirements">
+                        <!-- Note: Add your requirement indicators here if needed, e.g., <span id="pw-length">8+ characters</span> -->
+                    </div>
                 </div>
-                <div class="form-group">
+
+                <!-- Confirm Password -->
+                <div class="form-group password-container">
                     <label for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirm_password" name="confirm_password" class="password-input" required>
+                        <button type="button" class="toggle-eye" id="toggleConfirmPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
+
                 <button type="submit" class="btn btn-primary btn-full-width">Sign Up</button>
             </form>
+
             <div class="auth-footer">
                 <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
             </div>
         </div>
     </div>
 
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Toastify messages
+        document.addEventListener("DOMContentLoaded", () => {
             {% if messages %}
                 {% for message in messages %}
-                    var messageType = "{{ message.tags }}";
-                    var backgroundColor;
-
-                    switch(messageType) {
-                        case 'success':
-                            backgroundColor = 'linear-gradient(to right, #28a745, #218838)';
-                            break;
-                        case 'error':
-                            backgroundColor = 'linear-gradient(to right, #dc3545, #c82333)';
-                            break;
-                        case 'info':
-                            backgroundColor = 'linear-gradient(to right, #17a2b8, #138496)';
-                            break;
-                        case 'warning':
-                            backgroundColor = 'linear-gradient(to right, #ffc107, #e0a800)';
-                            break;
-                        default:
-                            backgroundColor = 'linear-gradient(to right, #6c757d, #5a6268)';
-                            break;
-                    }
+                    let messageType = "{{ message.tags }}";
+                    let bgColor = {
+                        success: 'linear-gradient(to right, #28a745, #218838)',
+                        error: 'linear-gradient(to right, #dc3545, #c82333)',
+                        info: 'linear-gradient(to right, #17a2b8, #138496)',
+                        warning: 'linear-gradient(to right, #ffc107, #e0a800)',
+                    }[messageType] || 'linear-gradient(to right, #6c757d, #5a6268)';
 
                     Toastify({
                         text: "{{ message|escapejs }}",
-                        duration: 5000,
-                        newWindow: true,
-                        close: true,
+                        duration: 4000,
                         gravity: "top",
                         position: "right",
-                        stopOnFocus: true,
-                        style: {
-                            background: backgroundColor,
-                        },
-                        onClick: function(){}
+                        close: true,
+                        style: { background: bgColor },
                     }).showToast();
                 {% endfor %}
             {% endif %}
 
-            // Dynamic form fields based on user type
             const userTypeSelect = document.getElementById('user_type');
             const citIdGroup = document.getElementById('cit-id-group');
             const citIdLabel = document.getElementById('cit-id-label');
             const citIdInput = document.getElementById('cit_id');
 
             userTypeSelect.addEventListener('change', function() {
-                citIdGroup.style.display = 'block';
-                if (this.value === 'administrator') {
-                    citIdLabel.textContent = 'Employee ID';
-                    citIdInput.placeholder = '00-0000-000';
-                } else if (this.value === 'student') {
-                    citIdLabel.textContent = 'Student ID';
-                    citIdInput.placeholder = '00-0000-000';
+                if (this.value === 'administrator' || this.value === 'student') {
+                    citIdGroup.style.display = 'block';
+                    citIdLabel.textContent = this.value === 'administrator' ? 'Employee ID' : 'Student ID';
                 } else {
                     citIdGroup.style.display = 'none';
+                }
+            });
+
+            // Input Mask for Student ID
+            citIdInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 2 && value.length <= 6)
+                    value = value.replace(/(\d{2})(\d+)/, '$1-$2');
+                else if (value.length > 6)
+                    value = value.replace(/(\d{2})(\d{4})(\d+)/, '$1-$2-$3');
+                e.target.value = value.slice(0, 11);
+            });
+
+            // Password Validation
+            const pwInput = document.getElementById('password');
+            const reqs = {
+                length: document.getElementById('pw-length'),
+                upper: document.getElementById('pw-upper'),
+                lower: document.getElementById('pw-lower'),
+                num: document.getElementById('pw-num'),
+                special: document.getElementById('pw-special')
+            };
+
+            pwInput.addEventListener('input', () => {
+                const v = pwInput.value;
+                if (reqs.length) reqs.length.style.color = v.length >= 8 ? 'green' : 'red';
+                if (reqs.upper) reqs.upper.style.color = /[A-Z]/.test(v) ? 'green' : 'red';
+                if (reqs.lower) reqs.lower.style.color = /[a-z]/.test(v) ? 'green' : 'red';
+                if (reqs.num) reqs.num.style.color = /\d/.test(v) ? 'green' : 'red';
+                if (reqs.special) reqs.special.style.color = /[!@#$%^&*(),.?":{}|<>]/.test(v) ? 'green' : 'red';
+            });
+
+            // Password Toggle
+            function toggleVisibility(btnId, inputId) {
+                const btn = document.getElementById(btnId);
+                const input = document.getElementById(inputId);
+                const icon = btn.querySelector('i');
+                btn.addEventListener('click', () => {
+                    const show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    icon.classList.toggle('fa-eye');
+                    icon.classList.toggle('fa-eye-slash');
+                });
+            }
+
+            toggleVisibility('togglePassword', 'password');
+            toggleVisibility('toggleConfirmPassword', 'confirm_password');
+
+            // ID Format Validation on Submit
+            const form = document.querySelector('form');
+            form.addEventListener('submit', (e) => {
+                const regex = /^\d{2}-\d{4}-\d{3}$/;
+                if (citIdGroup.style.display === 'block' && !regex.test(citIdInput.value)) {
+                    e.preventDefault();
+                    Toastify({
+                        text: "CIT ID must follow the format: 00-0000-000",
+                        duration: 4000,
+                        gravity: "top",
+                        position: "right",
+                        style: { background: 'linear-gradient(to right, #dc3545, #c82333)' },
+                    }).showToast();
                 }
             });
         });
