@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    {% load static %}
     <link rel="stylesheet" href="{% static 'css/register_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
@@ -20,6 +19,7 @@
                 <i class="fas fa-calendar-check"></i> GatherEd
             </div>
             <h2>Create Your Account</h2>
+
             <form action="{% url 'register' %}" method="post">
                 {% csrf_token %}
                 <div class="form-group">
@@ -30,28 +30,38 @@
                         <option value="administrator">Administrator</option>
                     </select>
                 </div>
+
                 <div class="form-group" id="cit-id-group" style="display:none;">
                     <label id="cit-id-label" for="cit_id"></label>
-                    <input type="text" id="cit_id" name="cit_id" placeholder="00-0000-000" required>
+                    <input type="text" id="cit_id" name="cit_id" placeholder="00-0000-000" required maxlength="11">
                 </div>
+
                 <div class="form-group">
                     <label for="name">Full Name</label>
                     <input type="text" id="name" name="name" placeholder="John Doe" required>
                 </div>
+
                 <div class="form-group">
                     <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" placeholder="john.doe@cit.edu" required>
                 </div>
+
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <input type="password" id="password" name="password" placeholder="minimum length, often 8 or more characters, and a mix of character types, such as uppercase letters, lowercase letters, numbers, and special symbols" required>
+                    <div id="password-requirements">
+
+                    </div>
                 </div>
+
                 <div class="form-group">
                     <label for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" required>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="minimum length, often 8 or more characters, and a mix of character types, such as uppercase letters, lowercase letters, numbers, and special symbols" required>
                 </div>
+
                 <button type="submit" class="btn btn-primary btn-full-width">Sign Up</button>
             </form>
+
             <div class="auth-footer">
                 <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
             </div>
@@ -61,63 +71,64 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Toastify messages
+            // --- Toastify for Django messages ---
             {% if messages %}
                 {% for message in messages %}
                     var messageType = "{{ message.tags }}";
                     var backgroundColor;
 
                     switch(messageType) {
-                        case 'success':
-                            backgroundColor = 'linear-gradient(to right, #28a745, #218838)';
-                            break;
-                        case 'error':
-                            backgroundColor = 'linear-gradient(to right, #dc3545, #c82333)';
-                            break;
-                        case 'info':
-                            backgroundColor = 'linear-gradient(to right, #17a2b8, #138496)';
-                            break;
-                        case 'warning':
-                            backgroundColor = 'linear-gradient(to right, #ffc107, #e0a800)';
-                            break;
-                        default:
-                            backgroundColor = 'linear-gradient(to right, #6c757d, #5a6268)';
-                            break;
+                        case 'success': backgroundColor = 'linear-gradient(to right, #28a745, #218838)'; break;
+                        case 'error': backgroundColor = 'linear-gradient(to right, #dc3545, #c82333)'; break;
+                        case 'info': backgroundColor = 'linear-gradient(to right, #17a2b8, #138496)'; break;
+                        case 'warning': backgroundColor = 'linear-gradient(to right, #ffc107, #e0a800)'; break;
+                        default: backgroundColor = 'linear-gradient(to right, #6c757d, #5a6268)'; break;
                     }
 
                     Toastify({
                         text: "{{ message|escapejs }}",
                         duration: 5000,
-                        newWindow: true,
                         close: true,
                         gravity: "top",
                         position: "right",
-                        stopOnFocus: true,
-                        style: {
-                            background: backgroundColor,
-                        },
-                        onClick: function(){}
+                        style: { background: backgroundColor },
                     }).showToast();
                 {% endfor %}
             {% endif %}
 
-            // Dynamic form fields based on user type
+            // --- Show/Hide CIT ID based on user type ---
             const userTypeSelect = document.getElementById('user_type');
             const citIdGroup = document.getElementById('cit-id-group');
             const citIdLabel = document.getElementById('cit-id-label');
             const citIdInput = document.getElementById('cit_id');
 
             userTypeSelect.addEventListener('change', function() {
-                citIdGroup.style.display = 'block';
-                if (this.value === 'administrator') {
-                    citIdLabel.textContent = 'Employee ID';
-                    citIdInput.placeholder = '00-0000-000';
-                } else if (this.value === 'student') {
-                    citIdLabel.textContent = 'Student ID';
-                    citIdInput.placeholder = '00-0000-000';
+                if (this.value === 'administrator' || this.value === 'student') {
+                    citIdGroup.style.display = 'block';
+                    citIdLabel.textContent = this.value === 'administrator' ? 'Employee ID' : 'Student ID';
                 } else {
                     citIdGroup.style.display = 'none';
                 }
+            });
+
+            // --- Input Mask for CIT ID (xx-xxxx-xxx) ---
+            citIdInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 2 && value.length <= 6)
+                    value = value.replace(/(\d{2})(\d+)/, '$1-$2');
+                else if (value.length > 6)
+                    value = value.replace(/(\d{2})(\d{4})(\d+)/, '$1-$2-$3');
+                e.target.value = value.slice(0, 11);
+            });
+
+            // --- Real-time Password Validation ---
+            const passwordInput = document.getElementById("password");
+            passwordInput.addEventListener("input", () => {
+                const value = passwordInput.value;
+                document.getElementById("pw-length").style.color = value.length >= 8 ? "green" : "red";
+                document.getElementById("pw-upper").style.color = /[A-Z]/.test(value) ? "green" : "red";
+                document.getElementById("pw-lower").style.color = /[a-z]/.test(value) ? "green" : "red";
+                document.getElementById("pw-num").style.color = /\d/.test(value) ? "green" : "red";
             });
         });
     </script>
