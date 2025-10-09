@@ -1,5 +1,6 @@
 # GatherEd
 **Course**: IT317-G1 CSIT327-G7
+
 **Title**: School Event / Club Management
 
 This project aims to develop a web-based application that centralizes event and club
@@ -12,8 +13,11 @@ student engagement in extracurricular activities.
 
 ## Tech Stack
 backend: Django (Python)
+
 Database: Supabase
+
 Frontend: Django Templates + HTML + CSS
+
 Deployment: Render (Backend + Forntend), Supabase(database)
 
 # Environment Setup
@@ -44,8 +48,13 @@ pip install -r requirements.txt
 python manage.py runserver
 # Team Members
 **Yabao, Christian Ken** – Product Owner - [christianken.yabao@cit.edu]()
+
 **Villarta, John Hector** – Business Analyst  - [johnhector.villarta@cit.edu]()
+
 **Villas, Ervin Louis** – Scrum Master - [ervinlouis.villas@cit.edu]()
+
 **Palicte, Jasmine Ciely** - Lead Developer - [jasminciely.palicte@cit.edu]()
+
 **Ruperez, Raymart** - Backend Developer - [raymart.ruperez@cit.edu]()
+
 **Rosel, Patricia** - Frontend Developer - [patriciamae.rosel@cit.edu]()
