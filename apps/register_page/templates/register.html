@@ -8,50 +8,55 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="{% static 'css/register_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    <style>
-        /* Inline CSS fix for eye icon positioning (add this to your register_css.css or keep inline) */
-        .password-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .password-input {
-            width: 100%;
-            padding-right: 40px; /* Make space for the eye icon */
-            box-sizing: border-box;
-        }
-        .toggle-eye {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #666;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-        }
-        .toggle-eye:hover {
-            color: #333;
-        }
-        .toggle-eye i {
-            font-size: 16px;
-        }
-        /* Ensure form-group doesn't interfere */
-        .form-group.password-container {
-            position: relative;
-        }
-    </style>
+
 </head>
+<style>
+    .password-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-input {
+        width: 100%;
+        padding-right: 40px;
+        box-sizing: border-box;
+    }
+
+    .toggle-eye {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #666;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+    }
+
+    .toggle-eye:hover {
+        color: #333;
+    }
+
+    .toggle-eye i {
+        font-size: 16px;
+    }
+
+    .form-group.password-container {
+        position: relative;
+    }
+</style>
 <body>
     <div class="auth-container">
         <div class="auth-box">
@@ -77,6 +82,59 @@
                     <input type="text" id="cit_id" name="cit_id" placeholder="00-0000-000" maxlength="11" required>
                 </div>
 
+                <div class="form-group" id="organization-group" style="display:none;">
+                    <label for="organization_name">Organization Affiliation</label>
+                    <select id="organization_name" name="organization_name" required>
+                        <option value="" disabled selected>Select Organization</option>
+                        <optgroup label="NON-DEPARTMENTAL ORGANIZATION">
+                            <option value="RACMC-CIT">Rotaract Club of Metro Cebu - CIT Chapter</option>
+                            <option value="DOST SA CIT-U">DOST SA CIT-U</option>
+                            <option value="CRCY">College Red Cross Youth</option>
+                            <option value="EDS">Elite Debate Society</option>
+                            <option value="HONSOC">CIT-U Honor Society</option>
+                            <option value="CIT-U SPRCY">Senior Plus Red Cross Youth</option>
+                            <option value="WEL">Wildcats Esports League</option>
+                            <option value="CFC">CIT-U Christian Fellowship</option>
+                            <option value="REAVO">Radio/Rescue Emergency Assistance Volunteer Organization</option>
+                            <option value="JJC CIT-U">CIT University Junior Jaycees</option>
+                            <option value="TTSP">The Technologian Student Press</option>
+                            <option value="TQ">The Technologian Quills</option>
+                            <option value="PFCIT-U SHS">SHS Peer Facilitators Program</option>
+                        </optgroup>
+                        <optgroup label="DEPARTMENTAL ORGANIZATION">
+                            <option value="CASEPsychSoc">PsychSoc (Psychology Society)</option>
+                            <option value="YEACIT-U">Young Educators Association</option>
+                            <option value="CELSA">Communication and English Language Students Association</option>
+                            <option value="CAMVAS">Creative Alliance of Multimedia and Visual Arts Student</option>
+                            <option value="CCJJCC">Junior Criminology Council</option>
+                            <option value="CCSCSS">Computer Students' Society</option>
+                            <option value="CEAJPIChE CIT-U">Junior Philippine Institute of Chemical Engineers</option>
+                            <option value="UAPSA">United Architects of the Philippines Student Auxiliary</option>
+                            <option value="JPSME">Junior Philippine Society of Mechanical Engineers</option>
+                            <option value="IIEE-CSC CIT-U">Institute of Integrated Electrical Engineers - CSC</option>
+                            <option value="ICpEP.SE">Institute of Computer Engineers Student Edition</option>
+                            <option value="IECEP CIT-U SC">Institute of Electronics Engineers of the Philippines</option>
+                            <option value="IEC">Industrial Engineering Council</option>
+                            <option value="ACIP - CITU SC">American Concrete Institute Philippines - SC</option>
+                            <option value="PICE CIT-U SC">Philippine Institute of Civil Engineers - SC</option>
+                            <option value="PSEM-VSC">Philippine Society of Mining Engineers - VSC</option>
+                            <option value="CMBAJAHTEX">Junior Association of Hospitality and Tourism Executives</option>
+                            <option value="JFINEX - CITU">Junior Financial Executives - CIT University Chapter</option>
+                            <option value="JPMAP">Junior People Management Association of the Philippines</option>
+                            <option value="IMA">Institute of Management Accountants</option>
+                            <option value="JPIA">Junior Philippine Institute of Accountants</option>
+                        </optgroup>
+                        <optgroup label="SENIOR HIGH SCHOOL">
+                            <option value="CNAHSHASBO">Health Alliance Student Body Organization</option>
+                            <option value="NCES">Nursing Community Extension Services</option>
+                            <option value="SHS DC">Senior High School Dance Club</option>
+                            <option value="YAS">Young Artist Society</option>
+                            <option value="GTCIT-U SHS">SHS GleeTechs</option>
+                            <option value="WCC">WILDCATS CHESS CLUB</option>
+                        </optgroup>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label for="name">Full Name</label>
                     <input type="text" id="name" name="name" placeholder="John Doe" required>
@@ -87,7 +145,6 @@
                     <input type="email" id="email" name="email" placeholder="john.doe@cit.edu" required>
                 </div>
 
-                <!-- Password -->
                 <div class="form-group password-container">
                     <label for="password">Password</label>
                     <div class="password-wrapper">
@@ -97,11 +154,9 @@
                         </button>
                     </div>
                     <div id="password-requirements">
-                        <!-- Note: Add your requirement indicators here if needed, e.g., <span id="pw-length">8+ characters</span> -->
-                    </div>
+                        </div>
                 </div>
 
-                <!-- Confirm Password -->
                 <div class="form-group password-container">
                     <label for="confirm_password">Confirm Password</label>
                     <div class="password-wrapper">
@@ -124,6 +179,7 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // --- Toastify Messages (No Change) ---
             {% if messages %}
                 {% for message in messages %}
                     let messageType = "{{ message.tags }}";
@@ -145,21 +201,43 @@
                 {% endfor %}
             {% endif %}
 
+            // --- Form Element References ---
             const userTypeSelect = document.getElementById('user_type');
             const citIdGroup = document.getElementById('cit-id-group');
             const citIdLabel = document.getElementById('cit-id-label');
             const citIdInput = document.getElementById('cit_id');
 
+            // Organization Group References
+            const organizationGroup = document.getElementById('organization-group');
+            const organizationSelect = document.getElementById('organization_name');
+
+
+            // --- User Type Change Listener (MODIFIED TO MAKE ORGANIZATION REQUIRED) ---
             userTypeSelect.addEventListener('change', function() {
-                if (this.value === 'administrator' || this.value === 'student') {
+                const selectedValue = this.value;
+
+                // Reset required status and visibility for both conditional groups
+                citIdGroup.style.display = 'none';
+                citIdInput.required = false;
+                organizationGroup.style.display = 'none';
+                organizationSelect.required = false; // Reset required status
+
+                if (selectedValue === 'student') {
                     citIdGroup.style.display = 'block';
-                    citIdLabel.textContent = this.value === 'administrator' ? 'Employee ID' : 'Student ID';
-                } else {
-                    citIdGroup.style.display = 'none';
+                    citIdInput.required = true;
+                    citIdLabel.textContent = 'Student ID';
+                } else if (selectedValue === 'administrator') {
+                    // Show ID field and Organization dropdown
+                    citIdGroup.style.display = 'block';
+                    citIdInput.required = true;
+                    citIdLabel.textContent = 'Employee ID';
+
+                    organizationGroup.style.display = 'block';
+                    organizationSelect.required = true; // Set Organization as required for Admins
                 }
             });
 
-            // Input Mask for Student ID
+            // --- Input Mask for Student/Employee ID (No Change) ---
             citIdInput.addEventListener('input', (e) => {
                 let value = e.target.value.replace(/\D/g, '');
                 if (value.length > 2 && value.length <= 6)
@@ -169,7 +247,7 @@
                 e.target.value = value.slice(0, 11);
             });
 
-            // Password Validation
+            // --- Password Validation (No Change) ---
             const pwInput = document.getElementById('password');
             const reqs = {
                 length: document.getElementById('pw-length'),
@@ -188,7 +266,7 @@
                 if (reqs.special) reqs.special.style.color = /[!@#$%^&*(),.?":{}|<>]/.test(v) ? 'green' : 'red';
             });
 
-            // Password Toggle
+            // --- Password Toggle (No Change) ---
             function toggleVisibility(btnId, inputId) {
                 const btn = document.getElementById(btnId);
                 const input = document.getElementById(inputId);
@@ -204,14 +282,16 @@
             toggleVisibility('togglePassword', 'password');
             toggleVisibility('toggleConfirmPassword', 'confirm_password');
 
-            // ID Format Validation on Submit
+            // --- ID Format Validation on Submit (No Change) ---
             const form = document.querySelector('form');
             form.addEventListener('submit', (e) => {
                 const regex = /^\d{2}-\d{4}-\d{3}$/;
-                if (citIdGroup.style.display === 'block' && !regex.test(citIdInput.value)) {
+
+                // Only validate the ID format if the ID group is visible (Student or Admin)
+                if (citIdGroup.style.display !== 'none' && !regex.test(citIdInput.value)) {
                     e.preventDefault();
                     Toastify({
-                        text: "CIT ID must follow the format: 00-0000-000",
+                        text: "ID must follow the format: 00-0000-000",
                         duration: 4000,
                         gravity: "top",
                         position: "right",
