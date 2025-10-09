@@ -58,7 +58,13 @@
                         <span class="badge" id="notification-count">{{ notification_count }}</span>
                     </div>
                     <div class="user-profile">
-                        <span class="profile-name">Admin Name</span>
+                        {% if request.user.is_authenticated %}
+                            <span class="profile-name">
+                                {{ request.user.adminprofile.name|default:'Administrator' }}
+                            </span>
+                        {% else %}
+                            <span class="profile-name">Guest Admin</span>
+                        {% endif %}
                         <i class="fas fa-user-circle"></i>
                     </div>
                 </div>
