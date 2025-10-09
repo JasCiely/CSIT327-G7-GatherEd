@@ -1,5 +1,5 @@
 import datetime
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.conf import settings
 from supabase import create_client
 from django.contrib import messages
@@ -24,9 +24,6 @@ def get_event_status(event_date_str):
 
 @login_required
 def manage_events(request):
-    """
-    Admin view to display, manage, and modify all events.
-    """
     events_list = []
     is_ajax = request.GET.get('is_ajax', False)
 
@@ -43,9 +40,8 @@ def manage_events(request):
             raise Exception(f"Supabase Client Error: {error_msg}")
 
         for event in fetch_result.data:
-            mock_registrations = 10  # Placeholder
+            mock_registrations = 10
 
-            # NOTE: Assuming event['date'] is a string in 'YYYY-MM-DD' format
             event_status = get_event_status(event.get('date', ''))
 
             events_list.append({
@@ -76,3 +72,26 @@ def manage_events(request):
 
     # Template Path: admin_portal/admin_dashboard.html
     return render(request, 'admin_dashboard.html', template_context)
+
+
+@login_required
+def modify_event_view(request, event_id):
+
+    try:
+        event_data = {'id': event_id, 'title': 'Fetched Event Title'}
+
+    except Exception:
+        # Handle case where the event ID is invalid
+        return render(request, 'error_page.html', {'message': 'Event not found.'})
+
+    if request.method == 'POST':
+        # Handle event update logic (update Supabase/DB)
+        # ...
+        return redirect('manage_events_root')
+
+    return render(request, 'fragments/manage_event/manage_events_content.html', {'event': event_data})
+
+
+def manage_events_view(request):
+    # This is the view for the main management page (if you have one)
+    return render(request, 'fragments/manage_event/manage_events_content.html')

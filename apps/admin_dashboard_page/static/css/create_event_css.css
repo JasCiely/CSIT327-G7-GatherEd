@@ -231,3 +231,125 @@
 .time-date-group label:first-child {
     margin-top: 0;
 }
+
+/* ---------------------------------------------------------------------- */
+/* 6. CONFIRMATION MODAL STYLES                                           */
+/* ---------------------------------------------------------------------- */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Use a dark, semi-transparent background consistent with the theme */
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Ensure modal is on top of everything */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay[style*="display: flex"] {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: var(--background-card);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: var(--shadow-small);
+    width: 90%;
+    max-width: 500px;
+    text-align: left;
+    color: var(--text-light);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay[style*="display: flex"] .modal-content {
+    transform: translateY(0);
+}
+
+.modal-content h3 {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.modal-content p {
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+/* Summary Box for Event Details */
+#event-details-summary {
+    margin: 20px 0;
+    padding: 15px;
+    /* Use theme variables for borders and background */
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--background-dark);
+}
+
+#event-details-summary p {
+    margin: 5px 0;
+    line-height: 1.5;
+    font-size: 0.95rem;
+    color: var(--text-light); /* Ensure detail text is light */
+}
+
+#event-details-summary strong {
+    display: inline-block;
+    width: 120px; /* Aligns the values nicely */
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+/* Modal Action Buttons */
+.modal-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+/* Primary Button (Yes, Schedule It) - Reusing .btn-secondary styles for consistency */
+.btn-primary#confirm-submit-btn {
+    /* Explicitly inheriting or duplicating the look of .btn.btn-secondary */
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 50px;
+    background-color: var(--primary-color);
+    color: var(--background-dark);
+    border: 2px solid transparent;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.btn-primary#confirm-submit-btn:hover {
+    background-color: var(--primary-color-dark);
+    transform: translateY(-2px);
+}
+
+/* Cancel Button */
+.btn-cancel {
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border-radius: 50px;
+
+    background-color: transparent;
+    color: var(--text-light);
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.btn-cancel:hover {
+    background-color: var(--border-color); /* Subtle hover effect */
+    border-color: var(--primary-color);
+}
