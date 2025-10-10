@@ -51,7 +51,8 @@
                     <th>Date</th>
                     <th>Time</th>
                     <th>Location</th>
-                    </tr>
+                    <th>Time Remaining</th>  {# <--- NEW COLUMN HEADER #}
+                </tr>
             </thead>
             <tbody>
                 {% for event in events %}
@@ -64,7 +65,12 @@
 
                     <td data-label="Location">{{ event.location }}</td>
 
-                    </tr>
+                    <td data-label="Time Remaining">
+                        <span class="time-countdown">
+                            {{ event.time_remaining }} {# <--- NEW DATA FIELD #}
+                        </span>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
