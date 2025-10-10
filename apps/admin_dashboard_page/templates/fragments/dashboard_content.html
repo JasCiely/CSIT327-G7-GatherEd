@@ -4,8 +4,7 @@
         <div class="card-icon"><i class="fas fa-calendar-alt"></i></div>
         <div class="card-content">
             <span class="card-label">Total Events Managed</span>
-            <span class="card-value">{{ total_events }}</span>
-        </div>
+            <span class="card-value">{{ total_events }}</span> </div>
     </div>
 
     <div class="card summary-card attendance">
@@ -23,17 +22,59 @@
             <span class="card-value">{{ new_feedback }}</span>
         </div>
     </div>
-
 </div>
-<div class="full-width-card" style="margin-top: 40px;">
+
+<div class="dashboard-grid">
+    </div>
+
+<div class="full-width-card manage-events-container" style="margin-top: 40px;">
     <div class="card-header">
         <h2>Upcoming Events</h2>
-        <a href="javascript:void(0);" data-url="{% url 'create_event' %}?is_ajax=true" class="btn btn-secondary" onclick="handleNavClick(this)"><i class="fas fa-plus"></i> Create New Event</a>
+        <p class="card-subtitle">A quick overview of events scheduled for your organization.</p>
+
+        <a href="javascript:void(0);"
+           data-url="{% url 'create_event' %}?is_ajax=true"
+           data-clean-url="{% url 'create_event' %}"
+           class="btn btn-primary create-event-button"
+           onclick="handleNavClick(this)">
+            <i class="fas fa-plus"></i> New Event
+        </a>
     </div>
-    <p class="text-center" style="font-size: 1rem; color: var(--text-muted); padding-bottom: 20px;">
-        A summary of your upcoming events will be displayed here. Click 'View/Modify Events' for the full management table.
-    </p>
-    <div class="placeholder-content">
-        <i class="fas fa-table" style="font-size: 24px; color: var(--text-muted);"></i> Data table placeholder.
+
+    {# --- EVENTS TABLE --- #}
+    <div class="events-table-responsive">
+        {% if events %}
+        <table class="events-table" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Event Name</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Location</th>
+                    </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr data-event-id="{{ event.id }}">
+                    <td data-label="Title">{{ event.title }}</td>
+
+                    <td data-label="Date">{{ event.start_date }}</td>
+
+                    <td data-label="Time">{{ event.start_time }}</td>
+
+                    <td data-label="Location">{{ event.location }}</td>
+
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <p>No upcoming events found.</p>
+            <p class="muted">Click the "New Event" button to get started!</p>
+        </div>
+        {% endif %}
     </div>
+
 </div>
