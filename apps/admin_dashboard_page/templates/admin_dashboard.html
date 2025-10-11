@@ -5,22 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - GatherEd</title>
     {% load static %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="..." crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="..." crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/admin_dashboard_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-            integrity="sha256-o6EwG/hR63c9LpL6/q4I8T6X5C8p0Tz3Z1P5y0Y9oW0="
-            crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
 </head>
 <body>
     <div class="dashboard-container">
-
         <aside class="sidebar">
             <div class="logo">
                 <i class="fas fa-calendar-check"></i> GatherEd
@@ -43,7 +42,7 @@
                 </a>
             </nav>
             <div class="sidebar-footer">
-                <a href="{% url 'logout' %}" class="nav-item logout">
+                <a href="{% url 'logout' %}" id="logout-btn" class="nav-item logout">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             </div>
@@ -73,7 +72,6 @@
             <div id="content-area">
                 {% include 'fragments/dashboard_content.html' %}
             </div>
-
         </main>
     </div>
 
@@ -85,7 +83,6 @@
     </div>
 
     <script>
-        // --- Navigation Helper Functions ---
         window.toggleNotifications = function() {
             const drawer = document.getElementById('notification-drawer');
             drawer.classList.toggle('open');
@@ -99,7 +96,6 @@
             }
         };
 
-        // FIX: Improved content loading to handle script execution correctly.
         window.loadContent = function(url, linkElement) {
             const contentArea = document.getElementById('content-area');
             const pageTitleElement = document.getElementById('page-title');
@@ -118,37 +114,21 @@
 
             fetch(url)
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     return response.text();
                 })
                 .then(html => {
-                    // Temporarily store the HTML to execute scripts
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = html;
                     contentArea.innerHTML = '';
-
-                    // Move nodes to contentArea
-                    while (tempDiv.firstChild) {
-                        contentArea.appendChild(tempDiv.firstChild);
-                    }
-
-                    // *** CRITICAL SCRIPT EXECUTION FIX ***
-                    // Although the form handler is outside, we execute any scripts
-                    // that might be loaded with the fragment (like the CSS includes)
+                    while (tempDiv.firstChild) contentArea.appendChild(tempDiv.firstChild);
                     const scripts = contentArea.getElementsByTagName('script');
                     for (let i = 0; i < scripts.length; i++) {
                         const newScript = document.createElement('script');
-                        if (scripts[i].src) {
-                            newScript.src = scripts[i].src;
-                        } else {
-                            newScript.textContent = scripts[i].textContent;
-                        }
+                        if (scripts[i].src) newScript.src = scripts[i].src;
+                        else newScript.textContent = scripts[i].textContent;
                         scripts[i].parentNode.replaceChild(newScript, scripts[i]);
                     }
-                    // **************************************
-
                     history.pushState(null, titleText, cleanUrl);
                 })
                 .catch(e => {
@@ -162,64 +142,58 @@
             loadContent(url, element);
         };
 
-        // 🚀 CRITICAL: GLOBAL AJAX HANDLER (Must be AFTER jQuery is loaded)
-        // This is the function that prevents the default submission and shows the toast.
-        $(document).on('submit', '#create-event-form', function(e) {
+        // 🔹 SweetAlert2 Logout Confirmation (Dark Mode)
+        document.getElementById('logout-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            const logoutUrl = this.getAttribute('href');
 
-            // DEBUGGING TIP: CHECK YOUR F12 CONSOLE FOR THIS MESSAGE!
-            console.log("AJAX submission intercepted!");
-
-            e.preventDefault(); // 🔥 THIS IS THE KEY: Stops the browser from navigating to the raw JSON response
-
-            const form = $(this);
-            const url = form.attr('action');
-            const data = form.serialize();
-
-            const submitButton = form.find('button[type="submit"]');
-            submitButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Scheduling...');
-
-            $.ajax({
-                type: 'POST',
-                url: url,
-                data: data,
-                dataType: 'json',
-
-                success: function(response) {
-                    if (response && response.status === 'success') {
-                        // ✅ SweetAlert2 Success Toast
-                        Swal.fire({
-                            toast: true,
-                            position: 'top-end',
-                            icon: 'success',
-                            title: response.message,
-                            showConfirmButton: false,
-                            timer: 4000,
-                            timerProgressBar: true
-                        });
-                        form[0].reset();
-                    } else if (response && response.status === 'error') {
-                        // Logical error (status 200, but JSON says error)
-                        Swal.fire('Error', response.message, 'error');
-                    }
-                },
-
-                error: function(xhr) {
-                    let errorMessage = "An unknown server error occurred.";
-                    try {
-                        // Handle server errors (400, 500)
-                        const errorResponse = JSON.parse(xhr.responseText);
-                        errorMessage = errorResponse.message || "A required field is missing or data is invalid.";
-                    } catch (e) {
-                        errorMessage = `Server Error (${xhr.status}). Check the console for details.`;
-                    }
-
-                    Swal.fire('Failed to Schedule', errorMessage, 'error');
-                },
-
-                complete: function() {
-                    submitButton.prop('disabled', false).html('<i class="fas fa-calendar-plus"></i> Schedule Event');
+            Swal.fire({
+                title: 'Log out from GatherEd?',
+                text: 'You will need to log in again to access the admin dashboard.',
+                icon: 'question',
+                background: '#1e1e1e',
+                color: '#ffffff',
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Yes, log out',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'rounded-4 shadow-lg',
+                    title: 'fw-bold',
+                    confirmButton: 'px-4 py-2',
+                    cancelButton: 'px-4 py-2'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Logging out...',
+                        text: 'Please wait a moment.',
+                        background: '#1e1e1e',
+                        color: '#fff',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                            setTimeout(() => {
+                                window.location.href = logoutUrl;
+                            }, 1000);
+                        }
+                    });
                 }
             });
+        });
+
+        if (window.history && window.history.pushState) {
+            window.history.pushState(null, null, window.location.href);
+            window.onpopstate = function() {
+                window.history.pushState(null, null, window.location.href);
+            };
+        }
+
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
+                window.location.href = "{% url 'index' %}";
+            }
         });
     </script>
 </body>
