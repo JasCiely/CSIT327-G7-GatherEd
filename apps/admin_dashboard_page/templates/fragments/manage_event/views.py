@@ -6,20 +6,36 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
 
+def format_to_readable_date(date_str):
+    if not date_str:
+        return 'N/A'
+    try:
+        date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+        return date_obj.strftime('%B %d, %Y').lstrip('0')
+    except Exception:
+        return date_str
+
+
+def format_to_12hr(time_str):
+    try:
+        dt_obj = datetime.datetime.strptime(time_str, '%H:%M:%S')
+        return dt_obj.strftime('%I:%M %p').lstrip('0')
+    except ValueError:
+        try:
+            dt_obj = datetime.datetime.strptime(time_str, '%H:%M')
+            return dt_obj.strftime('%I:%M %p').lstrip('0')
+        except:
+            return time_str
+
+
 def get_event_status(event_date_str, start_time_str, end_time_str):
-    """
-    Determines the status of an event based on its date and time range.
-    """
     if not all([event_date_str, start_time_str, end_time_str]):
         return 'Unknown'
 
     try:
-        # 1. Parse Event Date
         event_date = datetime.datetime.strptime(event_date_str, '%Y-%m-%d').date()
 
-        # 2. Parse Start and End Times (robust to different time formats)
         def parse_time(time_str):
-            # Try to parse with seconds first, then without
             for fmt in ('%H:%M:%S', '%H:%M'):
                 try:
                     return datetime.datetime.strptime(time_str, fmt).time()
@@ -30,29 +46,21 @@ def get_event_status(event_date_str, start_time_str, end_time_str):
         start_time = parse_time(start_time_str)
         end_time = parse_time(end_time_str)
 
-        # 3. Create full datetime objects for comparison
         event_start_dt = datetime.datetime.combine(event_date, start_time)
         event_end_dt = datetime.datetime.combine(event_date, end_time)
 
-        # Use datetime.datetime.now() for the current moment comparison
         now = datetime.datetime.now()
 
-        # 4. Determine Status
         if now < event_start_dt:
-            # Time hasn't come yet
             return 'Upcoming'
         elif event_start_dt <= now <= event_end_dt:
-            # Within the scheduled start and end time range
             return 'Active'
         elif now > event_end_dt:
-            # The event end time has passed
             return 'Completed'
 
-        # Fallback for unexpected cases
         return 'Unknown'
 
     except Exception as e:
-        # Catch parsing or other errors
         print(f"Error determining event status for {event_date_str}: {e}")
         return 'Unknown'
 
@@ -62,32 +70,25 @@ def manage_events(request):
     events_list = []
     is_ajax = request.GET.get('is_ajax', False)
 
-    # 1. Initialize template_context before the try block
     template_context = {
         'events_list': events_list,
         'title': 'Manage Events',
     }
 
     try:
-        # 2. Get the current admin's ID (UUID)
         current_admin_id = request.user.adminprofile.id
-
-        # 🚨 DEBUG: Confirm the ID being used
-        print(f"DEBUG: Filtering events for Admin ID (UUID): {current_admin_id}")
 
         admin_client = create_client(
             settings.SUPABASE_URL,
             settings.SUPABASE_SERVICE_ROLE_KEY
         )
 
-        # 3. Fetch events from Supabase filtered by the admin_id
         fetch_result = admin_client.table('events') \
-            .select('*') \
+            .select('id, title, description, date, location, start_time, end_time, max_attendees') \
             .eq('admin_id', str(current_admin_id)) \
             .order('date', desc=False) \
             .execute()
 
-        # Supabase API Response Error Handling
         if hasattr(fetch_result, 'error') and fetch_result.error:
             error_msg = fetch_result.error.get('message', 'Unknown Supabase error')
             raise Exception(f"Supabase Client Error: {error_msg}")
@@ -97,32 +98,31 @@ def manage_events(request):
             data = []
 
         for event in data:
-            # Determine event status based on current time
+            date_str = event.get('date', '')
+            start_time_str = event.get('start_time', '')
+            end_time_str = event.get('end_time', '')
+
             event_status = get_event_status(
-                event.get('date', ''),
-                event.get('start_time', ''),
-                event.get('end_time', '')
+                date_str,
+                start_time_str,
+                end_time_str
             )
 
-            # 🛑 PLACEHOLDER FOR REGISTRATION COUNT 🛑
-            # Future Code: Fetch the actual count from a 'registrations' table
-            # where event_id matches event['id']. For now, initialize to 0.
             current_registrations_count = 0
 
             events_list.append({
                 'id': event['id'],
                 'name': event.get('title', 'N/A'),
                 'description': event.get('description', 'N/A'),
-                'date': event.get('date', 'N/A'),
+                'date': format_to_readable_date(date_str),
                 'location': event.get('location', 'N/A'),
-                'start_time': event.get('start_time', 'N/A'),
-                'end_time': event.get('end_time', 'N/A'),
+                'start_time': format_to_12hr(start_time_str),
+                'end_time': format_to_12hr(end_time_str),
                 'max_attendees': event.get('max_attendees', 0),
-                'registrations': current_registrations_count,  # Use the placeholder
+                'registrations': current_registrations_count,
                 'status': event_status,
             })
 
-        # Update the context with the fetched list
         template_context['events_list'] = events_list
 
     except Exception as e:
@@ -133,34 +133,24 @@ def manage_events(request):
     if is_ajax:
         return render(request, 'fragments/manage_event/manage_events_content.html', template_context)
 
-    # Template Path: admin_portal/admin_dashboard.html (or wherever it lives)
     return render(request, 'admin_dashboard.html', template_context)
 
 
 @login_required
 def modify_event_view(request, event_id):
-    # NOTE: You will need to implement the fetch logic here to get a specific event.
-    # e.g., admin_client.table('events').select('*').eq('id', event_id).single().execute()
-
     try:
-        # Placeholder for fetched event data
         event_data = {'id': event_id, 'title': 'Fetched Event Title'}
 
     except Exception:
-        # Handle case where the event ID is invalid or not found
         messages.error(request, f"Event with ID {event_id} was not found.")
-        return redirect('manage_events_root')  # Assuming 'manage_events_root' is your list view name
+        return redirect('manage_events_root')
 
     if request.method == 'POST':
-        # Handle event update logic (update Supabase/DB)
-        # ...
         messages.success(request, f"Event '{event_data.get('title', 'Event')}' updated successfully.")
-        return redirect('manage_events_root')  # Change to your actual root URL name
+        return redirect('manage_events_root')
 
-    # Renders the modification form/view for a specific event
     return render(request, 'fragments/manage_event/modify_event_form.html', {'event': event_data})
 
 
 def manage_events_view(request):
-    # This is a placeholder/wrapper view, its utility depends on your URL configuration.
     return render(request, 'fragments/manage_event/manage_events_content.html')
