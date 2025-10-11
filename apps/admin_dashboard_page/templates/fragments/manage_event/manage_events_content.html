@@ -1,15 +1,12 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/manage_event_css.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-
 <div class="full-width-card manage-events-container">
     <div class="card-header">
         <h2>View and Modify Events</h2>
         <p class="card-subtitle">Manage all active, upcoming, and past events created across the schools.</p>
     </div>
 
-    {# --- SEARCH AND FILTER BAR (MODIFIED) --- #}
     <div class="events-controls">
         <input type="text" placeholder="Search events by name..." class="control-input">
         <select class="control-select">
@@ -27,45 +24,60 @@
         </a>
     </div>
 
-    {# --- EVENTS TABLE --- #}
-    <div class="events-table-responsive">
-        {% if events_list %}
-        <table class="events-table">
-            <thead>
-                <tr>
-                    <th>Event Name</th>
-                    <th>Date</th>
-                    <th>Registrations</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for event in events_list %}
-                <tr data-event-id="{{ event.id }}">
-                    <td data-label="Event Name">{{ event.name }}</td>
-                    <td data-label="Date">{{ event.date }}</td>
-                    <td data-label="Registrations">{{ event.registrations }}</td>
+    <div class="events-content-wrapper" style="display: flex; flex-direction: row; gap: 20px;">
 
-                    {# 💡 FIX: Ensure the class uses the lowercase status for CSS styling #}
-                    <td data-label="Status" class="status-{{ event.status|lower }}">
-                        {{ event.status }}
-                    </td>
+        <div class="events-table-area">
+            <div class="events-table-responsive">
+                {% if events_list %}
+                <table class="events-table">
+                    <thead>
+                        <tr>
+                            <th>Event Name</th>
+                            <th>Date</th>
+                            <th>Registrations</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events_list %}
+                        <tr class="clickable-row" data-event-id="{{ event.id }}">
+                            <td data-label="Event Name">{{ event.name }}</td>
+                            <td data-label="Date">{{ event.date }}</td>
+                            <td data-label="Registrations">{{ event.registrations }}</td>
 
-                    <td data-label="Actions" class="action-buttons">
-                        <button class="btn-action edit" title="Edit Event"><i class="fas fa-edit"></i></button>
-                        <button class="btn-action delete" title="Delete Event"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-calendar-times"></i>
-            <p>No events found yet.</p>
-            <p class="muted">Start by creating your first event using the "New Event" button.</p>
+                            <td data-label="Status" class="status-{{ event.status|lower }}">
+                                {{ event.status }}
+                            </td>
+
+                            <td data-label="Actions" class="action-buttons">
+                                <button class="btn-action edit" title="Edit Event" onclick="event.stopPropagation()"><i class="fas fa-edit"></i></button>
+                                <button class="btn-action delete" title="Delete Event" onclick="event.stopPropagation()"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>No events found yet.</p>
+                    <p class="muted">Start by creating your first event using the "New Event" button.</p>
+                </div>
+                {% endif %}
+            </div>
         </div>
-        {% endif %}
+
+        <div class="event-details-panel">
+            <div id="initial-details-message" class="details-placeholder">
+                <i class="fas fa-hand-pointer"></i>
+                <h3>Select an Event</h3>
+                <p>Click any row in the table to view the event's full details and management options here.</p>
+            </div>
+
+            <div id="event-details-content" style="display: none;">
+                </div>
+        </div>
+
     </div>
 </div>

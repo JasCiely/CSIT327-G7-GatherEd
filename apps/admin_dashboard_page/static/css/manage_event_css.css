@@ -10,6 +10,8 @@
     --text-light: #E0E0E0;
     --text-muted: #9E9E9E;
     --border-color: #333333;
+    --accent-blue-rgba: rgba(0, 169, 255, 0.6);
+    --panel-background: #191919;
 }
 
 /* Base Card & Header */
@@ -61,7 +63,7 @@
 }
 
 .btn-primary:hover {
-    background-color: #007bb5; /* Darker primary */
+    background-color: #007bb5;
 }
 
 /* Table Styling */
@@ -73,7 +75,7 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
-    min-width: 700px; /* Ensures table is readable on smaller screens */
+    min-width: 700px;
 }
 
 .events-table th, .events-table td {
@@ -84,15 +86,19 @@
 }
 
 .events-table th {
-    background-color: var(--background-dark);
-    color: var(--text-muted);
-    font-weight: 600;
+    background-color: var(--primary-color) !important;
+    color: var(--background-dark) !important;
+    font-weight: 700;
     text-transform: uppercase;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+}
+
+.events-table tbody tr {
+    background-color: var(--background-light);
 }
 
 .events-table tbody tr:hover {
-    background-color: #252525; /* Slight hover highlight */
+    background-color: #252525;
 }
 
 /* Status Badges */
@@ -142,4 +148,116 @@
 }
 .empty-state p {
     margin: 5px 0;
+}
+
+/* ======================================= */
+/* --- FLEX LAYOUT & PANEL STYLES (FINAL AESTHETICS) --- */
+/* ======================================= */
+
+.events-content-wrapper {
+    margin-top: 20px;
+    align-items: stretch !important;
+    min-height: 400px; /* Provides vertical space */
+}
+
+.events-table-area {
+    flex: 2;
+    min-width: 0;
+}
+
+.event-details-panel {
+    flex: 1;
+    min-width: 300px;
+    max-width: 400px;
+
+    /* ENHANCED PANEL STYLE */
+    background-color: var(--panel-background) !important;
+    border: 3px solid var(--primary-color) !important;
+    border-radius: 12px;
+    padding: 0 !important;
+    box-shadow: 0 5px 25px var(--accent-blue-rgba);
+
+    color: var(--text-light);
+    position: sticky;
+    top: 20px;
+    /* CRITICAL: Must fill the parent height */
+    height: 100% !important;
+}
+
+/* --- Initial Placeholder Message Styling (PERFECTLY CENTERED & BOLD) --- */
+.details-placeholder {
+    /* Fill 100% of the panel height and width */
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+
+    /* *** KEY CENTERING PROPERTIES *** */
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important; /* Centers items vertically */
+    align-items: center !important; /* Centers items horizontally */
+
+    padding: 20px 15px !important;
+
+    /* BACKGROUND AND BORDER AESTHETICS */
+    background-color: var(--background-light) !important;
+    border: none !important;
+    border-radius: 12px;
+
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7) !important;
+    text-align: center !important;
+}
+
+.details-placeholder i {
+    font-size: 4rem;
+    color: var(--primary-color) !important;
+    margin-bottom: 20px;
+    text-shadow: 0 0 15px var(--accent-blue-rgba) !important;
+    animation: pulse-icon 2s infinite alternate;
+}
+
+.details-placeholder h3 {
+    margin: 0 0 10px 0 !important;
+    color: var(--text-light) !important;
+    font-weight: 700;
+    font-size: 1.8rem;
+    letter-spacing: 0.5px;
+}
+
+.details-placeholder p {
+    font-size: 1rem;
+    color: var(--text-muted) !important;
+    line-height: 1.4;
+    max-width: 90%;
+}
+
+/* Subtle icon pulse animation */
+@keyframes pulse-icon {
+    from {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1.02);
+    }
+}
+
+/* --- Responsive adjustment for small screens (Stacks them vertically) --- */
+@media (max-width: 1000px) {
+    .events-content-wrapper {
+        flex-direction: column !important;
+        min-height: auto;
+    }
+
+    .events-table-area, .event-details-panel {
+        flex: auto;
+        max-width: none;
+        min-width: auto;
+        position: static;
+    }
+
+    .details-placeholder {
+        height: 250px;
+    }
 }
