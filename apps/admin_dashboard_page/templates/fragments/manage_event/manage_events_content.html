@@ -1,6 +1,53 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/manage_event_css.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        console.log("Manage Events Script: Initializing AJAX event delegation.");
+
+        // Use event delegation on the static document for dynamically loaded rows.
+        $(document).on('click', '.clickable-row', function() {
+
+            var eventId = $(this).data('event-id');
+            // Construct URL dynamically using the pattern defined in urls.py
+            var detailsUrl = "/manage/event/" + eventId + "/details/";
+
+            console.log("Event row clicked. ID:", eventId, "URL:", detailsUrl);
+
+            // 1. Manage Visual State (Adds 'selected' class)
+            $('.clickable-row').removeClass('selected');
+            $(this).addClass('selected');
+
+            // 2. Hide placeholder and show loading state
+            $('#initial-details-message').hide();
+            var detailsContent = $('#event-details-content').show().html(
+                `<p class="text-center" style="color: var(--text-muted); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading details...</p>`
+            );
+
+            // --- ACTUAL AJAX CALL ---
+            $.ajax({
+                url: detailsUrl,
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(data) {
+                    console.log("AJAX Success. Details loaded.");
+                    detailsContent.html(data);
+                },
+                error: function(xhr) {
+                    let errorMsg = xhr.responseText || `Error ${xhr.status}: Failed to load event details. Check the server console (views.py).`;
+                    detailsContent.html(`<div style="color: var(--danger-color); padding: 20px;">${errorMsg}</div>`);
+                    console.error("AJAX Error details:", xhr.responseText);
+                }
+            });
+        });
+    });
+</script>
+
 <div class="full-width-card manage-events-container">
     <div class="card-header">
         <h2>View and Modify Events</h2>
@@ -20,7 +67,7 @@
            data-clean-url="{% url 'create_event' %}"
            class="btn btn-primary create-event-button"
            onclick="handleNavClick(this)">
-            <i class="fas fa-plus"></i> New Event
+            <i class="fas fas-plus"></i> New Event
         </a>
     </div>
 
@@ -51,7 +98,6 @@
                             </td>
 
                             <td data-label="Actions" class="action-buttons">
-                                <button class="btn-action edit" title="Edit Event" onclick="event.stopPropagation()"><i class="fas fa-edit"></i></button>
                                 <button class="btn-action delete" title="Delete Event" onclick="event.stopPropagation()"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
@@ -69,7 +115,7 @@
         </div>
 
         <div class="event-details-panel">
-            <div id="initial-details-message" class="details-placeholder">
+            <div id="initial-details-message" class="details-placeholder" style="display: block;">
                 <i class="fas fa-hand-pointer"></i>
                 <h3>Select an Event</h3>
                 <p>Click any row in the table to view the event's full details and management options here.</p>

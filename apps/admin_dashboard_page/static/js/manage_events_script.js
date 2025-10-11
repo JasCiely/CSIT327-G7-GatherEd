@@ -1,9 +1,7 @@
-// This script assumes you have linked jQuery: <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 $(document).ready(function() {
 
-    // Handler for clicking any row in the table
-    $('.clickable-row').on('click', function() {
+    // Use event delegation on the document for elements that might be loaded later via AJAX.
+    $(document).on('click', '.clickable-row', function() {
 
         var eventId = $(this).data('event-id');
 
@@ -11,47 +9,32 @@ $(document).ready(function() {
         $('.clickable-row').removeClass('selected');
         $(this).addClass('selected');
 
-        // 2. Hide placeholder and show loading state in content area
+        // 2. Hide placeholder and show loading state
         $('#initial-details-message').hide();
         var detailsContent = $('#event-details-content').show().html(
-            `<p class="text-center" style="color: var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> Loading details...</p>`
+            `<p class="text-center" style="color: var(--text-muted); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading details...</p>`
         );
 
-
-        // --- NOTE: You would replace the placeholder below with an AJAX call to your Django backend ---
-        // Example Django AJAX call:
-        /*
+        // --- ACTUAL AJAX CALL TO DJANGO BACKEND ---
         $.ajax({
-            url: `/events/${eventId}/get_details_html/`,
+            // Construct the URL using the eventId data attribute
+            url: `/manage/event/${eventId}/details/`,
             method: 'GET',
-            success: function(data) {
-                detailsContent.html(data.html_content);
+            headers: {
+                // IMPORTANT: Tells Django this is an AJAX request
+                'X-Requested-With': 'XMLHttpRequest'
             },
-            error: function() {
-                detailsContent.html('<div style="color: var(--danger-color);">Error loading event details.</div>');
+            success: function(data) {
+                // data contains the HTML fragment
+                detailsContent.html(data);
+            },
+            error: function(xhr) {
+                // Enhanced error reporting
+                let errorMsg = xhr.responseText || `Error ${xhr.status}: Failed to load event details.`;
+                detailsContent.html(`<div style="color: var(--danger-color); padding: 20px;">${errorMsg}</div>`);
+                console.error("AJAX Error details:", xhr);
             }
         });
-        */
-
-        // --- Placeholder Content for Immediate Testing ---
-        var eventName = $(this).find('td[data-label="Event Name"]').text();
-        var eventDate = $(this).find('td[data-label="Date"]').text();
-
-        var demoHtml = `
-            <h4 style="color: var(--primary-color);">${eventName} (ID: ${eventId})</h4>
-            <p style="margin-bottom: 5px;"><strong>Date:</strong> ${eventDate}</p>
-            <p style="margin-bottom: 5px;"><strong>Registrations:</strong> ${$(this).find('td[data-label="Registrations"]').text()}</p>
-            <p><strong>Status:</strong> ${$(this).find('td[data-label="Status"]').text()}</p>
-            <hr style="border-color: var(--border-color);">
-            <p style="color: var(--text-muted); font-size: 0.85rem;">Event description and full details appear here.</p>
-            <button class="btn btn-sm btn-info w-100 mb-2" style="background-color: var(--secondary-color); color: var(--background-dark); border: none;" onclick="alert('Viewing Registrants for ${eventName}')">
-                <i class="fas fa-users"></i> View Registrants
-            </button>
-            <button class="btn btn-sm btn-warning w-100" style="background-color: var(--warning-color); color: var(--background-dark); border: none;" onclick="alert('Editing ${eventName}')">
-                <i class="fas fa-edit"></i> Full Edit Form
-            </button>
-        `;
-        detailsContent.html(demoHtml);
-        // --- End Placeholder ---
+        // --- END AJAX CALL ---
     });
 });
