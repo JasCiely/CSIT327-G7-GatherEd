@@ -6,20 +6,14 @@ from django.contrib.auth.decorators import login_required
 import uuid
 import datetime
 
-# CRITICAL IMPORT: Assuming this is the correct path where AdminProfile is defined.
 from apps.register_page.models import AdminProfile
 
 
 @login_required
 def create_event(request):
-    """
-    Handles the creation of a new event, submitting data to Supabase via AJAX.
-    Returns a success/error JSON response suitable for a client-side pop-up.
-    """
     is_ajax = request.GET.get('is_ajax') == 'true'
     context = {}
 
-    # 1. SUPABASE CLIENT INITIALIZATION
     try:
         supabase_admin: Client = create_client(
             settings.SUPABASE_URL,
@@ -31,7 +25,6 @@ def create_event(request):
             return JsonResponse({'status': 'error', 'message': error_msg}, status=500)
         return redirect('admin_dashboard')
 
-    # 2. VALIDATE & RETRIEVE ADMIN PROFILE
     try:
         admin_profile = get_object_or_404(AdminProfile, user=request.user)
         current_admin_id = admin_profile.pk
@@ -44,7 +37,6 @@ def create_event(request):
 
     if request.method == 'POST':
         try:
-            # --- FORM FIELD RETRIEVAL ---
             title = request.POST.get('title')
             description = request.POST.get('description')
             date = request.POST.get('date')
@@ -53,13 +45,11 @@ def create_event(request):
             end_time = request.POST.get('end_time')
             max_attendees = request.POST.get('max_attendees')
 
-            # --- FIELD VALIDATION ---
             if not all([title, description, date, start_time]):
                 return JsonResponse(
                     {'status': 'error', 'message': "Event title, description, date, and start time are required."},
                     status=400)
 
-            # --- 3. INSERT RECORD INTO SUPABASE DATABASE ---
             new_uuid = str(uuid.uuid4())
 
             insert_data = {
@@ -83,17 +73,14 @@ def create_event(request):
                 error_message = error_dict.get('message', error_dict.get('details', 'Unknown database error'))
                 raise Exception(f"Database insertion failed: {error_message}")
 
-            # SUCCESS RESPONSE: This JSON triggers the SweetAlert2 Toast
             return JsonResponse({
                 'status': 'success',
                 'message': f"Event '{title}' scheduled successfully!",
             }, status=200)
 
         except Exception as e:
-            # Catch all other errors (database, type conversion, etc.)
             return JsonResponse({'status': 'error', 'message': f"Failed to create event: {e}"}, status=500)
 
-    # 4. HANDLE GET REQUEST (Renders the form fragment)
     else:
         if is_ajax:
             return render(request, 'fragments/create_event/create_event_content.html', context)
