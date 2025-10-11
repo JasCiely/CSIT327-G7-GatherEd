@@ -5,14 +5,19 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from supabase import create_client, Client
+from django.contrib import messages
 
 
 def logout_view(request):
     logout(request)
     request.session.flush()
+    request.session.clear_expired()
     messages.success(request, "You have been logged out.")
-    # Assuming 'index' is the correct URL name for the homepage
-    return redirect('index')
+    response = redirect('index')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 
 def calculate_time_remaining(event_date_str, start_time_str):
