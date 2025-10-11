@@ -8,10 +8,53 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    {% load static %}
     <link rel="stylesheet" href="{% static 'css/login_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <style>
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input {
+            width: 100%;
+            padding-right: 40px;
+            box-sizing: border-box;
+        }
+
+        .toggle-eye {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .toggle-eye:hover {
+            color: #333;
+        }
+
+        .toggle-eye i {
+            font-size: 16px;
+        }
+
+        .form-group.password-container {
+            position: relative;
+        }
+    </style>
 </head>
 <body>
     <div class="auth-container">
@@ -26,9 +69,14 @@
                     <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" placeholder="john.doe@school.edu" required>
                 </div>
-                <div class="form-group">
+                <div class="form-group password-container">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" class="password-input" required>
+                        <button type="button" class="toggle-eye" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary btn-full-width">Log In</button>
             </form>
@@ -38,14 +86,14 @@
         </div>
     </div>
 
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // Toastify messages
             {% if messages %}
                 {% for message in messages %}
                     var messageType = "{{ message.tags }}";
                     var backgroundColor;
-
                     switch(messageType) {
                         case 'success':
                             backgroundColor = 'linear-gradient(to right, #28a745, #218838)';
@@ -63,7 +111,6 @@
                             backgroundColor = 'linear-gradient(to right, #6c757d, #5a6268)';
                             break;
                     }
-
                     Toastify({
                         text: "{{ message|escapejs }}",
                         duration: 5000,
@@ -72,13 +119,22 @@
                         gravity: "top",
                         position: "right",
                         stopOnFocus: true,
-                        style: {
-                            background: backgroundColor,
-                        },
-                        onClick: function(){}
+                        style: { background: backgroundColor },
                     }).showToast();
                 {% endfor %}
             {% endif %}
+
+            // Toggle password visibility
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = togglePassword.querySelector('i');
+
+            togglePassword.addEventListener('click', () => {
+                const show = passwordInput.type === 'password';
+                passwordInput.type = show ? 'text' : 'password';
+                eyeIcon.classList.toggle('fa-eye');
+                eyeIcon.classList.toggle('fa-eye-slash');
+            });
         });
     </script>
 </body>
