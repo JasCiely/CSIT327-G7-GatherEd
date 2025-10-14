@@ -1,6 +1,7 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/create_event_css.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="full-width-card event-form-container">
     <div class="card-header">
@@ -8,31 +9,34 @@
         <p class="card-subtitle">Fill in all fields to schedule a new event.</p>
     </div>
 
-    <form id="create-event-form" method="POST" action="{% url 'create_event' %}" class="event-form">
+    <form id="create-event-form" method="POST" action="{% url 'create_event' %}" class="event-form" autocomplete="off">
         {% csrf_token %}
 
-        {# COLUMN 1: Title, Description, Date, and Time #}
         <div class="form-column column-left">
             <h3>Basic Information</h3>
             <label for="event-title">Event Title</label>
-            <input type="text" id="event-title" name="title" placeholder="e.g., Annual Sports Day" required>
+            <input type="text" id="event-title" name="title" required>
+
             <label for="event-description">Description</label>
-            <textarea id="event-description" name="description" rows="5" placeholder="Briefly describe the event and purpose..."></textarea>
+            <textarea id="event-description" name="description" rows="4" required></textarea>
+
             <div class="time-date-group">
                 <label for="event-date">Date</label>
                 <input type="date" id="event-date" name="date" required>
+
                 <label for="event-start-time">Start Time</label>
                 <input type="time" id="event-start-time" name="start_time" required>
+
                 <label for="event-end-time">End Time</label>
                 <input type="time" id="event-end-time" name="end_time">
             </div>
         </div>
 
-        {# COLUMN 2: Location, Picture, and Capacity #}
         <div class="form-column column-right">
             <h3>Logistics & Media</h3>
             <label for="event-location">Location/Venue</label>
             <input type="text" id="event-location" name="location" placeholder="e.g., School Auditorium or Online Link">
+
             <label for="max-attendees">Max Attendees (Optional)</label>
             <input type="number" id="max-attendees" name="max_attendees" placeholder="0 for unlimited" min="0">
         </div>
@@ -44,3 +48,70 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("create-event-form");
+    if (!form) return;
+
+    form.addEventListener("submit", function (e) {
+        e.preventDefault(); // ✅ stop normal submit
+
+        Swal.fire({
+            title: "Confirm Event Creation",
+            text: "Are you sure you want to schedule this event?",
+            icon: "question",
+            background: "#1e1e1e",
+            color: "#fff",
+            showCancelButton: true,
+            confirmButtonColor: "#007bff",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: "Yes, schedule it",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: "Scheduling event...",
+                    allowOutsideClick: false,
+                    background: "#1e1e1e",
+                    color: "#fff",
+                    didOpen: () => {
+                        Swal.showLoading();
+
+                        const formData = new FormData(form);
+                        fetch(form.action, {
+                            method: "POST",
+                            body: formData,
+                            headers: { "X-Requested-With": "XMLHttpRequest" },
+                        })
+                        .then((response) => {
+                            if (response.redirected) {
+                                Swal.fire({
+                                    title: "Event Scheduled!",
+                                    text: "Your event has been successfully added.",
+                                    icon: "success",
+                                    background: "#1e1e1e",
+                                    color: "#fff",
+                                    confirmButtonColor: "#007bff",
+                                }).then(() => {
+                                    window.location.href = response.url;
+                                });
+                            } else {
+                                Swal.close();
+                            }
+                        })
+                        .catch(() => {
+                            Swal.fire({
+                                title: "Error",
+                                text: "Something went wrong. Please try again.",
+                                icon: "error",
+                                background: "#1e1e1e",
+                                color: "#fff",
+                            });
+                        });
+                    },
+                });
+            }
+        });
+    });
+});
+</script>

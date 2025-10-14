@@ -1,3 +1,5 @@
+<!-- apps/admin_dashboard_page/templates/admin_dashboard.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,8 +9,6 @@
     {% load static %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/admin_dashboard_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -18,6 +18,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 </head>
+
 <body>
     <div class="dashboard-container">
         <aside class="sidebar">
@@ -41,6 +42,7 @@
                     <i class="fas fa-comments"></i> View Feedback
                 </a>
             </nav>
+
             <div class="sidebar-footer">
                 <a href="{% url 'logout' %}" id="logout-btn" class="nav-item logout">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -83,106 +85,148 @@
     </div>
 
     <script>
+        // Helper function to extract the first name
+        function getFirstName(fullName) {
+            if (!fullName) return "Admin";
+            return fullName.split(' ')[0];
+        }
+
+        // ✅ Fast welcome toast (only on first load)
+        document.addEventListener("DOMContentLoaded", function() {
+            // Show SweetAlert messages (login/logout, etc.)
+            {% if messages %}
+                {% for message in messages %}
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: "{{ message.tags|default:'info' }}",
+                        title: "{{ message|escapejs }}",
+                        showConfirmButton: false,
+                        timer: 4000,
+                        timerProgressBar: true,
+                        background: "#1e1e1e",
+                        color: "#fff",
+                        // The conditional logic for iconColor
+                        iconColor: "{% if message.tags == 'success' %}limegreen{% else %}#ff4d4d{% endif %}"
+                    });
+                {% endfor %}
+            {% endif %}
+
+            // 👋 Personalized welcome message
+            {% if request.user.is_authenticated %}
+                if (!sessionStorage.getItem("welcomed")) {
+                    // Extract the full name from the template
+                    const fullName = "{{ request.user.adminprofile.name|default:request.user.username|escapejs }}";
+                    const firstName = getFirstName(fullName);
+
+                    // Enhanced Aesthetic Welcome Toast
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        // Use a custom icon or emoji for a friendlier look
+                        iconHtml: '<i class="fas fa-hand-sparkles" style="color: #FFC107;"></i>',
+                        title: `Welcome back, ${firstName}!`,
+                        // 🔑 The new welcoming and action-oriented message
+                        text: 'Ready to organize amazing school events! 🚀',
+                        showConfirmButton: false,
+                        timer: 4000,
+                        timerProgressBar: true,
+                        background: 'linear-gradient(to right, #1e1e1e, #2a2a2a)', // Gradient background
+                        color: '#fff',
+                        customClass: {
+                            popup: 'swal2-toast-custom', // Custom class for further styling
+                            title: 'swal2-title-custom'
+                        },
+                        // Ensure it is not an error/success icon that overrides the custom one
+                        icon: false,
+                    });
+                    sessionStorage.setItem("welcomed", "true");
+                }
+            {% endif %}
+        });
+
+        // 🔹 Toggle Notifications Drawer
         window.toggleNotifications = function() {
             const drawer = document.getElementById('notification-drawer');
             drawer.classList.toggle('open');
             const badge = document.getElementById('notification-count');
             const count = parseInt(badge.textContent || '0');
-
-            if (drawer.classList.contains('open') && count > 0) {
-                badge.style.display = 'none';
-            } else if (!drawer.classList.contains('open') && count > 0) {
-                badge.style.display = 'block';
-            }
+            badge.style.display = drawer.classList.contains('open') ? 'none' : (count > 0 ? 'block' : 'none');
         };
 
+        // 🔹 Load content via AJAX (Fast Navigation)
         window.loadContent = function(url, linkElement) {
             const contentArea = document.getElementById('content-area');
             const pageTitleElement = document.getElementById('page-title');
             const activeClass = 'active';
-
-            document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
-                item.classList.remove(activeClass);
-            });
+            document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => item.classList.remove(activeClass));
             linkElement.classList.add(activeClass);
-
-            contentArea.innerHTML = '<div class="loader-placeholder"><i class="fas fa-sync-alt fa-spin"></i> Loading content...</div>';
+            contentArea.innerHTML = '<div class="loader-placeholder"><i class="fas fa-sync-alt fa-spin"></i> Loading...</div>';
 
             const titleText = linkElement.textContent.replace(/[\s\r\n]+/g, ' ').trim();
             pageTitleElement.textContent = titleText;
             const cleanUrl = linkElement.getAttribute('data-clean-url');
 
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.text();
-                })
+            fetch(url, { cache: 'no-store' })
+                .then(res => res.ok ? res.text() : Promise.reject(res))
                 .then(html => {
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = html;
                     contentArea.innerHTML = '';
                     while (tempDiv.firstChild) contentArea.appendChild(tempDiv.firstChild);
-                    const scripts = contentArea.getElementsByTagName('script');
-                    for (let i = 0; i < scripts.length; i++) {
+
+                    // Re-execute inline scripts
+                    const scripts = contentArea.querySelectorAll('script');
+                    scripts.forEach(oldScript => {
                         const newScript = document.createElement('script');
-                        if (scripts[i].src) newScript.src = scripts[i].src;
-                        else newScript.textContent = scripts[i].textContent;
-                        scripts[i].parentNode.replaceChild(newScript, scripts[i]);
-                    }
+                        if (oldScript.src) newScript.src = oldScript.src;
+                        else newScript.textContent = oldScript.textContent;
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+
                     history.pushState(null, titleText, cleanUrl);
                 })
-                .catch(e => {
-                    console.error('Error loading content:', e);
-                    contentArea.innerHTML = '<div class="error-message">Failed to load content. Please try again.</div>';
+                .catch(() => {
+                    contentArea.innerHTML = '<div class="error-message">⚠️ Failed to load content.</div>';
                 });
         };
 
-        window.handleNavClick = function(element) {
-            const url = element.getAttribute('data-url');
-            loadContent(url, element);
+        window.handleNavClick = function(el) {
+            loadContent(el.getAttribute('data-url'), el);
         };
 
-        // 🔹 SweetAlert2 Logout Confirmation (Dark Mode)
+        // 🔹 Logout Confirmation
         document.getElementById('logout-btn').addEventListener('click', function(e) {
             e.preventDefault();
-            const logoutUrl = this.getAttribute('href');
-
+            const logoutUrl = this.href;
             Swal.fire({
                 title: 'Log out from GatherEd?',
-                text: 'You will need to log in again to access the admin dashboard.',
+                text: 'You will need to log in again to access the dashboard.',
                 icon: 'question',
                 background: '#1e1e1e',
-                color: '#ffffff',
+                color: '#fff',
                 showCancelButton: true,
                 confirmButtonColor: '#007bff',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Yes, log out',
-                cancelButtonText: 'Cancel',
-                customClass: {
-                    popup: 'rounded-4 shadow-lg',
-                    title: 'fw-bold',
-                    confirmButton: 'px-4 py-2',
-                    cancelButton: 'px-4 py-2'
-                }
+                confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Log out',
+                cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
                     Swal.fire({
                         title: 'Logging out...',
-                        text: 'Please wait a moment.',
                         background: '#1e1e1e',
                         color: '#fff',
                         allowOutsideClick: false,
                         didOpen: () => {
                             Swal.showLoading();
-                            setTimeout(() => {
-                                window.location.href = logoutUrl;
-                            }, 1000);
+                            setTimeout(() => window.location.href = logoutUrl, 800);
                         }
                     });
                 }
             });
         });
 
+        // 🔹 Prevent caching after logout
         if (window.history && window.history.pushState) {
             window.history.pushState(null, null, window.location.href);
             window.onpopstate = function() {
@@ -190,6 +234,7 @@
             };
         }
 
+        // 🔹 Redirect to index if back navigation from cache
         window.addEventListener('pageshow', function(event) {
             if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
                 window.location.href = "{% url 'index' %}";

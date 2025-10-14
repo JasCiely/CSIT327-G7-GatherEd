@@ -4,6 +4,7 @@ from django.conf import settings
 from supabase import create_client
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 
 
 def format_to_readable_date(date_str):
@@ -48,7 +49,6 @@ def get_event_status(event_date_str, start_time_str, end_time_str):
 
         event_start_dt = datetime.datetime.combine(event_date, start_time)
         event_end_dt = datetime.datetime.combine(event_date, end_time)
-
         now = datetime.datetime.now()
 
         if now < event_start_dt:
@@ -57,7 +57,6 @@ def get_event_status(event_date_str, start_time_str, end_time_str):
             return 'Active'
         elif now > event_end_dt:
             return 'Completed'
-
         return 'Unknown'
 
     except Exception as e:
@@ -67,17 +66,24 @@ def get_event_status(event_date_str, start_time_str, end_time_str):
 
 @login_required
 def manage_events(request):
-    events_list = []
     is_ajax = request.GET.get('is_ajax', False)
+    current_admin_id = request.user.adminprofile.id
+    cache_key = f"manage_events_{current_admin_id}"
 
-    template_context = {
-        'events_list': events_list,
-        'title': 'Manage Events',
-    }
+    # Try fetching cached events
+    events_list = cache.get(cache_key)
+    if events_list is not None:
+        template_context = {
+            'events_list': events_list,
+            'title': 'Manage Events',
+        }
+        if is_ajax:
+            return render(request, 'fragments/manage_event/manage_events_content.html', template_context)
+        return render(request, 'admin_dashboard.html', template_context)
 
+    # Fetch events from Supabase if not cached
+    events_list = []
     try:
-        current_admin_id = request.user.adminprofile.id
-
         admin_client = create_client(
             settings.SUPABASE_URL,
             settings.SUPABASE_SERVICE_ROLE_KEY
@@ -93,22 +99,15 @@ def manage_events(request):
             error_msg = fetch_result.error.get('message', 'Unknown Supabase error')
             raise Exception(f"Supabase Client Error: {error_msg}")
 
-        data = getattr(fetch_result, 'data', [])
-        if data is None:
-            data = []
+        data = getattr(fetch_result, 'data', []) or []
 
         for event in data:
             date_str = event.get('date', '')
             start_time_str = event.get('start_time', '')
             end_time_str = event.get('end_time', '')
 
-            event_status = get_event_status(
-                date_str,
-                start_time_str,
-                end_time_str
-            )
-
-            current_registrations_count = 0
+            event_status = get_event_status(date_str, start_time_str, end_time_str)
+            current_registrations_count = 0  # Update if you fetch real registrations
 
             events_list.append({
                 'id': event['id'],
@@ -123,12 +122,18 @@ def manage_events(request):
                 'status': event_status,
             })
 
-        template_context['events_list'] = events_list
+        # Cache the events list for 60 seconds
+        cache.set(cache_key, events_list, timeout=60)
 
     except Exception as e:
         print(f"Error fetching events from Supabase: {e}")
         messages.error(request,
                        "Failed to load events due to a critical server error. Check the Django console for details.")
+
+    template_context = {
+        'events_list': events_list,
+        'title': 'Manage Events',
+    }
 
     if is_ajax:
         return render(request, 'fragments/manage_event/manage_events_content.html', template_context)
@@ -147,6 +152,11 @@ def modify_event_view(request, event_id):
 
     if request.method == 'POST':
         messages.success(request, f"Event '{event_data.get('title', 'Event')}' updated successfully.")
+
+        # Invalidate cache after modification
+        cache_key = f"manage_events_{request.user.adminprofile.id}"
+        cache.delete(cache_key)
+
         return redirect('manage_events_root')
 
     return render(request, 'fragments/manage_event/modify_event_form.html', {'event': event_data})
