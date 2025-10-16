@@ -43,23 +43,24 @@ def create_event(request):
             max_attendees = request.POST.get('max_attendees')
 
             # Required fields check
-            if not all([title, description, date, start_time]):
-                messages.error(request, "Event title, description, date, and start time are required.")
+            if not all([title, description, date, start_time, end_time, location]):
+                messages.error(request, "Event title, description, date, start time, end time, and location are required.")
                 return redirect('admin_dashboard')
 
-            # ✅ Check for duplicate event
+            # ✅ Check for exact duplicate event
             existing_event = supabase_admin.table('events') \
-                .select('id') \
+                .select('*') \
                 .eq('admin_id', current_admin_id) \
                 .eq('title', title) \
                 .eq('date', date) \
                 .eq('start_time', start_time) \
                 .eq('end_time', end_time) \
                 .eq('location', location) \
-                .execute().data
+                .execute()
 
-            if existing_event:
-                messages.error(request, "An event with the same title, date, time, and location already exists.")
+            # Supabase returns a dict with 'data' key
+            if existing_event.data and len(existing_event.data) > 0:
+                messages.error(request, "An event with the exact same title, date, time, and location already exists.")
                 return redirect('admin_dashboard')
 
             # Insert new event

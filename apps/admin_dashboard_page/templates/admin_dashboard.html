@@ -85,15 +85,7 @@
     </div>
 
     <script>
-        // Helper function to extract the first name
-        function getFirstName(fullName) {
-            if (!fullName) return "Admin";
-            return fullName.split(' ')[0];
-        }
-
-        // ✅ Fast welcome toast (only on first load)
-        document.addEventListener("DOMContentLoaded", function() {
-            // Show SweetAlert messages (login/logout, etc.)
+        document.addEventListener("DOMContentLoaded", function () {
             {% if messages %}
                 {% for message in messages %}
                     Swal.fire({
@@ -106,140 +98,245 @@
                         timerProgressBar: true,
                         background: "#1e1e1e",
                         color: "#fff",
-                        // The conditional logic for iconColor
                         iconColor: "{% if message.tags == 'success' %}limegreen{% else %}#ff4d4d{% endif %}"
                     });
                 {% endfor %}
             {% endif %}
 
-            // 👋 Personalized welcome message
+            // 👋 Welcome message once per session
             {% if request.user.is_authenticated %}
                 if (!sessionStorage.getItem("welcomed")) {
-                    // Extract the full name from the template
                     const fullName = "{{ request.user.adminprofile.name|default:request.user.username|escapejs }}";
-                    const firstName = getFirstName(fullName);
-
-                    // Enhanced Aesthetic Welcome Toast
+                    const firstName = fullName.split(" ")[0] || "Admin";
                     Swal.fire({
                         toast: true,
-                        position: 'top-end',
-                        // Use a custom icon or emoji for a friendlier look
-                        iconHtml: '<i class="fas fa-hand-sparkles" style="color: #FFC107;"></i>',
+                        position: "top-end",
+                        iconHtml: '<i class="fas fa-hand-sparkles" style="color:#FFC107;"></i>',
                         title: `Welcome back, ${firstName}!`,
-                        // 🔑 The new welcoming and action-oriented message
-                        text: 'Ready to organize amazing school events! 🚀',
+                        text: "Ready to organize amazing school events! 🚀",
                         showConfirmButton: false,
                         timer: 4000,
-                        timerProgressBar: true,
-                        background: 'linear-gradient(to right, #1e1e1e, #2a2a2a)', // Gradient background
-                        color: '#fff',
-                        customClass: {
-                            popup: 'swal2-toast-custom', // Custom class for further styling
-                            title: 'swal2-title-custom'
-                        },
-                        // Ensure it is not an error/success icon that overrides the custom one
+                        background: "linear-gradient(to right, #1e1e1e, #2a2a2a)",
+                        color: "#fff",
                         icon: false,
                     });
                     sessionStorage.setItem("welcomed", "true");
                 }
             {% endif %}
+
+            preloadCommonPages();
         });
 
-        // 🔹 Toggle Notifications Drawer
-        window.toggleNotifications = function() {
-            const drawer = document.getElementById('notification-drawer');
-            drawer.classList.toggle('open');
-            const badge = document.getElementById('notification-count');
-            const count = parseInt(badge.textContent || '0');
-            badge.style.display = drawer.classList.contains('open') ? 'none' : (count > 0 ? 'block' : 'none');
+        // =======================================
+        // ⚡ FAST, SAFE CACHED NAVIGATION SYSTEM
+        // =======================================
+        const pageCache = {};
+        const CACHE_TIMEOUT = 15000; // 15 seconds
+        let currentController = null; // track the active request controller
+
+        window.handleNavClick = function (el) {
+            const url = el.getAttribute("data-url");
+            const cleanUrl = el.getAttribute("data-clean-url");
+            const title = el.textContent.trim();
+            const contentArea = document.getElementById("content-area");
+            const pageTitle = document.getElementById("page-title");
+            const navItems = document.querySelectorAll(".sidebar-nav .nav-item");
+
+            navItems.forEach(item => item.classList.remove("active"));
+            el.classList.add("active");
+            pageTitle.textContent = title;
+
+            const now = Date.now();
+            if (pageCache[url] && now - pageCache[url].timestamp < CACHE_TIMEOUT) {
+                contentArea.innerHTML = pageCache[url].html;
+                fadeInContent(contentArea);
+                history.pushState(null, "", cleanUrl);
+                // update silently in background
+                fetchAndCache(url, false);
+                return;
+            }
+
+            contentArea.innerHTML = `
+                <div class="fast-loader">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <span class="loading-text">Loading content...</span>
+                </div>
+            `;
+            fetchAndCache(url, true, cleanUrl);
         };
 
-        // 🔹 Load content via AJAX (Fast Navigation)
-        window.loadContent = function(url, linkElement) {
-            const contentArea = document.getElementById('content-area');
-            const pageTitleElement = document.getElementById('page-title');
-            const activeClass = 'active';
-            document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => item.classList.remove(activeClass));
-            linkElement.classList.add(activeClass);
-            contentArea.innerHTML = '<div class="loader-placeholder"><i class="fas fa-sync-alt fa-spin"></i> Loading...</div>';
+        function fetchAndCache(url, renderImmediately = false, cleanUrl = "") {
+            const contentArea = document.getElementById("content-area");
 
-            const titleText = linkElement.textContent.replace(/[\s\r\n]+/g, ' ').trim();
-            pageTitleElement.textContent = titleText;
-            const cleanUrl = linkElement.getAttribute('data-clean-url');
+            if (currentController) {
+                currentController.aborted = true;
+            }
 
-            fetch(url, { cache: 'no-store' })
-                .then(res => res.ok ? res.text() : Promise.reject(res))
-                .then(html => {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = html;
-                    contentArea.innerHTML = '';
-                    while (tempDiv.firstChild) contentArea.appendChild(tempDiv.firstChild);
+            const controller = new AbortController();
+            currentController = controller;
 
-                    // Re-execute inline scripts
-                    const scripts = contentArea.querySelectorAll('script');
-                    scripts.forEach(oldScript => {
-                        const newScript = document.createElement('script');
-                        if (oldScript.src) newScript.src = oldScript.src;
-                        else newScript.textContent = oldScript.textContent;
-                        oldScript.parentNode.replaceChild(newScript, oldScript);
-                    });
-
-                    history.pushState(null, titleText, cleanUrl);
+            fetch(url, { cache: "no-store", signal: controller.signal })
+                .then(res => {
+                    // skip if newer request started
+                    if (controller.aborted || currentController !== controller) return;
+                    if (!res.ok) throw new Error("Failed to fetch page");
+                    return res.text();
                 })
-                .catch(() => {
-                    contentArea.innerHTML = '<div class="error-message">⚠️ Failed to load content.</div>';
+                .then(html => {
+                    if (controller.aborted || currentController !== controller) return;
+
+                    // Cache the page
+                    pageCache[url] = { html, timestamp: Date.now() };
+                    if (renderImmediately) {
+                        contentArea.innerHTML = html;
+                        fadeInContent(contentArea);
+                        if (cleanUrl) history.pushState(null, "", cleanUrl);
+                    }
+
+                    // Re-run scripts properly
+                    const temp = document.createElement("div");
+                    temp.innerHTML = html;
+                    temp.querySelectorAll("script").forEach(s => {
+                        const ns = document.createElement("script");
+                        if (s.src) ns.src = s.src;
+                        else ns.textContent = s.textContent;
+                        document.body.appendChild(ns);
+                    });
+                })
+                .catch(err => {
+                    // only show if not user-aborted
+                    if (!controller.aborted && currentController === controller) {
+                        contentArea.innerHTML = `<div class="error-message">⚠️ Failed to load content.</div>`;
+                    }
                 });
+        }
+
+        // =======================================
+        // 💨 FADE-IN ANIMATION
+        // =======================================
+        function fadeInContent(element) {
+            element.style.opacity = 0;
+            element.style.transition = "opacity 0.25s ease-in";
+            requestAnimationFrame(() => {
+                element.style.opacity = 1;
+            });
+        }
+
+        // =======================================
+        // ⚙️ PRELOAD COMMON PAGES
+        // =======================================
+        function preloadCommonPages() {
+            const preloadLinks = document.querySelectorAll(".sidebar-nav .nav-item");
+            preloadLinks.forEach(link => {
+                const url = link.getAttribute("data-url");
+                // only preload main pages
+                if (url.includes("create_event") || url.includes("manage_event") || url.includes("track_attendance")) {
+                    fetch(url, { cache: "no-store" })
+                        .then(res => res.text())
+                        .then(html => {
+                            pageCache[url] = { html, timestamp: Date.now() };
+                        })
+                        .catch(() => {});
+                }
+            });
+        }
+
+        // =======================================
+        // 🔔 NOTIFICATIONS DRAWER
+        // =======================================
+        window.toggleNotifications = function () {
+            const drawer = document.getElementById("notification-drawer");
+            const badge = document.getElementById("notification-count");
+            drawer.classList.toggle("open");
+            const count = parseInt(badge.textContent || "0");
+            badge.style.display = drawer.classList.contains("open") ? "none" : (count > 0 ? "block" : "none");
         };
 
-        window.handleNavClick = function(el) {
-            loadContent(el.getAttribute('data-url'), el);
-        };
-
-        // 🔹 Logout Confirmation
-        document.getElementById('logout-btn').addEventListener('click', function(e) {
+        // =======================================
+        // 🚪 LOGOUT CONFIRMATION
+        // =======================================
+        document.getElementById("logout-btn").addEventListener("click", function (e) {
             e.preventDefault();
             const logoutUrl = this.href;
             Swal.fire({
-                title: 'Log out from GatherEd?',
-                text: 'You will need to log in again to access the dashboard.',
-                icon: 'question',
-                background: '#1e1e1e',
-                color: '#fff',
+                title: "Log out from GatherEd?",
+                text: "You will need to log in again to access the dashboard.",
+                icon: "question",
+                background: "#1e1e1e",
+                color: "#fff",
                 showCancelButton: true,
-                confirmButtonColor: '#007bff',
-                cancelButtonColor: '#6c757d',
+                confirmButtonColor: "#007bff",
+                cancelButtonColor: "#6c757d",
                 confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Log out',
-                cancelButtonText: 'Cancel'
+                cancelButtonText: "Cancel",
             }).then((result) => {
                 if (result.isConfirmed) {
                     Swal.fire({
-                        title: 'Logging out...',
-                        background: '#1e1e1e',
-                        color: '#fff',
+                        title: "Logging out...",
+                        background: "#1e1e1e",
+                        color: "#fff",
                         allowOutsideClick: false,
                         didOpen: () => {
                             Swal.showLoading();
-                            setTimeout(() => window.location.href = logoutUrl, 800);
-                        }
+                            setTimeout(() => (window.location.href = logoutUrl), 600);
+                        },
                     });
                 }
             });
         });
 
-        // 🔹 Prevent caching after logout
+        // =======================================
+        // 🧠 BLOCK BACK BUTTON CACHE
+        // =======================================
         if (window.history && window.history.pushState) {
             window.history.pushState(null, null, window.location.href);
-            window.onpopstate = function() {
+            window.onpopstate = function () {
                 window.history.pushState(null, null, window.location.href);
             };
         }
-
-        // 🔹 Redirect to index if back navigation from cache
-        window.addEventListener('pageshow', function(event) {
+        window.addEventListener("pageshow", function (event) {
             if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
                 window.location.href = "{% url 'index' %}";
             }
         });
     </script>
+
+        <!-- ✅ AUTO REFRESH UPCOMING EVENTS EVERY 60s -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const refreshInterval = 60000; // 60 seconds
+        let refreshTimer = null;
+
+        async function refreshUpcomingEvents() {
+            const section = document.getElementById("upcoming-events-section");
+            if (!section) return;
+
+            // Only refresh if on dashboard
+            const activeNav = document.querySelector(".sidebar-nav .nav-item.active");
+            if (!activeNav || !activeNav.textContent.includes("Dashboard")) return;
+
+            try {
+                const response = await fetch("{% url 'admin_dashboard' %}?is_ajax=true", { cache: "no-store" });
+                if (!response.ok) throw new Error("Failed to refresh events");
+                const html = await response.text();
+
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = html;
+                const newSection = tempDiv.querySelector("#upcoming-events-section");
+
+                if (newSection) {
+                    section.innerHTML = newSection.innerHTML;
+                    console.log("✅ Upcoming events auto-refreshed:", new Date().toLocaleTimeString());
+                }
+            } catch (err) {
+                console.warn("⚠️ Event refresh failed:", err.message);
+            }
+        }
+
+        // Start auto-refresh
+        refreshTimer = setInterval(refreshUpcomingEvents, refreshInterval);
+    });
+    </script>
+
 </body>
 </html>

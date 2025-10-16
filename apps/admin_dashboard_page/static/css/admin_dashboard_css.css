@@ -503,3 +503,18 @@ html {
     color: #b91c1c;
     border: 1px solid #fecaca;
 }
+
+.fast-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+.fast-loader .loading-text {
+    margin-top: 10px;
+    font-weight: 500;
+}
+

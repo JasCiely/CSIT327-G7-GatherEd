@@ -1,12 +1,30 @@
 {% load static %}
+
+<!-- 🔹 Redirect script: ensures hard refresh goes to admin dashboard -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const currentPath = window.location.pathname;
+
+    if (currentPath === "/student_dashboard/manage/events/manage/events/") {
+        window.location.replace("/admin_dashboard/");
+    }
+
+    // Set the current fragment in sessionStorage for reload detection
+    sessionStorage.setItem("active_fragment", "manage_events");
+});
+</script>
+
 <link rel="stylesheet" href="{% static 'css/manage_event_css.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<div class="full-width-card manage-events-container">
+
+<div class="full-width-card manage-events-container" data-fragment="manage_events">
+    <!-- Card Header -->
     <div class="card-header">
         <h2>View and Modify Events</h2>
         <p class="card-subtitle">Manage all active, upcoming, and past events created across the schools.</p>
     </div>
 
+    <!-- Controls -->
     <div class="events-controls">
         <input type="text" placeholder="Search events by name..." class="control-input">
         <select class="control-select">
@@ -24,8 +42,8 @@
         </a>
     </div>
 
+    <!-- Events Table & Details Panel -->
     <div class="events-content-wrapper" style="display: flex; flex-direction: row; gap: 20px;">
-
         <div class="events-table-area">
             <div class="events-table-responsive">
                 {% if events_list %}
@@ -45,11 +63,7 @@
                             <td data-label="Event Name">{{ event.name }}</td>
                             <td data-label="Date">{{ event.date }}</td>
                             <td data-label="Registrations">{{ event.registrations }}</td>
-
-                            <td data-label="Status" class="status-{{ event.status|lower }}">
-                                {{ event.status }}
-                            </td>
-
+                            <td data-label="Status" class="status-{{ event.status|lower }}">{{ event.status }}</td>
                             <td data-label="Actions" class="action-buttons">
                                 <button class="btn-action edit" title="Edit Event" onclick="event.stopPropagation()"><i class="fas fa-edit"></i></button>
                                 <button class="btn-action delete" title="Delete Event" onclick="event.stopPropagation()"><i class="fas fa-trash"></i></button>
@@ -74,10 +88,49 @@
                 <h3>Select an Event</h3>
                 <p>Click any row in the table to view the event's full details and management options here.</p>
             </div>
-
-            <div id="event-details-content" style="display: none;">
-                </div>
+            <div id="event-details-content" style="display: none;"></div>
         </div>
-
     </div>
 </div>
+
+<!-- JS: Initialize clickable rows and handle safe reload -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const detailsPanel = document.getElementById("event-details-content");
+    const placeholder = document.getElementById("initial-details-message");
+
+    function initRows() {
+        document.querySelectorAll(".clickable-row").forEach(row => {
+            row.addEventListener("click", () => {
+                const eventId = row.dataset.eventId;
+
+                placeholder.style.display = "none";
+                detailsPanel.style.display = "block";
+                detailsPanel.innerHTML = `
+                    <div class="loading-event-details">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <span>Loading event details...</span>
+                    </div>
+                `;
+
+                fetch(`/admin-dashboard/event/${eventId}/details/?is_ajax=true`, { cache: "no-store" })
+                    .then(res => res.ok ? res.text() : Promise.reject("Failed to fetch"))
+                    .then(html => detailsPanel.innerHTML = html)
+                    .catch(() => {
+                        detailsPanel.innerHTML = `<p class="error-text">⚠️ Failed to load event details.</p>`;
+                    });
+            });
+        });
+    }
+
+    initRows();
+
+    // Detect full reload and redirect if sessionStorage says this fragment was active
+    if (!performance.getEntriesByType("navigation")[0].type.includes("reload")) return;
+
+    const activeFragment = sessionStorage.getItem("active_fragment");
+    if (activeFragment === "manage_events") {
+        window.location.replace("/admin_dashboard/?reload_fragment=manage_events");
+    }
+});
+</script>

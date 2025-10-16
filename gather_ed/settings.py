@@ -70,9 +70,9 @@ WSGI_APPLICATION = 'gather_ed.wsgi.application'
 # Database configuration using Supabase Session Pooler
 DATABASES = {
     "default": dj_database_url.config(
-        default="sqlite:///db.sqlite3",
-        conn_max_age=600, # persistent connections
-        ssl_require=True # enforce SSL
+        default=os.getenv("DATABASE_URL"),
+        conn_max_age=60,   # keep DB connections alive for performance
+        ssl_require=True,  # enforce SSL
     )
 }
 

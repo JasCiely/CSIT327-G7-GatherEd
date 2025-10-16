@@ -2,5 +2,5 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('track/attendance/', views.track_attendance, name='track_attendance'),
+    path('', views.track_attendance, name='track_attendance'),  # /admin_dashboard/track/attendance/
 ]
