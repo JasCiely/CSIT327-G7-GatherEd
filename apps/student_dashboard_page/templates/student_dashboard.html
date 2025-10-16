@@ -17,6 +17,31 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+
+    <style>
+        /* Notification container styles */
+        .message-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 250px;
+        }
+        .message-item {
+            margin-bottom: 10px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            opacity: 0.95;
+            transition: all 0.5s ease-in-out;
+        }
+        .message-success { background-color: #28a745; }
+        .message-error { background-color: #dc3545; }
+        .message-info { background-color: #17a2b8; }
+        .fade-out { opacity: 0; transform: translateY(-20px); }
+    </style>
 </head>
 <body>
     <div class="dashboard-container">
@@ -58,6 +83,17 @@
                 </div>
             </header>
 
+            <!-- ✅ Message container -->
+            <div class="message-container" id="message-container">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="message-item {% if message.tags %}message-{{ message.tags }}{% else %}message-info{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
             <div id="content-area">
                 {% include 'fragments/dashboard_content.html' %}
             </div>
@@ -65,15 +101,26 @@
     </div>
 
     <script>
+        // Messages fade-out automatically after 4 seconds
+        $(document).ready(function() {
+            setTimeout(() => {
+                $('#message-container .message-item').each(function() {
+                    $(this).addClass('fade-out');
+                });
+            }, 4000);
+            // Remove after fade-out transition
+            setTimeout(() => {
+                $('#message-container').empty();
+            }, 5000);
+        });
+
         function loadContent(url, linkElement) {
             const contentArea = document.getElementById('content-area');
             const pageTitleElement = document.getElementById('page-title');
             const activeClass = 'active';
             const cleanUrl = linkElement.getAttribute('data-clean-url');
 
-            document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
-                item.classList.remove(activeClass);
-            });
+            document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => item.classList.remove(activeClass));
             linkElement.classList.add(activeClass);
 
             contentArea.innerHTML = '<div class="loader-placeholder"><i class="fas fa-sync-alt fa-spin"></i> Loading content...</div>';
@@ -83,17 +130,9 @@
             if (cleanUrl) history.pushState(null, titleText, cleanUrl);
 
             fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.text();
-                })
-                .then(html => {
-                    contentArea.innerHTML = html;
-                })
-                .catch(e => {
-                    console.error('Error loading content:', e);
-                    contentArea.innerHTML = '<div class="error-message">Failed to load content. Please try again.</div>';
-                });
+                .then(response => response.ok ? response.text() : Promise.reject(`HTTP error! status: ${response.status}`))
+                .then(html => contentArea.innerHTML = html)
+                .catch(e => contentArea.innerHTML = '<div class="error-message">Failed to load content. Please try again.</div>');
         }
 
         function handleNavClick(element) {
@@ -101,11 +140,8 @@
             loadContent(url, element);
         }
 
-        window.onpopstate = function(event) {
-            window.location.reload();
-        };
+        window.onpopstate = function(event) { window.location.reload(); };
 
-        // Dark SweetAlert2 Logout Confirmation
         document.getElementById('logout-btn').addEventListener('click', function(e) {
             e.preventDefault();
             const logoutUrl = this.getAttribute('href');
@@ -121,12 +157,7 @@
                 cancelButtonColor: '#6c757d',
                 confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Yes, log out',
                 cancelButtonText: 'Cancel',
-                customClass: {
-                    popup: 'rounded-4 shadow-lg',
-                    title: 'fw-bold',
-                    confirmButton: 'px-4 py-2',
-                    cancelButton: 'px-4 py-2'
-                }
+                customClass: { popup: 'rounded-4 shadow-lg', title: 'fw-bold', confirmButton: 'px-4 py-2', cancelButton: 'px-4 py-2' }
             }).then((result) => {
                 if (result.isConfirmed) {
                     Swal.fire({
@@ -135,12 +166,7 @@
                         background: '#1e1e1e',
                         color: '#fff',
                         allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                            setTimeout(() => {
-                                window.location.href = logoutUrl;
-                            }, 1000);
-                        }
+                        didOpen: () => { Swal.showLoading(); setTimeout(() => { window.location.href = logoutUrl; }, 1000); }
                     });
                 }
             });
@@ -148,14 +174,12 @@
 
         if (window.history && window.history.pushState) {
             window.history.pushState(null, null, window.location.href);
-            window.onpopstate = function() {
-                window.history.pushState(null, null, window.location.href);
-            };
+            window.onpopstate = function() { window.history.pushState(null, null, window.location.href); };
         }
 
         window.addEventListener('pageshow', function(event) {
             if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
-                window.location.href = "{% url 'index' %}";
+                window.location.href = "{% url 'student_dashboard' %}";
             }
         });
     </script>

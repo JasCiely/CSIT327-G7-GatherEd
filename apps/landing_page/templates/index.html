@@ -10,6 +10,7 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/index_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 <body>
     <header>
@@ -152,5 +153,41 @@
             &copy; 2025 GatherEd. All rights reserved.
         </div>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            {% if messages %}
+                {% for message in messages %}
+                    var messageType = "{{ message.tags }}";
+                    var backgroundColor;
+                    switch (messageType) {
+                        case 'success':
+                            backgroundColor = 'linear-gradient(to right, #28a745, #218838)';
+                            break;
+                        case 'error':
+                            backgroundColor = 'linear-gradient(to right, #dc3545, #c82333)';
+                            break;
+                        default:
+                            backgroundColor = 'linear-gradient(to right, #6c757d, #5a6268)';
+                    }
+                    Toastify({
+                        text: "{{ message|escapejs }}",
+                        duration: 4000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        stopOnFocus: true,
+                        style: {
+                            background: backgroundColor,
+                            borderRadius: "8px",
+                            boxShadow: "0 3px 6px rgba(0,0,0,0.2)"
+                        },
+                        offset: { x: 10, y: 60 }
+                    }).showToast();
+                {% endfor %}
+            {% endif %}
+        });
+    </script>
 </body>
 </html>

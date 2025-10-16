@@ -481,3 +481,40 @@ html {
         color: var(--text-muted);
     }
 }
+
+.message-container {
+    width: 90%;
+    max-width: 800px;
+    margin: 20px auto;
+}
+.alert {
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+.alert-success {
+    background-color: #e6ffed;
+    color: #046c4e;
+    border: 1px solid #a7f3d0;
+}
+.alert-error {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.fast-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+.fast-loader .loading-text {
+    margin-top: 10px;
+    font-weight: 500;
+}
+

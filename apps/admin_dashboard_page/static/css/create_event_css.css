@@ -353,3 +353,84 @@
     background-color: var(--border-color); /* Subtle hover effect */
     border-color: var(--primary-color);
 }
+
+/* --- Custom Styles for SweetAlert to mimic the screenshot modal --- */
+
+/* The main pop-up container */
+.swal2-popup.gather-ed-modal-popup {
+    background-color: #1a1a1a !important; /* Ensure the background is dark */
+    padding: 30px 40px !important;
+    border-radius: 8px !important;
+    max-width: 400px !important; /* Match the screenshot's size */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Icon Container */
+.swal-icon-container {
+    margin-bottom: 20px;
+    /* Optional: Center the icon if needed, though SweetAlert usually does this */
+}
+
+/* SVG Icon Styling */
+.swal-icon-container .question-icon {
+    width: 60px;
+    height: 60px;
+    display: block; /* Ensures centering if needed */
+    margin: 0 auto;
+}
+
+/* Title Styling */
+.swal-title-custom {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    color: #fff !important;
+    margin-top: 0 !important;
+    margin-bottom: 10px !important;
+}
+
+/* Text Styling */
+.swal-text-custom {
+    font-size: 1rem !important;
+    color: #ccc !important;
+    margin-bottom: 30px !important;
+}
+
+/* Button Actions Container (Crucial for button layout) */
+.swal2-actions.gather-ed-modal-actions {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+    margin-top: 0 !important; /* Reset default margin */
+}
+
+/* Individual Button Styling */
+.btn-gather-ed {
+    padding: 10px 20px !important;
+    border: none !important;
+    border-radius: 4px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.95rem !important;
+    margin: 0 7.5px !important; /* Add gap between buttons */
+}
+
+/* Specific Button Colors */
+.btn-logout {
+    background-color: #007bff !important; /* Blue for 'Yes, Schedule it' */
+    color: #fff !important;
+}
+.btn-logout:hover {
+    background-color: #0056b3 !important;
+}
+
+.btn-cancel {
+    background-color: #6c757d !important; /* Gray for 'Cancel' */
+    color: #fff !important;
+}
+.btn-cancel:hover {
+    background-color: #5a6268 !important;
+}
