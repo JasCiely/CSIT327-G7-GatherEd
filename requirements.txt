@@ -36,3 +36,5 @@ typing-inspection==0.4.1
 typing_extensions==4.15.0
 tzdata==2025.2
 websockets==15.0.1
+Django>=4.2
+gunicorn
