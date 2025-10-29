@@ -1,0 +1,135 @@
+:root {
+    --primary-color: #00A9FF;
+    --secondary-color: #2F93FF;
+    --background-dark: #121212;
+    --background-medium: #1F1F1F;
+    --text-light: #E0E0E0;
+    --text-muted: #BDBDBD;
+    --border-color: #333;
+    --card-hover-shadow: rgba(0, 169, 255, 0.2);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    color: var(--text-light);
+    background-color: var(--background-dark);
+}
+
+/* Button Base Styles */
+.btn {
+    display: inline-block;
+    padding: 0.8rem 2.2rem;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 500;
+    transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--background-dark);
+}
+
+.btn-full-width {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* Logo Style (Used within auth-box) */
+.logo {
+    font-weight: 700;
+    font-size: 1.5rem; /* Base size, overridden by .auth-box .logo */
+    color: var(--primary-color);
+}
+
+.logo .fas {
+    margin-right: 0.5rem;
+}
+
+/* --- Authentication/Login Page Styles --- */
+
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--background-dark);
+}
+
+.auth-box {
+    background-color: var(--background-medium);
+    padding: 3rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+}
+
+.auth-box .logo {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+}
+
+.auth-box h2 {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    color: var(--text-light);
+    /* Standard h2 styles are removed for auth-box */
+    margin-bottom: 2rem;
+    position: static;
+}
+
+.form-group {
+    text-align: left;
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background-color: var(--background-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    color: var(--text-light);
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.auth-footer {
+    margin-top: 1.5rem;
+}
+
+.auth-footer p {
+    color: var(--text-muted);
+}
+
+.auth-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}

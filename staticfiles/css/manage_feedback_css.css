@@ -1,0 +1,271 @@
+/* ---------------------------------------------------------------------- */
+/* 1. THEME VARIABLES & UTILITIES (Matching styles.css)                   */
+/* ---------------------------------------------------------------------- */
+:root {
+    --primary-color: #00A9FF;
+    --secondary-color: #2F93FF;
+    --background-dark: #121212;
+    --background-card: #1F1F1F; /* Equivalent to --background-medium */
+    --text-light: #E0E0E0;
+    --text-muted: #BDBDBD;
+    --border-color: #333;
+    --shadow-small: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    /* Custom colors for stats boxes */
+    --info-color: var(--primary-color);
+    --attention-color: #FFC107; /* Yellow/Amber for 'New Unread' */
+    --success-color: #28a745; /* Green for positive things */
+}
+
+.primary-text { color: var(--info-color); }
+.secondary-text { color: var(--secondary-color); }
+.attention-text { color: var(--attention-color); }
+
+/* ---------------------------------------------------------------------- */
+/* 2. MAIN CONTAINER & HEADER                                             */
+/* ---------------------------------------------------------------------- */
+.feedback-container {
+    background-color: var(--background-card);
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: var(--shadow-small);
+}
+
+.feedback-container .card-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 20px;
+}
+
+.feedback-container .card-header h2 {
+    color: var(--text-light);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.feedback-container .card-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 3. STATISTICS BOXES                                                    */
+/* ---------------------------------------------------------------------- */
+.feedback-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-box {
+    padding: 20px;
+    background: var(--background-dark);
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s ease;
+}
+
+.stat-box:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary-color);
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-light);
+}
+
+.stat-value i {
+    font-size: 1.8rem;
+    margin-right: 5px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 4. CONTROLS (Filter/Sort Bar)                                          */
+/* ---------------------------------------------------------------------- */
+.feedback-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.control-select,
+.control-button {
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.control-select {
+    flex-grow: 1;
+    background-color: var(--background-dark);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    appearance: none; /* Hide default arrow */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23BDBDBD'%3e%3cpath d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 0.9rem;
+}
+
+.control-button {
+    background-color: var(--secondary-color);
+    color: var(--background-dark);
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.control-button:hover {
+    background-color: var(--primary-color);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 5. FEEDBACK LIST CARDS                                                 */
+/* ---------------------------------------------------------------------- */
+.feedback-list {
+    display: grid;
+    gap: 20px;
+}
+
+.feedback-card {
+    background: var(--background-dark);
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 5px solid var(--border-color); /* Subtle default border */
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feedback-card:hover {
+    border-left-color: var(--primary-color);
+    box-shadow: 0 4px 15px rgba(0, 169, 255, 0.1);
+}
+
+.new-feedback-card {
+    border-left-color: var(--attention-color); /* Highlight new submissions */
+}
+
+.card-rating {
+    flex-shrink: 0;
+    text-align: center;
+    padding-right: 20px;
+    border-right: 1px solid var(--border-color);
+}
+
+.rating-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--info-color);
+    line-height: 1;
+}
+
+.card-rating .fas.fa-star {
+    color: var(--attention-color); /* Yellow star icon */
+    font-size: 1rem;
+    margin-top: 5px;
+}
+
+.card-content {
+    flex-grow: 1;
+}
+
+.comment-text {
+    font-size: 1rem;
+    color: var(--text-light);
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.card-meta span i {
+    margin-right: 5px;
+    color: var(--secondary-color);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 6. EMPTY STATE & RESPONSIVENESS                                        */
+/* ---------------------------------------------------------------------- */
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background-color: var(--background-dark);
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+.empty-state p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.empty-state .muted {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+    .feedback-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .feedback-controls {
+        flex-wrap: wrap;
+    }
+    .control-select {
+        flex-grow: 1;
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .feedback-stats {
+        grid-template-columns: 1fr;
+    }
+    .feedback-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .card-rating {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding-right: 0;
+        padding-bottom: 10px;
+        width: 100%;
+        text-align: left;
+    }
+    .card-meta {
+        flex-direction: column;
+        gap: 5px;
+    }
+}

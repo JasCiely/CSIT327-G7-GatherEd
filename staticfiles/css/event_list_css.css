@@ -1,0 +1,112 @@
+/* static/css/student_event_list_css.css */
+.event-list-container {
+    padding: 30px;
+}
+
+.event-search-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.control-input, .control-select {
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--background-dark);
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+.control-input {
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+.btn-search {
+    background-color: var(--secondary-color);
+    color: var(--background-dark);
+    padding: 10px 15px;
+}
+
+.btn-search:hover {
+    background-color: #007bb5; /* Darker blue */
+}
+
+/* Event Cards Grid */
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.event-card {
+    background-color: var(--background-dark);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 10px var(--shadow-color);
+    transition: transform 0.2s;
+}
+
+.event-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary-color);
+}
+
+.event-card.registered-card {
+    border-left: 5px solid var(--primary-color);
+}
+
+.event-card.conflict-card {
+    border-left: 5px solid var(--danger-color);
+    opacity: 0.7;
+}
+
+.event-title {
+    font-size: 1.3rem;
+    color: var(--text-light);
+    margin: 10px 0;
+}
+
+.event-date, .event-location, .event-registrations {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin: 5px 0;
+}
+
+.event-date i, .event-location i, .event-registrations i {
+    margin-right: 8px;
+    color: var(--secondary-color);
+}
+
+.card-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-detail {
+    background: none;
+    border: 1px solid var(--secondary-color);
+    color: var(--secondary-color);
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.register-btn {
+    flex-grow: 1;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-badge.registered { background-color: var(--primary-color); color: var(--background-dark); }
+.status-badge.conflict { background-color: var(--danger-color); color: white; }
+.status-badge.upcoming { background-color: var(--text-muted); color: var(--background-dark); }
