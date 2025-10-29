@@ -1,0 +1,117 @@
+/* static/css/student_notifications_css.css (STRICT BLUE THEME - NO GREEN) */
+:root {
+    /* Admin Theme Variables - NO GREEN PRIMARY */
+    --primary-color: #00A9FF;       /* Bright Blue */
+    --secondary-color: #2F93FF;      /* Darker Blue */
+    --danger-color: #FF6B6B;          /* Red (Attention/Unread Dot) */
+    --background-dark: #0A0A0A;      /* Deep Black/Dark Gray */
+    --background-medium: #181818;    /* Dark Gray (Card Surface) */
+    --border-color: #333333;        /* Dark Border */
+    --text-light: #F0F0F0;          /* Light Text */
+    --text-muted: #9E9E9E;            /* Muted Text */
+
+    --background-light: var(--background-medium);
+}
+
+.notifications-container {
+    padding: 30px;
+}
+
+.notification-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.btn-secondary {
+    /* Button color is now primary blue */
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.btn-secondary:hover {
+    background-color: rgba(0, 169, 255, 0.15);
+}
+
+.notification-list-full {
+    background-color: var(--background-medium);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+/* Individual Notification Item */
+.notification-item-full {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    text-decoration: none;
+    color: var(--text-light);
+    transition: background-color 0.2s;
+}
+
+.notification-item-full:last-child {
+    border-bottom: none;
+}
+
+.notification-item-full:hover {
+    /* Background color on hover is dark gray, not green */
+    background-color: #252525;
+}
+
+/* Unread State */
+.notification-item-full.unread {
+    background-color: var(--background-dark);
+    font-weight: 600;
+}
+
+.icon-section {
+    width: 30px;
+    padding-top: 3px;
+    flex-shrink: 0;
+}
+
+.unread-dot {
+    /* Red dot for alert */
+    color: var(--danger-color);
+    font-size: 0.7rem;
+}
+
+.read-dot {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    opacity: 0.5;
+}
+
+.content-section {
+    flex-grow: 1;
+}
+
+.message-text {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.timestamp-full {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.timestamp-full i {
+    margin-right: 5px;
+}
+
+/* Empty State Styling */
+.empty-state {
+    padding: 50px 20px;
+    text-align: center;
+}

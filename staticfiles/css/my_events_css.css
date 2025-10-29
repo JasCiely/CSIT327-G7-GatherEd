@@ -1,0 +1,57 @@
+/* static/css/student_my_events_css.css */
+.my-registrations-container {
+    padding: 30px;
+}
+
+.events-table-responsive {
+    overflow-x: auto;
+}
+
+.my-events-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    min-width: 600px;
+}
+
+.my-events-table th, .my-events-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-light);
+}
+
+.my-events-table th {
+    background-color: var(--background-dark);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+.my-events-table tbody tr:hover {
+    background-color: #252525;
+}
+
+/* Status Styling */
+.status-attended { color: var(--primary-color); font-weight: 600; }
+.status-absent { color: var(--danger-color); }
+.status-pending { color: var(--text-muted); }
+.status-completed { color: var(--secondary-color); }
+
+.btn-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-right: 10px;
+    padding: 5px;
+    transition: color 0.2s;
+}
+
+.btn-action.view-qr {
+    color: var(--primary-color);
+}
+.btn-action.cancel {
+    color: var(--danger-color);
+}

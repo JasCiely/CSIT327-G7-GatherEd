@@ -1,0 +1,68 @@
+/* static/css/student_submit_feedback_css.css */
+.feedback-submission-container {
+    max-width: 800px;
+    margin: auto;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-light);
+}
+
+#event-select, textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--background-dark);
+    color: var(--text-light);
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+}
+
+/* Star Rating Styling */
+.star-rating {
+    font-size: 1.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.star-rating i {
+    margin-right: 5px;
+    transition: color 0.1s;
+}
+
+.star-rating i.fas { /* Filled star */
+    color: var(--warning-color);
+}
+
+.rating-text {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-left: 10px;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
+}
+
+.hidden-message {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+    display: none; /* Controlled by JavaScript */
+}
