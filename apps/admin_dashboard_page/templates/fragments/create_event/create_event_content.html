@@ -1,62 +1,105 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/create_event_css.css' %}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Event - GatherEd</title>
 
-<div class="full-width-card event-form-container">
-    <div class="card-header">
-        <h2>New Event Details</h2>
-        <p class="card-subtitle">Fill in all fields to schedule a new event.</p>
-    </div>
+    <!-- ✅ Fonts & Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="{% static 'css/create_event_css.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-    <form id="create-event-form" method="POST" action="{% url 'create_event' %}" class="event-form" autocomplete="off">
-        {% csrf_token %}
+    <!-- ✅ SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        <div class="form-column column-left">
-            <h3>Basic Information</h3>
-            <label for="event-title">Event Title</label>
-            <input type="text" id="event-title" name="title" required>
+    <style>
+        /* Force content to show immediately even if spinner is stuck */
+        body, html {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        #content {
+            display: block !important;
+        }
+        #spinner, .loading-spinner {
+            display: none !important;
+        }
+    </style>
+</head>
 
-            <label for="event-description">Description</label>
-            <textarea id="event-description" name="description" rows="4" required></textarea>
+<body>
+<div id="content">
+    <div class="full-width-card event-form-container">
+        <div class="card-header">
+            <h2>New Event Details</h2>
+            <p class="card-subtitle">Fill in all fields to schedule a new event.</p>
+        </div>
 
-            <div class="time-date-group">
-                <label for="event-date">Date</label>
-                <input type="date" id="event-date" name="date" required>
+        <form id="create-event-form" method="POST" action="{% url 'create_event' %}" class="event-form" autocomplete="off">
+            {% csrf_token %}
 
-                <label for="event-start-time">Start Time</label>
-                <input type="time" id="event-start-time" name="start_time" required>
+            <div class="form-column column-left">
+                <h3>Basic Information</h3>
 
-                <label for="event-end-time">End Time</label>
-                <input type="time" id="event-end-time" name="end_time">
+                <label for="event-title">Event Title</label>
+                <input type="text" id="event-title" name="title" required>
+
+                <label for="event-description">Description</label>
+                <textarea id="event-description" name="description" rows="4" required></textarea>
+
+                <div class="time-date-group">
+                    <label for="event-date">Date</label>
+                    <input type="date" id="event-date" name="date" required>
+
+                    <label for="event-start-time">Start Time</label>
+                    <input type="time" id="event-start-time" name="start_time" required>
+
+                    <label for="event-end-time">End Time</label>
+                    <input type="time" id="event-end-time" name="end_time">
+                </div>
             </div>
-        </div>
 
-        <div class="form-column column-right">
-            <h3>Logistics & Media</h3>
-            <label for="event-location">Location/Venue</label>
-            <input type="text" id="event-location" name="location" placeholder="e.g., School Auditorium or Online Link">
+            <div class="form-column column-right">
+                <h3>Logistics & Media</h3>
 
-            <label for="max-attendees">Max Attendees (Optional)</label>
-            <input type="number" id="max-attendees" name="max_attendees" placeholder="0 for unlimited" min="0">
-        </div>
+                <label for="event-location">Location/Venue</label>
+                <input type="text" id="event-location" name="location" placeholder="e.g., School Auditorium or Online Link">
 
-        <div class="form-actions">
-            <button type="submit" id="schedule-event-btn" class="btn btn-secondary">
-                <i class="fas fa-calendar-plus"></i> Schedule Event
-            </button>
-        </div>
-    </form>
+                <label for="max-attendees">Max Attendees (Optional)</label>
+                <input type="number" id="max-attendees" name="max_attendees" placeholder="0 for unlimited" min="0">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" id="schedule-event-btn" class="btn btn-secondary">
+                    <i class="fas fa-calendar-plus"></i> Schedule Event
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    // ✅ Force-hide any spinner that exists
+    const spinner = document.getElementById("spinner");
+    const loader = document.querySelector(".loading-spinner");
+    const mainContent = document.getElementById("content");
+
+    if (spinner) spinner.style.display = "none";
+    if (loader) loader.style.display = "none";
+    if (mainContent) mainContent.style.display = "block";
+
     const form = document.getElementById("create-event-form");
     const submitBtn = document.getElementById("schedule-event-btn");
     if (!form || !submitBtn) return;
 
+    let isSubmitting = false;
+
     form.addEventListener("submit", function (e) {
-        e.preventDefault(); // stop normal submit
+        e.preventDefault();
+        if (isSubmitting) return;
 
         Swal.fire({
             title: "Confirm Event Creation",
@@ -69,9 +112,9 @@ document.addEventListener("DOMContentLoaded", () => {
             cancelButtonColor: "#6c757d",
             confirmButtonText: "Yes, schedule it",
         }).then((result) => {
-            if (!result.isConfirmed) return; // do nothing if cancelled
+            if (!result.isConfirmed) return;
 
-            // ✅ Disable button after confirmation
+            isSubmitting = true;
             submitBtn.disabled = true;
 
             Swal.fire({
@@ -101,8 +144,17 @@ document.addEventListener("DOMContentLoaded", () => {
                                 window.location.href = response.url;
                             });
                         } else {
-                            Swal.close();
-                            submitBtn.disabled = false; // re-enable if not redirected
+                            return response.json().then(data => {
+                                Swal.fire({
+                                    title: "Submission Error",
+                                    text: data.message || "Please check your inputs and try again.",
+                                    icon: "warning",
+                                    background: "#1e1e1e",
+                                    color: "#fff",
+                                });
+                                isSubmitting = false;
+                                submitBtn.disabled = false;
+                            });
                         }
                     })
                     .catch(() => {
@@ -113,7 +165,8 @@ document.addEventListener("DOMContentLoaded", () => {
                             background: "#1e1e1e",
                             color: "#fff",
                         });
-                        submitBtn.disabled = false; // re-enable on error
+                        isSubmitting = false;
+                        submitBtn.disabled = false;
                     });
                 },
             });
@@ -121,3 +174,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 </script>
+</body>
+</html>
