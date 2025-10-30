@@ -30,11 +30,21 @@ def calculate_time_remaining(event_date_str, start_time_str):
             start_time = datetime.datetime.strptime(start_time_str, '%H:%M:%S').time()
         except ValueError:
             start_time = datetime.datetime.strptime(start_time_str, '%H:%M').time()
+
         event_start_dt = datetime.datetime.combine(event_date, start_time)
         diff = event_start_dt - datetime.datetime.now()
         secs = diff.total_seconds()
-        if secs <= 0:
+
+        # Check for Active/Started status
+        if secs <= 0 and (event_date == datetime.date.today()):
+            # This is the string the HTML relies on for the highlight
             return "Active/Started"
+
+            # Check for Completed status (event is in the past)
+        if secs <= 0:
+            return "Completed"
+
+        # Remaining time calculation
         days = diff.days
         hrs, mins = divmod(diff.seconds, 3600)
         mins //= 60
@@ -94,10 +104,11 @@ def admin_dashboard(request):
             return len(data) if data else 0
 
         def get_upcoming_events():
+            # Query events starting from today or later
             data = (supabase_client.table('events')
                     .select('id, title, date, location, start_time')
                     .eq('admin_id', admin_filter_id)
-                    .gte('date', today_str)
+                    .gte('date', today_str)  # Filter only future/today events for "Upcoming" list
                     .order('date', desc=False)
                     .execute()).data
             return data or []
@@ -110,7 +121,6 @@ def admin_dashboard(request):
             upcoming_data = future_upcoming.result()
 
         formatted_events = []
-        now = datetime.datetime.now()
 
         for e in upcoming_data:
             try:
@@ -124,25 +134,23 @@ def admin_dashboard(request):
                 if not start_time:
                     continue
 
-                event_dt = datetime.datetime.combine(datetime.datetime.strptime(e['date'], '%Y-%m-%d').date(), start_time)
-                if event_dt > now:
-                    formatted_events.append({
-                        'id': e['id'],
-                        'title': e['title'],
-                        'start_date': format_to_readable_date(e['date']),
-                        'start_time': format_to_12hr(e['start_time']),
-                        'location': e['location'],
-                        'time_remaining': calculate_time_remaining(e['date'], e['start_time'])
-                    })
+                formatted_events.append({
+                    'id': e['id'],
+                    'title': e['title'],
+                    'start_date': format_to_readable_date(e['date']),
+                    'start_time': format_to_12hr(e['start_time']),
+                    'location': e['location'],
+                    'time_remaining': calculate_time_remaining(e['date'], e['start_time'])
+                })
             except Exception:
                 continue
 
-        formatted_events.sort(key=lambda x: x['start_date'])
         formatted_events = formatted_events[:10]
 
         context = {
             'admin_organization': admin_profile.organization_name,
             'total_events': total_events,
+            # Placeholder values for attendance/feedback
             'total_attendance': 0,
             'new_feedback': 0,
             'notification_count': 0,

@@ -51,12 +51,17 @@
                     <th>Date</th>
                     <th>Time</th>
                     <th>Location</th>
-                    <th>Time Remaining</th>  {# <--- NEW COLUMN HEADER #}
+                    <th>Time Remaining</th>
                 </tr>
             </thead>
             <tbody>
                 {% for event in events %}
-                <tr data-event-id="{{ event.id }}">
+                <tr data-event-id="{{ event.id }}"
+                    style="{% if event.time_remaining == 'Active/Started' %}
+                        background-color: rgba(255, 193, 7, 0.1) !important;
+                        border-left: 5px solid #FFC107 !important;
+                    {% endif %}">
+
                     <td data-label="Title">{{ event.title }}</td>
 
                     <td data-label="Date">{{ event.start_date }}</td>
@@ -66,8 +71,11 @@
                     <td data-label="Location">{{ event.location }}</td>
 
                     <td data-label="Time Remaining">
-                        <span class="time-countdown">
-                            {{ event.time_remaining }} {# <--- NEW DATA FIELD #}
+                        <span class="time-countdown"
+                              style="{% if event.time_remaining == 'Active/Started' %}
+                                    color: #FFC107 !important; font-weight: 700;
+                                   {% endif %}">
+                            {{ event.time_remaining }}
                         </span>
                     </td>
                 </tr>

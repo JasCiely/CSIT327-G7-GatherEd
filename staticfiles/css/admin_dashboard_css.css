@@ -21,7 +21,7 @@
     --card-hover-shadow: 0 10px 20px rgba(0, 169, 255, 0.25); /* Focused Blue Hover Shadow */
 
     /* --- Accent Colors --- */
-    --warning-color: #FFC107;      /* Notification Badge Yellow */
+    --warning-color: #FFC107;      /* Notification Badge Yellow/Orange */
     --success-color: #6BFF8E;      /* Event Green */
     --attention-color: #FF6B6B;     /* Feedback Red */
     --info-color: #FFD26B;          /* Attendance Yellow */
@@ -448,8 +448,6 @@ html {
     border-bottom: none;
 }
 
-/* STATUS STYLING IS REMOVED HERE */
-
 
 /* Optional: Mobile View (Adjusted to account for 4 columns) */
 @media (max-width: 768px) {
@@ -517,4 +515,3 @@ html {
     margin-top: 10px;
     font-weight: 500;
 }
-
