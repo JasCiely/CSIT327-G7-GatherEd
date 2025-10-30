@@ -1,5 +1,4 @@
 <!-- apps/admin_dashboard_page/templates/admin_dashboard.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,16 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - GatherEd</title>
     {% load static %}
+
+    <!-- ✅ Optimized CSS Loading -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"></noscript>
+
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></noscript>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/admin_dashboard_css.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
-    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+
+    <!-- ✅ Deferred Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous" defer></script>
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+
+    <!-- Removed meta refresh (was slowing load) -->
 </head>
 
 <body>
@@ -60,9 +66,7 @@
                     </div>
                     <div class="user-profile">
                         {% if request.user.is_authenticated %}
-                            <span class="profile-name">
-                                {{ request.user.adminprofile.name|default:'Administrator' }}
-                            </span>
+                            <span class="profile-name">{{ request.user.adminprofile.name|default:'Administrator' }}</span>
                         {% else %}
                             <span class="profile-name">Guest Admin</span>
                         {% endif %}
@@ -71,7 +75,7 @@
                 </div>
             </header>
 
-            <div id="content-area">
+            <div id="content-area" class="fade-container">
                 {% include 'fragments/dashboard_content.html' %}
             </div>
         </main>
@@ -84,7 +88,7 @@
         </div>
     </div>
 
-    <script>
+    <script defer>
         document.addEventListener("DOMContentLoaded", function () {
             {% if messages %}
                 {% for message in messages %}
@@ -103,7 +107,6 @@
                 {% endfor %}
             {% endif %}
 
-            // 👋 Welcome message once per session
             {% if request.user.is_authenticated %}
                 if (!sessionStorage.getItem("welcomed")) {
                     const fullName = "{{ request.user.adminprofile.name|default:request.user.username|escapejs }}";
@@ -128,15 +131,15 @@
         });
 
         // =======================================
-        // ⚡ FAST, SAFE CACHED NAVIGATION SYSTEM
+        // 🚀 Optimized Fast Navigation
         // =======================================
         const pageCache = {};
-        const CACHE_TIMEOUT = 15000; // 15 seconds
-        let currentController = null; // track the active request controller
+        const CACHE_TIMEOUT = 60000; // 1 minute
+        let currentController = null;
 
         window.handleNavClick = function (el) {
-            const url = el.getAttribute("data-url");
-            const cleanUrl = el.getAttribute("data-clean-url");
+            const url = el.dataset.url;
+            const cleanUrl = el.dataset.cleanUrl;
             const title = el.textContent.trim();
             const contentArea = document.getElementById("content-area");
             const pageTitle = document.getElementById("page-title");
@@ -151,7 +154,6 @@
                 contentArea.innerHTML = pageCache[url].html;
                 fadeInContent(contentArea);
                 history.pushState(null, "", cleanUrl);
-                // update silently in background
                 fetchAndCache(url, false);
                 return;
             }
@@ -160,24 +162,19 @@
                 <div class="fast-loader">
                     <div class="spinner-border text-primary" role="status"></div>
                     <span class="loading-text">Loading content...</span>
-                </div>
-            `;
+                </div>`;
             fetchAndCache(url, true, cleanUrl);
         };
 
         function fetchAndCache(url, renderImmediately = false, cleanUrl = "") {
             const contentArea = document.getElementById("content-area");
 
-            if (currentController) {
-                currentController.aborted = true;
-            }
-
+            if (currentController) currentController.aborted = true;
             const controller = new AbortController();
             currentController = controller;
 
             fetch(url, { cache: "no-store", signal: controller.signal })
                 .then(res => {
-                    // skip if newer request started
                     if (controller.aborted || currentController !== controller) return;
                     if (!res.ok) throw new Error("Failed to fetch page");
                     return res.text();
@@ -185,26 +182,25 @@
                 .then(html => {
                     if (controller.aborted || currentController !== controller) return;
 
-                    // Cache the page
                     pageCache[url] = { html, timestamp: Date.now() };
                     if (renderImmediately) {
-                        contentArea.innerHTML = html;
-                        fadeInContent(contentArea);
-                        if (cleanUrl) history.pushState(null, "", cleanUrl);
+                        contentArea.classList.add("fade-out");
+                        setTimeout(() => {
+                            contentArea.innerHTML = html;
+                            contentArea.classList.remove("fade-out");
+                            fadeInContent(contentArea);
+                            if (cleanUrl) history.pushState(null, "", cleanUrl);
+                        }, 150);
                     }
 
-                    // Re-run scripts properly
+                    // Re-run inline scripts only (skip external)
                     const temp = document.createElement("div");
                     temp.innerHTML = html;
-                    temp.querySelectorAll("script").forEach(s => {
-                        const ns = document.createElement("script");
-                        if (s.src) ns.src = s.src;
-                        else ns.textContent = s.textContent;
-                        document.body.appendChild(ns);
+                    temp.querySelectorAll("script:not([src])").forEach(s => {
+                        try { eval(s.textContent); } catch (e) {}
                     });
                 })
-                .catch(err => {
-                    // only show if not user-aborted
+                .catch(() => {
                     if (!controller.aborted && currentController === controller) {
                         contentArea.innerHTML = `<div class="error-message">⚠️ Failed to load content.</div>`;
                     }
@@ -212,37 +208,29 @@
         }
 
         // =======================================
-        // 💨 FADE-IN ANIMATION
+        // 💨 Fade-In Effect via CSS
         // =======================================
         function fadeInContent(element) {
-            element.style.opacity = 0;
-            element.style.transition = "opacity 0.25s ease-in";
-            requestAnimationFrame(() => {
-                element.style.opacity = 1;
-            });
+            element.style.opacity = 1;
         }
 
         // =======================================
-        // ⚙️ PRELOAD COMMON PAGES
+        // ⚙️ Preload Common Pages
         // =======================================
         function preloadCommonPages() {
-            const preloadLinks = document.querySelectorAll(".sidebar-nav .nav-item");
-            preloadLinks.forEach(link => {
-                const url = link.getAttribute("data-url");
-                // only preload main pages
+            document.querySelectorAll(".sidebar-nav .nav-item").forEach(link => {
+                const url = link.dataset.url;
                 if (url.includes("create_event") || url.includes("manage_event") || url.includes("track_attendance")) {
                     fetch(url, { cache: "no-store" })
                         .then(res => res.text())
-                        .then(html => {
-                            pageCache[url] = { html, timestamp: Date.now() };
-                        })
+                        .then(html => pageCache[url] = { html, timestamp: Date.now() })
                         .catch(() => {});
                 }
             });
         }
 
         // =======================================
-        // 🔔 NOTIFICATIONS DRAWER
+        // 🔔 Notifications Drawer
         // =======================================
         window.toggleNotifications = function () {
             const drawer = document.getElementById("notification-drawer");
@@ -253,40 +241,45 @@
         };
 
         // =======================================
-        // 🚪 LOGOUT CONFIRMATION
+        // 🚪 Logout Confirmation
         // =======================================
-        document.getElementById("logout-btn").addEventListener("click", function (e) {
-            e.preventDefault();
-            const logoutUrl = this.href;
-            Swal.fire({
-                title: "Log out from GatherEd?",
-                text: "You will need to log in again to access the dashboard.",
-                icon: "question",
-                background: "#1e1e1e",
-                color: "#fff",
-                showCancelButton: true,
-                confirmButtonColor: "#007bff",
-                cancelButtonColor: "#6c757d",
-                confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Log out',
-                cancelButtonText: "Cancel",
-            }).then((result) => {
-                if (result.isConfirmed) {
+        document.addEventListener("DOMContentLoaded", () => {
+            const logoutBtn = document.getElementById("logout-btn");
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    const logoutUrl = this.href;
                     Swal.fire({
-                        title: "Logging out...",
+                        title: "Log out from GatherEd?",
+                        text: "You will need to log in again to access the dashboard.",
+                        icon: "question",
                         background: "#1e1e1e",
                         color: "#fff",
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                            setTimeout(() => (window.location.href = logoutUrl), 600);
-                        },
+                        showCancelButton: true,
+                        confirmButtonColor: "#007bff",
+                        cancelButtonColor: "#6c757d",
+                        confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Log out',
+                        cancelButtonText: "Cancel",
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            Swal.fire({
+                                title: "Logging out...",
+                                background: "#1e1e1e",
+                                color: "#fff",
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                    setTimeout(() => (window.location.href = logoutUrl), 600);
+                                },
+                            });
+                        }
                     });
-                }
-            });
+                });
+            }
         });
 
         // =======================================
-        // 🧠 BLOCK BACK BUTTON CACHE
+        // 🧠 Prevent Back Cache Navigation
         // =======================================
         if (window.history && window.history.pushState) {
             window.history.pushState(null, null, window.location.href);
@@ -294,49 +287,40 @@
                 window.history.pushState(null, null, window.location.href);
             };
         }
-        window.addEventListener("pageshow", function (event) {
-            if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
-                window.location.href = "{% url 'index' %}";
-            }
+
+        // =======================================
+        // ✅ Auto Refresh Upcoming Events
+        // =======================================
+        document.addEventListener("DOMContentLoaded", function () {
+            const refreshInterval = 60000;
+            setInterval(async () => {
+                if (document.hidden) return; // Skip if tab inactive
+                const section = document.getElementById("upcoming-events-section");
+                if (!section) return;
+                const activeNav = document.querySelector(".sidebar-nav .nav-item.active");
+                if (!activeNav || !activeNav.textContent.includes("Dashboard")) return;
+                try {
+                    const response = await fetch("{% url 'admin_dashboard' %}?is_ajax=true", { cache: "no-store" });
+                    if (!response.ok) throw new Error();
+                    const html = await response.text();
+                    const temp = document.createElement("div");
+                    temp.innerHTML = html;
+                    const newSection = temp.querySelector("#upcoming-events-section");
+                    if (newSection) section.innerHTML = newSection.innerHTML;
+                } catch {}
+            }, refreshInterval);
         });
     </script>
 
-        <!-- ✅ AUTO REFRESH UPCOMING EVENTS EVERY 60s -->
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const refreshInterval = 60000; // 60 seconds
-        let refreshTimer = null;
-
-        async function refreshUpcomingEvents() {
-            const section = document.getElementById("upcoming-events-section");
-            if (!section) return;
-
-            // Only refresh if on dashboard
-            const activeNav = document.querySelector(".sidebar-nav .nav-item.active");
-            if (!activeNav || !activeNav.textContent.includes("Dashboard")) return;
-
-            try {
-                const response = await fetch("{% url 'admin_dashboard' %}?is_ajax=true", { cache: "no-store" });
-                if (!response.ok) throw new Error("Failed to refresh events");
-                const html = await response.text();
-
-                const tempDiv = document.createElement("div");
-                tempDiv.innerHTML = html;
-                const newSection = tempDiv.querySelector("#upcoming-events-section");
-
-                if (newSection) {
-                    section.innerHTML = newSection.innerHTML;
-                    console.log("✅ Upcoming events auto-refreshed:", new Date().toLocaleTimeString());
-                }
-            } catch (err) {
-                console.warn("⚠️ Event refresh failed:", err.message);
-            }
+    <!-- ✅ Small CSS helper for fade -->
+    <style>
+        .fade-container {
+            transition: opacity 0.25s ease-in;
+            opacity: 1;
         }
-
-        // Start auto-refresh
-        refreshTimer = setInterval(refreshUpcomingEvents, refreshInterval);
-    });
-    </script>
-
+        .fade-container.fade-out {
+            opacity: 0;
+        }
+    </style>
 </body>
 </html>
