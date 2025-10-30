@@ -1,31 +1,174 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manage Events - GatherEd</title>
-
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
-<link rel="stylesheet" href="{% static 'css/manage_event_css.css' %}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <style>
-body, html { opacity: 1 !important; visibility: visible !important; }
-#spinner, .loading-spinner { display: none !important; }
-.row-selected { background-color: #e0f3ff; }
-.clickable-row:hover { cursor: pointer; background-color: #f0f8ff; }
-.full-width-card { opacity: 1 !important; visibility: visible !important; }
-.details-placeholder { text-align: center; color: #666; padding: 40px; }
-.error-text { color: red; }
+/* -------------------------------------- */
+/* 🚀 CSS STYLES (Provided by User) */
+/* -------------------------------------- */
+
+:root {
+    --primary-color: #00A9FF;
+    --secondary-color: #7B68EE;
+    --success-color: #4CAF50;
+    --danger-color: #F44336;
+    --warning-color: #FFC107;
+    --background-light: #1E1E1E;
+    --background-dark: #121212;
+    --text-light: #E0E0E0;
+    --text-muted: #9E9E9E;
+    --border-color: #333333;
+    --accent-blue-rgba: rgba(0, 169, 255, 0.6);
+    --panel-background: #191919;
+}
+
+.manage-events-container {
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color);
+}
+
+.card-header h2 { color: var(--text-light); }
+.card-subtitle { color: var(--text-muted); }
+
+.events-controls {
+    display: flex; gap: 15px; margin-bottom: 25px; align-items: center; flex-wrap: wrap;
+}
+
+.control-input, .control-select {
+    padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border-color);
+    background: var(--background-dark); color: var(--text-light); font-size: 0.95rem;
+}
+
+.control-input { flex-grow: 1; min-width: 200px; }
+
+.btn-primary {
+    background-color: var(--primary-color); color: var(--background-dark);
+    padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: 600;
+    transition: background-color 0.2s; white-space: nowrap;
+}
+
+.btn-primary:hover { background-color: #007bb5; }
+
+.events-table-responsive { overflow-x: auto; }
+
+.events-table {
+    width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 700px;
+}
+
+.events-table th, .events-table td {
+    padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color);
+    color: var(--text-light);
+}
+
+.events-table th {
+    background-color: var(--primary-color) !important;
+    color: var(--background-dark) !important;
+    font-weight: 700; text-transform: uppercase; font-size: 0.9rem;
+}
+
+.events-table tbody tr { background-color: var(--background-light); }
+
+/* Standard hover effect */
+.events-table tbody tr:hover { background-color: #252525; }
+
+/* Status Badges */
+.status-active { color: var(--success-color); font-weight: 600; }
+.status-upcoming { color: var(--warning-color); font-weight: 600; }
+.status-completed { color: var(--text-muted); }
+
+/* Action Buttons */
+.action-buttons { white-space: nowrap; }
+
+.btn-action {
+    background: none; border: none; cursor: pointer; font-size: 1rem;
+    margin-right: 5px; padding: 5px; transition: color 0.2s;
+}
+
+.btn-action.delete { color: var(--danger-color); }
+.btn-action.delete:hover { color: #cc0000; }
+
+/* Empty State */
+.empty-state {
+    text-align: center; padding: 80px 20px; color: var(--text-muted);
+}
+.empty-state i { font-size: 40px; margin-bottom: 15px; display: block; }
+
+/* FLEX LAYOUT & PANEL STYLES */
+.events-content-wrapper {
+    margin-top: 20px; align-items: stretch !important; min-height: 400px;
+}
+
+.events-table-area { flex: 2; min-width: 0; }
+
+.event-details-panel {
+    flex: 1; min-width: 300px; max-width: 400px;
+    background-color: var(--panel-background) !important;
+    border: 3px solid var(--primary-color) !important;
+    border-radius: 12px; padding: 0 !important;
+    box-shadow: 0 5px 25px var(--accent-blue-rgba);
+    color: var(--text-light);
+    position: sticky; top: 20px;
+    height: 100% !important;
+}
+
+.details-placeholder {
+    width: 100% !important; height: 100% !important; margin: 0 !important;
+    display: flex !important; flex-direction: column !important;
+    justify-content: center !important; align-items: center !important;
+    padding: 20px 15px !important;
+    background-color: var(--background-light) !important;
+    border-radius: 12px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7) !important;
+    text-align: center !important;
+}
+
+.details-placeholder i {
+    font-size: 4rem; color: var(--primary-color) !important; margin-bottom: 20px;
+    text-shadow: 0 0 15px var(--accent-blue-rgba) !important;
+    animation: pulse-icon 2s infinite alternate;
+}
+
+@keyframes pulse-icon {
+    from { opacity: 0.8; transform: scale(1); }
+    to { opacity: 1; transform: scale(1.02); }
+}
+
+/* Responsive adjustment */
+@media (max-width: 1000px) {
+    .events-content-wrapper { flex-direction: column !important; min-height: auto; }
+    .events-table-area, .event-details-panel { flex: auto; max-width: none; min-width: auto; position: static; }
+    .details-placeholder { height: 250px; }
+}
+
+/* ⭐⭐⭐ CORRECTED SELECTED ROW INDICATION CSS ⭐⭐⭐ */
+.events-table tbody .clickable-row.selected {
+    /* Use a color slightly darker than the hover, but with the primary accent */
+    background-color: #253343;
+
+    /* Prominent left border using the main primary color */
+    border-left: 5px solid var(--primary-color);
+
+    /* Subtle glow/shadow effect to lift it */
+    box-shadow: inset 0 0 10px var(--accent-blue-rgba);
+
+    /* Slight scale for visual pop */
+    transform: scale(1.005);
+    transition: all 0.2s ease-in-out;
+}
+
+/* Ensure the text color is bright and clear when selected */
+.events-table tbody .clickable-row.selected td {
+    color: var(--text-light) !important;
+    font-weight: 500;
+}
+
+/* Ensure selected rows don't change color on hover (to avoid flicker) */
+.events-table tbody .clickable-row.selected:hover {
+    background-color: #253343; /* Keep the selected color */
+}
 </style>
-</head>
 
-<body>
-<div class="full-width-card manage-events-container" data-fragment="manage_events">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<div class="full-width-card manage-events-container">
     <div class="card-header">
         <h2>View and Modify Events</h2>
         <p class="card-subtitle">Manage all active, upcoming, and past events created across the schools.</p>
@@ -65,13 +208,14 @@ body, html { opacity: 1 !important; visibility: visible !important; }
                     <tbody>
                         {% for event in events_list %}
                         <tr class="clickable-row" data-event-id="{{ event.id }}">
-                            <td>{{ event.name }}</td>
-                            <td>{{ event.date }}</td>
-                            <td>{{ event.registrations }}</td>
-                            <td class="status-{{ event.status|lower }}">{{ event.status }}</td>
-                            <td class="action-buttons">
-                                <button class="btn-action edit" title="Edit Event" onclick="event.stopPropagation()"><i class="fas fa-edit"></i></button>
-                                <button class="btn-action delete" title="Delete Event" onclick="event.stopPropagation()"><i class="fas fa-trash"></i></button>
+                            <td data-label="Event Name">{{ event.name }}</td>
+                            <td data-label="Date">{{ event.date }}</td>
+                            <td data-label="Registrations">{{ event.registrations }}</td>
+                            <td data-label="Status" class="status-{{ event.status|lower }}">{{ event.status }}</td>
+                            <td data-label="Actions" class="action-buttons">
+                                <button class="btn-action delete" title="Delete Event" onclick="event.stopPropagation()">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -88,46 +232,60 @@ body, html { opacity: 1 !important; visibility: visible !important; }
         </div>
 
         <div class="event-details-panel">
-            <div id="initial-details-message" class="details-placeholder">
-                <i class="fas fa-hand-pointer fa-2x"></i>
+            <div id="initial-details-message" class="details-placeholder" style="display: block;">
+                <i class="fas fa-hand-pointer"></i>
                 <h3>Select an Event</h3>
                 <p>Click any row in the table to view the event's full details and management options here.</p>
             </div>
+
             <div id="event-details-content" style="display: none;"></div>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const detailsPanel = document.getElementById("event-details-content");
-    const placeholder = document.getElementById("initial-details-message");
-    let selectedRow = null;
+$(document).ready(function() {
+    console.log("Manage Events Script: Initializing AJAX event delegation.");
 
-    document.querySelectorAll(".clickable-row").forEach(row => {
-        row.addEventListener("click", async (e) => {
-            if (e.target.closest("button")) return;
-            const eventId = row.dataset.eventId;
+    // Generate correct URL for event details respecting Django URL patterns
+    function getEventDetailsUrl(eventId) {
+        return "{% url 'event_details_html' 'EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId);
+    }
 
-            if (selectedRow) selectedRow.classList.remove("row-selected");
-            row.classList.add("row-selected");
-            selectedRow = row;
+    // Click handler for rows
+    $(document).on('click', '.clickable-row', function() {
+        var eventId = $(this).data('event-id');
+        var detailsUrl = getEventDetailsUrl(eventId);
 
-            placeholder.style.display = "none";
-            detailsPanel.style.display = "block";
-            detailsPanel.scrollTop = 0;
+        console.log("Event row clicked. ID:", eventId, "URL:", detailsUrl);
 
-            try {
-                const res = await fetch(`/admin-dashboard/manage/events/event/${eventId}/details/?is_ajax=true`, { cache: "no-store" });
-                if (!res.ok) throw new Error("Fetch failed");
-                const html = await res.text();
-                detailsPanel.innerHTML = html;
-            } catch (err) {
-                detailsPanel.innerHTML = `<p class="error-text">⚠️ Failed to load event details.</p>`;
+        // 🎯 HIGHLIGHT LOGIC: Remove 'selected' from all, add it to the clicked row
+        $('.clickable-row').removeClass('selected');
+        $(this).addClass('selected');
+
+        // Hide placeholder and show loading spinner
+        $('#initial-details-message').hide();
+        var detailsContent = $('#event-details-content').show().html(
+            `<p class="text-center" style="color: var(--text-muted); padding: 20px;">
+                <i class="fas fa-spinner fa-spin"></i> Loading details...
+            </p>`
+        );
+
+        // AJAX call
+        $.ajax({
+            url: detailsUrl,
+            method: 'GET',
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            success: function(data) {
+                console.log("AJAX Success. Details loaded.");
+                detailsContent.html(data);
+            },
+            error: function(xhr) {
+                let errorMsg = xhr.responseText || `Error ${xhr.status}: Failed to load event details.`;
+                detailsContent.html(`<div style="color: var(--danger-color); padding: 20px;">${errorMsg}</div>`);
+                console.error("AJAX Error details:", xhr.responseText);
             }
         });
     });
 });
 </script>
-</body>
-</html>
