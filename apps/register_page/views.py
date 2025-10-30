@@ -8,7 +8,6 @@ from datetime import datetime
 import re
 from postgrest.exceptions import APIError
 
-CIT_ID_REGEX = r'^\d{2}-\d{4}-\d{3}$'
 EMAIL_DOMAIN = '@cit.edu'
 
 def get_supabase_clients(request):
@@ -33,7 +32,6 @@ def register(request):
     user_type = request.POST.get('user_type')
     cit_id = request.POST.get('cit_id')
     organization_name = request.POST.get('organization_name')
-    formatted_cit_id = cit_id
 
     # --- Validation ---
     if not all([email, password, cit_id, name, user_type]):
@@ -51,8 +49,10 @@ def register(request):
     if not email.endswith(EMAIL_DOMAIN):
         messages.error(request, f'Registration is limited to {EMAIL_DOMAIN} email addresses only.')
         return render(request, 'register.html')
-    if not re.fullmatch(CIT_ID_REGEX, cit_id):
-        messages.error(request, 'CIT ID must follow the format: XX-XXXX-XXX.')
+
+    # ✅ CIT ID: Allow any length, only numbers and dashes
+    if not re.fullmatch(r'^[0-9-]+$', cit_id):
+        messages.error(request, 'CIT ID can only contain numbers and dashes (-).')
         return render(request, 'register.html')
 
     try:
@@ -62,8 +62,8 @@ def register(request):
 
     # --- Uniqueness Checks ---
     try:
-        student_id_check = supabase_public.table('students').select('cit_id').eq('cit_id', formatted_cit_id).limit(1).execute().data
-        admin_id_check = supabase_public.table('admins').select('cit_id').eq('cit_id', formatted_cit_id).limit(1).execute().data
+        student_id_check = supabase_public.table('students').select('cit_id').eq('cit_id', cit_id).limit(1).execute().data
+        admin_id_check = supabase_public.table('admins').select('cit_id').eq('cit_id', cit_id).limit(1).execute().data
         if student_id_check or admin_id_check:
             messages.error(request, 'This ID is already registered.')
             return render(request, 'register.html')
@@ -92,7 +92,7 @@ def register(request):
             supabase_admin.table('admins').insert({
                 'user_id': user_pk_str,
                 'name': name,
-                'cit_id': formatted_cit_id,
+                'cit_id': cit_id,
                 'organization_name': organization_name,
                 'created_at': current_time
             }).execute()
@@ -101,15 +101,13 @@ def register(request):
             supabase_admin.table('students').insert({
                 'user_id': user_pk_str,
                 'name': name,
-                'cit_id': formatted_cit_id,
+                'cit_id': cit_id,
                 'created_at': current_time
             }).execute()
             redirect_path = 'student_dashboard'
 
         logged_in_user = authenticate(request, username=email, password=password)
         login(request, logged_in_user)
-
-        # ✅ Success message will now appear in the dashboard
         messages.success(request, 'Registration successful! You are now logged in.')
         return redirect(redirect_path)
 

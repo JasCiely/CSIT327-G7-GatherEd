@@ -8,55 +8,48 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="{% static 'css/register_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-
+    <style>
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-input {
+            width: 100%;
+            padding-right: 40px;
+            box-sizing: border-box;
+        }
+        .toggle-eye {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+        .toggle-eye:hover {
+            color: #333;
+        }
+        .toggle-eye i {
+            font-size: 16px;
+        }
+        .form-group.password-container {
+            position: relative;
+        }
+    </style>
 </head>
-<style>
-    .password-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-
-    .password-input {
-        width: 100%;
-        padding-right: 40px;
-        box-sizing: border-box;
-    }
-
-    .toggle-eye {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: #666;
-        padding: 0;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1;
-    }
-
-    .toggle-eye:hover {
-        color: #333;
-    }
-
-    .toggle-eye i {
-        font-size: 16px;
-    }
-
-    .form-group.password-container {
-        position: relative;
-    }
-</style>
 <body>
     <div class="auth-container">
         <div class="auth-box">
@@ -79,7 +72,7 @@
 
                 <div class="form-group" id="cit-id-group" style="display:none;">
                     <label id="cit-id-label" for="cit_id"></label>
-                    <input type="text" id="cit_id" name="cit_id" placeholder="00-0000-000" maxlength="11" required>
+                    <input type="text" id="cit_id" name="cit_id" placeholder="Enter ID" inputmode="numeric" maxlength="15" required>
                 </div>
 
                 <div class="form-group" id="organization-group" style="display:none;">
@@ -153,8 +146,6 @@
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
-                    <div id="password-requirements">
-                        </div>
                 </div>
 
                 <div class="form-group password-container">
@@ -179,94 +170,51 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // --- Toastify Messages (No Change) ---
             {% if messages %}
                 {% for message in messages %}
-                    let messageType = "{{ message.tags }}";
-                    let bgColor = {
-                        success: 'linear-gradient(to right, #28a745, #218838)',
-                        error: 'linear-gradient(to right, #dc3545, #c82333)',
-                        info: 'linear-gradient(to right, #17a2b8, #138496)',
-                        warning: 'linear-gradient(to right, #ffc107, #e0a800)',
-                    }[messageType] || 'linear-gradient(to right, #6c757d, #5a6268)';
-
                     Toastify({
                         text: "{{ message|escapejs }}",
                         duration: 4000,
                         gravity: "top",
                         position: "right",
                         close: true,
-                        style: { background: bgColor },
+                        style: { background: 'linear-gradient(to right, #28a745, #218838)' },
                     }).showToast();
                 {% endfor %}
             {% endif %}
 
-            // --- Form Element References ---
             const userTypeSelect = document.getElementById('user_type');
             const citIdGroup = document.getElementById('cit-id-group');
             const citIdLabel = document.getElementById('cit-id-label');
             const citIdInput = document.getElementById('cit_id');
-
-            // Organization Group References
             const organizationGroup = document.getElementById('organization-group');
             const organizationSelect = document.getElementById('organization_name');
 
-
-            // --- User Type Change Listener (MODIFIED TO MAKE ORGANIZATION REQUIRED) ---
             userTypeSelect.addEventListener('change', function() {
                 const selectedValue = this.value;
-
-                // Reset required status and visibility for both conditional groups
                 citIdGroup.style.display = 'none';
                 citIdInput.required = false;
                 organizationGroup.style.display = 'none';
-                organizationSelect.required = false; // Reset required status
+                organizationSelect.required = false;
 
                 if (selectedValue === 'student') {
                     citIdGroup.style.display = 'block';
                     citIdInput.required = true;
                     citIdLabel.textContent = 'Student ID';
                 } else if (selectedValue === 'administrator') {
-                    // Show ID field and Organization dropdown
                     citIdGroup.style.display = 'block';
                     citIdInput.required = true;
                     citIdLabel.textContent = 'Employee ID';
-
                     organizationGroup.style.display = 'block';
-                    organizationSelect.required = true; // Set Organization as required for Admins
+                    organizationSelect.required = true;
                 }
             });
 
-            // --- Input Mask for Student/Employee ID (No Change) ---
-            citIdInput.addEventListener('input', (e) => {
-                let value = e.target.value.replace(/\D/g, '');
-                if (value.length > 2 && value.length <= 6)
-                    value = value.replace(/(\d{2})(\d+)/, '$1-$2');
-                else if (value.length > 6)
-                    value = value.replace(/(\d{2})(\d{4})(\d+)/, '$1-$2-$3');
-                e.target.value = value.slice(0, 11);
+            // Allow only numbers and hyphens
+            document.getElementById('cit_id').addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9-]/g, '');
             });
 
-            // --- Password Validation (No Change) ---
-            const pwInput = document.getElementById('password');
-            const reqs = {
-                length: document.getElementById('pw-length'),
-                upper: document.getElementById('pw-upper'),
-                lower: document.getElementById('pw-lower'),
-                num: document.getElementById('pw-num'),
-                special: document.getElementById('pw-special')
-            };
-
-            pwInput.addEventListener('input', () => {
-                const v = pwInput.value;
-                if (reqs.length) reqs.length.style.color = v.length >= 8 ? 'green' : 'red';
-                if (reqs.upper) reqs.upper.style.color = /[A-Z]/.test(v) ? 'green' : 'red';
-                if (reqs.lower) reqs.lower.style.color = /[a-z]/.test(v) ? 'green' : 'red';
-                if (reqs.num) reqs.num.style.color = /\d/.test(v) ? 'green' : 'red';
-                if (reqs.special) reqs.special.style.color = /[!@#$%^&*(),.?":{}|<>]/.test(v) ? 'green' : 'red';
-            });
-
-            // --- Password Toggle (No Change) ---
             function toggleVisibility(btnId, inputId) {
                 const btn = document.getElementById(btnId);
                 const input = document.getElementById(inputId);
@@ -281,24 +229,6 @@
 
             toggleVisibility('togglePassword', 'password');
             toggleVisibility('toggleConfirmPassword', 'confirm_password');
-
-            // --- ID Format Validation on Submit (No Change) ---
-            const form = document.querySelector('form');
-            form.addEventListener('submit', (e) => {
-                const regex = /^\d{2}-\d{4}-\d{3}$/;
-
-                // Only validate the ID format if the ID group is visible (Student or Admin)
-                if (citIdGroup.style.display !== 'none' && !regex.test(citIdInput.value)) {
-                    e.preventDefault();
-                    Toastify({
-                        text: "ID must follow the format: 00-0000-000",
-                        duration: 4000,
-                        gravity: "top",
-                        position: "right",
-                        style: { background: 'linear-gradient(to right, #dc3545, #c82333)' },
-                    }).showToast();
-                }
-            });
         });
     </script>
 </body>
