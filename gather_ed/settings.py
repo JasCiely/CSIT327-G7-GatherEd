@@ -8,27 +8,36 @@ import dj_database_url
 from django.contrib import staticfiles
 from dotenv import load_dotenv
 
+# Load environment variables from .env (for local dev)
 load_dotenv()
 
+# =====================
+# PATHS
+# =====================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-your-secret-key-here'
+# =====================
+# SECURITY & DEBUG
+# =====================
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-your-secret-key-here')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG is False by default unless explicitly set to True
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = [
     'csit327-g7-gathered.onrender.com',
-    'localhost',  # optional, for local testing
-    '127.0.0.1',  # optional, for local testing
+    'localhost',
+    '127.0.0.1',
 ]
-RENDER_EXTENAL_HOSTNAME = os.getenv("RENDER_EXTENAL_HOSTNAME")
-if RENDER_EXTENAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTENAL_HOSTNAME)
 
+# Add Render’s dynamic hostname if available
+RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# Application definition
+# =====================
+# APPLICATIONS
+# =====================
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -36,18 +45,22 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Your apps
     'apps',
     'apps.landing_page',
     'apps.register_page',
     'apps.login_page',
     'apps.admin_dashboard_page',
-    'apps.student_dashboard_page'
-
+    'apps.student_dashboard_page',
 ]
 
+# =====================
+# MIDDLEWARE
+# =====================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # for static files on Render
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -58,6 +71,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'gather_ed.urls'
 
+# =====================
+# TEMPLATES
+# =====================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -70,99 +86,103 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'debug': DEBUG,  # auto-disable in production
         },
     },
 ]
 
 WSGI_APPLICATION = 'gather_ed.wsgi.application'
 
-# Database configuration using Supabase Session Pooler
+# =====================
+# DATABASE (Supabase)
+# =====================
 DATABASES = {
     "default": dj_database_url.config(
         default=os.getenv("DATABASE_URL"),
-        conn_max_age=60,   # keep DB connections alive for performance
-        ssl_require=True,  # enforce SSL
+        conn_max_age=60,
+        ssl_require=True,
     )
 }
 
-# Password validation
+# =====================
+# PASSWORD VALIDATION
+# =====================
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# Internationalization
+# =====================
+# INTERNATIONALIZATION
+# =====================
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-
-STATIC_URL = 'static/'
-
-# This is where Django will look for your static files
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'apps/landing_page'),
-    os.path.join(BASE_DIR, 'apps/register_page'),
-    os.path.join(BASE_DIR, 'apps/login_page'),
-
-]
-
-# --------------------------
-# Static & Media Files
-# --------------------------
+# =====================
+# STATIC & MEDIA FILES
+# =====================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# Keep this only if you have extra global static files (not per app)
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # You can create this if needed
-]
-
-# Serve static files efficiently
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Login URLs
+# =====================
+# AUTH & LOGIN
+# =====================
 LOGIN_URL = 'events:login'
 LOGIN_REDIRECT_URL = 'events:dashboard'
 LOGOUT_REDIRECT_URL = 'events:login'
 
-#Prints emails to console
+# =====================
+# EMAIL (CONSOLE MODE)
+# =====================
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'support@gathered.edu'  # Any dummy for console
+DEFAULT_FROM_EMAIL = 'support@gathered.edu'
 
-# Get the URL
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
+# =====================
+# SUPABASE KEYS
+# =====================
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
 if not SUPABASE_URL:
-    # Use a method that logs an error or raises an exception if the key is mandatory
-    print("FATAL ERROR: SUPABASE_URL is missing in environment variables.")
+    print("⚠️ WARNING: SUPABASE_URL missing in environment variables.")
 
-# 2. Get the Public/Anon Key (Used for read-only RLS checks)
-SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
+# =====================
+# SESSION SECURITY & CONFIGURATION (6 HOURS)
+# =====================
+SESSION_COOKIE_HTTPONLY = True      # JS can't read session cookies
+SESSION_COOKIE_SAMESITE = 'Lax'     # Protects against CSRF
+SESSION_COOKIE_AGE = 6 * 60 * 60    # 6 hours
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
-# 3. Get the Service Role Key (Used for database writes in Django backend)
-SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+# Secure cookies only in production
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+# =====================
+# PERFORMANCE OPTIMIZATIONS
+# =====================
+WHITENOISE_MAX_AGE = 31536000  # 1 year cache
+CONN_MAX_AGE = 60
+WHITENOISE_USE_FINDERS = True
+
+# =====================
+# DEFAULT PRIMARY KEY
+# =====================
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
