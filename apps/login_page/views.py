@@ -57,6 +57,14 @@ def login_view(request):
 
 
 def logout_view(request):
+    """
+    Logs out the user and prevents back-button from showing previous pages.
+    """
     request.session.pop(USER_ROLE_SESSION_KEY, None)
     logout(request)
-    return redirect('index')
+
+    response = redirect('index')
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response

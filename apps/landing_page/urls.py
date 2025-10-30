@@ -1,6 +1,6 @@
-from django.urls import path
-from django.views.generic import TemplateView
+# apps/landing_page/urls.py
 
+from django.urls import path
 from . import views
 
 urlpatterns = [

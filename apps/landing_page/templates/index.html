@@ -4,190 +4,207 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GatherEd: Centralized School Event Management</title>
+    {% load static %}
+
+    <!-- Fonts and icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    {% load static %}
     <link rel="stylesheet" href="{% static 'css/index_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <!-- Prevent caching -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">
-                <i class="fas fa-calendar-check"></i> GatherEd
-            </div>
-            <ul class="nav-links">
-                <li><a href="#features">Features</a></li>
-                <li><a href="#how-it-works">How It Works</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-            <div class="auth-buttons">
-                <a href="{% url 'login' %}" class="btn btn-login">Login</a>
-                <a href="{% url 'register' %}" class="btn btn-primary">Sign Up</a>
-            </div>
-        </nav>
-    </header>
 
-    <main>
-        <section id="hero">
-            <div class="hero-content">
-                <h1>Simplify School Event & Club Management</h1>
-                <p>Tired of lost sign-up sheets? GatherEd provides a centralized platform for seamless event organization, communication, and attendance tracking for your school community.</p>
-                <div class="cta-buttons">
-                    <a href="{% url 'register' %}" class="btn btn-primary">Get Started Now</a>
-                    <a href="#features" class="btn btn-secondary">Learn More <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
-        </section>
+<!-- ================= Strong Back-Button Fix ================= -->
+<script>
+(function() {
+    // Clear session storage
+    sessionStorage.clear();
 
-        <section id="features">
-            <h2>Core Features</h2>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <i class="fas fa-check-circle icon"></i>
-                    <h3>Digital Sign-Ups</h3>
-                    <p>Move beyond paper forms with a reliable, digital system that automatically records student participation.</p>
-                </div>
-                <div class="feature-card">
-                    <i class="fas fa-chart-bar icon"></i>
-                    <h3>Attendance Tracking</h3>
-                    <p>Effortlessly track attendance for any event or club meeting, giving administrators accurate data and insights.</p>
-                </div>
-                <div class="feature-card">
-                    <i class="fas fa-bullhorn icon"></i>
-                    <h3>Instant Communication</h3>
-                    <p>Send real-time updates and announcements to all participants, ensuring no one misses a beat.</p>
-                </div>
-                <div class="feature-card">
-                    <i class="fas fa-users icon"></i>
-                    <h3>Club Management</h3>
-                    <p>Empower club leaders to manage their own events, members, and communications from a dedicated dashboard.</p>
-                </div>
-            </div>
-        </section>
+    // Prevent back button from showing cached pages
+    window.history.pushState(null, document.title, window.location.href);
+    window.addEventListener('popstate', function (event) {
+        // Always redirect back button to index
+        window.location.replace("{% url 'index' %}");
+    });
 
-        <section id="how-it-works">
-            <h2>How GatherEd Works</h2>
-            <div class="steps-container">
-                <div class="step-card">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h3>Create an Event</h3>
-                        <p>Administrators or club leaders can quickly create and publish a new event with all the necessary details.</p>
-                    </div>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h3>Students Sign Up</h3>
-                        <p>Students can easily discover and sign up for events and clubs from a single, intuitive dashboard.</p>
-                    </div>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h3>Gathered Data</h3>
-                        <p>Attendance and participation records are automatically stored, providing a transparent and structured history.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+    // Remove this page from history
+    window.history.replaceState({}, document.title, window.location.href);
+})();
+</script>
 
-        <section id="cta-bottom">
-            <div class="cta-content">
-                <h2>Ready to Revolutionize Your School's Events?</h2>
-                <p>Improve efficiency and student engagement with a centralized platform designed for the modern school.</p>
-                <a href="{% url 'register' %}" class="btn btn-primary">Join GatherEd</a>
-            </div>
-        </section>
+<header>
+    <nav>
+        <div class="logo">
+            <i class="fas fa-calendar-check"></i> GatherEd
+        </div>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <div class="auth-buttons">
+            <a href="{% url 'login' %}" class="btn btn-login">Login</a>
+            <a href="{% url 'register' %}" class="btn btn-primary">Sign Up</a>
+        </div>
+    </nav>
+</header>
 
-        <section id="contact">
-            <h2>Get In Touch</h2>
-            <p class="section-description">We'd love to hear from you! Send us a message or find us on social media.</p>
-            <div class="contact-grid">
-                <div class="contact-info">
-                    <h3>Reach Out Directly</h3>
-                    <p><i class="fas fa-envelope"></i> support@gathered.edu</p>
-                    <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
-                    <p><i class="fas fa-map-marker-alt"></i> 123 School Ave, Learning City, ST 98765</p>
-                </div>
-                <form class="contact-form">
-                    <h3>Send Us a Message</h3>
-                    <div class="form-group">
-                        <label for="contact-name">Your Name</label>
-                        <input type="text" id="contact-name" name="name" placeholder="John Doe" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="contact-email">Your Email</label>
-                        <input type="email" id="contact-email" name="email" placeholder="john.doe@example.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="contact-subject">Subject</label>
-                        <input type="text" id="contact-subject" name="subject" placeholder="Question about features" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="contact-message">Message</label>
-                        <textarea id="contact-message" name="message" rows="6" placeholder="Your message here..." required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full-width">Send Message</button>
-                </form>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <div class="footer-content">
-            <div class="footer-brand">
-                <div class="logo">GatherEd</div>
-                <p>Your central hub for school events.</p>
-            </div>
-            <div class="footer-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#contact">Support</a>
+<main>
+    <!-- Hero Section -->
+    <section id="hero">
+        <div class="hero-content">
+            <h1>Simplify School Event & Club Management</h1>
+            <p>Tired of lost sign-up sheets? GatherEd provides a centralized platform for seamless event organization, communication, and attendance tracking for your school community.</p>
+            <div class="cta-buttons">
+                <a href="{% url 'register' %}" class="btn btn-primary">Get Started Now</a>
+                <a href="#features" class="btn btn-secondary">Learn More <i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
-        <div class="footer-copyright">
-            &copy; 2025 GatherEd. All rights reserved.
-        </div>
-    </footer>
+    </section>
 
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            {% if messages %}
-                {% for message in messages %}
-                    var messageType = "{{ message.tags }}";
-                    var backgroundColor;
-                    switch (messageType) {
-                        case 'success':
-                            backgroundColor = 'linear-gradient(to right, #28a745, #218838)';
-                            break;
-                        case 'error':
-                            backgroundColor = 'linear-gradient(to right, #dc3545, #c82333)';
-                            break;
-                        default:
-                            backgroundColor = 'linear-gradient(to right, #6c757d, #5a6268)';
-                    }
-                    Toastify({
-                        text: "{{ message|escapejs }}",
-                        duration: 4000,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        stopOnFocus: true,
-                        style: {
-                            background: backgroundColor,
-                            borderRadius: "8px",
-                            boxShadow: "0 3px 6px rgba(0,0,0,0.2)"
-                        },
-                        offset: { x: 10, y: 60 }
-                    }).showToast();
-                {% endfor %}
-            {% endif %}
-        });
-    </script>
+    <!-- Features Section -->
+    <section id="features">
+        <h2>Core Features</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <i class="fas fa-check-circle icon"></i>
+                <h3>Digital Sign-Ups</h3>
+                <p>Move beyond paper forms with a reliable, digital system that automatically records student participation.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-chart-bar icon"></i>
+                <h3>Attendance Tracking</h3>
+                <p>Effortlessly track attendance for any event or club meeting, giving administrators accurate data and insights.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-bullhorn icon"></i>
+                <h3>Instant Communication</h3>
+                <p>Send real-time updates and announcements to all participants, ensuring no one misses a beat.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-users icon"></i>
+                <h3>Club Management</h3>
+                <p>Empower club leaders to manage their own events, members, and communications from a dedicated dashboard.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works">
+        <h2>How GatherEd Works</h2>
+        <div class="steps-container">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Create an Event</h3>
+                    <p>Administrators or club leaders can quickly create and publish a new event with all the necessary details.</p>
+                </div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Students Sign Up</h3>
+                    <p>Students can easily discover and sign up for events and clubs from a single, intuitive dashboard.</p>
+                </div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Gathered Data</h3>
+                    <p>Attendance and participation records are automatically stored, providing a transparent and structured history.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section id="cta-bottom">
+        <div class="cta-content">
+            <h2>Ready to Revolutionize Your School's Events?</h2>
+            <p>Improve efficiency and student engagement with a centralized platform designed for the modern school.</p>
+            <a href="{% url 'register' %}" class="btn btn-primary">Join GatherEd</a>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact">
+        <h2>Get In Touch</h2>
+        <p class="section-description">We'd love to hear from you! Send us a message or find us on social media.</p>
+        <div class="contact-grid">
+            <div class="contact-info">
+                <h3>Reach Out Directly</h3>
+                <p><i class="fas fa-envelope"></i> support@gathered.edu</p>
+                <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
+                <p><i class="fas fa-map-marker-alt"></i> 123 School Ave, Learning City, ST 98765</p>
+            </div>
+            <form class="contact-form">
+                <h3>Send Us a Message</h3>
+                <div class="form-group">
+                    <label for="contact-name">Your Name</label>
+                    <input type="text" id="contact-name" name="name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-email">Your Email</label>
+                    <input type="email" id="contact-email" name="email" placeholder="john.doe@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-subject">Subject</label>
+                    <input type="text" id="contact-subject" name="subject" placeholder="Question about features" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-message">Message</label>
+                    <textarea id="contact-message" name="message" rows="6" placeholder="Your message here..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full-width">Send Message</button>
+            </form>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="footer-content">
+        <div class="footer-brand">
+            <div class="logo">GatherEd</div>
+            <p>Your central hub for school events.</p>
+        </div>
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#contact">Support</a>
+        </div>
+    </div>
+    <div class="footer-copyright">
+        &copy; 2025 GatherEd. All rights reserved.
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    {% if messages %}
+        {% for message in messages %}
+            var bgColor = "linear-gradient(to right, #6c757d, #5a6268)";
+            {% if message.tags == 'success' %} bgColor = "linear-gradient(to right, #28a745, #218838)"; {% endif %}
+            {% if message.tags == 'error' %} bgColor = "linear-gradient(to right, #dc3545, #c82333)"; {% endif %}
+            Toastify({
+                text: "{{ message|escapejs }}",
+                duration: 4000,
+                close: true,
+                gravity: "top",
+                position: "right",
+                style: { background: bgColor, borderRadius: "8px", boxShadow: "0 3px 6px rgba(0,0,0,0.2)" },
+                offset: { x: 10, y: 60 }
+            }).showToast();
+        {% endfor %}
+    {% endif %}
+});
+</script>
 </body>
 </html>
