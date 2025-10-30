@@ -1,0 +1,35 @@
+{% load static %}
+<div class="event-details-content-wrapper" style="padding: 20px;">
+
+    <h4 style="color: var(--primary-color); font-weight: 700; margin-bottom: 15px;">{{ event.name }}</h4>
+
+    <div style="font-size: 0.95rem; line-height: 1.6;">
+        <p style="margin-bottom: 5px;"><strong>Date:</strong> {{ event.date }}</p>
+        <p style="margin-bottom: 5px;"><strong>Time:</strong> {{ event.start_time }} - {{ event.end_time }}</p>
+        <p style="margin-bottom: 5px;"><strong>Location:</strong> {{ event.location }}</p>
+        <p style="margin-bottom: 5px;"><strong>Status:</strong> <span class="status-{{ event.status|lower }}">{{ event.status }}</span></p>
+        <p style="margin-bottom: 5px;"><strong>Registrations:</strong> {{ event.registrations }} / {{ event.max_attendees }}</p>
+    </div>
+
+    <hr style="border-color: var(--border-color); margin-top: 15px; margin-bottom: 15px;">
+
+    <p style="color: var(--text-light); margin-bottom: 20px;">
+        <strong>Description:</strong> {{ event.description }}
+    </p>
+
+    <a href="javascript:void(0);"
+       onclick="alert('Viewing Registrants for {{ event.name }}')"
+       class="btn w-100 mb-2"
+       style="background-color: var(--secondary-color); color: var(--background-dark); border: none; font-weight: 600;">
+        <i class="fas fa-users"></i> View Registrants ({{ event.registrations }})
+    </a>
+
+    <a href="javascript:void(0);"
+       onclick="handleNavClick(this)"
+       data-url="{% url 'modify_event' event_id=event.id %}?is_ajax=true"
+       data-clean-url="{% url 'modify_event' event_id=event.id %}"
+       class="btn w-100"
+       style="background-color: var(--warning-color); color: var(--background-dark); border: none; font-weight: 600;">
+        <i class="fas fa-edit"></i> Full Edit Form
+    </a>
+</div>

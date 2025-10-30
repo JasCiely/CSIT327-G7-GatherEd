@@ -109,3 +109,22 @@ def modify_event_view(request, event_id):
         return redirect('manage_event')
 
     return render(request, 'fragments/manage_event/modify_event_form.html', {'event_id': event_id})
+
+@login_required
+def event_details_view(request, event_id):
+    """Return event details as a fragment for AJAX requests."""
+    try:
+        admin_id = str(request.user.adminprofile.id)
+        cache_key = f"events_{admin_id}"
+        events_list = cache.get(cache_key, [])
+
+        # Find event by ID
+        event = next((ev for ev in events_list if str(ev['id']) == str(event_id)), None)
+        if not event:
+            return render(request, 'fragments/manage_event/error_message.html', {'message': 'Event not found'})
+
+        return render(request, 'fragments/manage_event/event_details_content.html', {'event': event})
+    except Exception as e:
+        print(f"[Error fetching event details] {e}")
+        return render(request, 'fragments/manage_event/error_message.html', {'message': 'Failed to load event details'})
+
