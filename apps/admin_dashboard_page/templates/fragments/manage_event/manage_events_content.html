@@ -1,7 +1,7 @@
 {% load static %}
 <style>
 /* -------------------------------------- */
-/* 🚀 CSS STYLES (Provided by User) */
+/* 🚀 CSS STYLES (Base Theme) */
 /* -------------------------------------- */
 
 :root {
@@ -64,8 +64,6 @@
 }
 
 .events-table tbody tr { background-color: var(--background-light); }
-
-/* Standard hover effect */
 .events-table tbody tr:hover { background-color: #252525; }
 
 /* Status Badges */
@@ -137,31 +135,173 @@
     .details-placeholder { height: 250px; }
 }
 
-/* ⭐⭐⭐ CORRECTED SELECTED ROW INDICATION CSS ⭐⭐⭐ */
+/* SELECTED ROW INDICATION */
 .events-table tbody .clickable-row.selected {
-    /* Use a color slightly darker than the hover, but with the primary accent */
     background-color: #253343;
-
-    /* Prominent left border using the main primary color */
     border-left: 5px solid var(--primary-color);
-
-    /* Subtle glow/shadow effect to lift it */
     box-shadow: inset 0 0 10px var(--accent-blue-rgba);
-
-    /* Slight scale for visual pop */
     transform: scale(1.005);
     transition: all 0.2s ease-in-out;
 }
-
-/* Ensure the text color is bright and clear when selected */
 .events-table tbody .clickable-row.selected td {
     color: var(--text-light) !important;
     font-weight: 500;
 }
-
-/* Ensure selected rows don't change color on hover (to avoid flicker) */
 .events-table tbody .clickable-row.selected:hover {
-    background-color: #253343; /* Keep the selected color */
+    background-color: #253343;
+}
+
+/* -------------------------------------- */
+/* ⚡ MODAL STYLES (Delete, Success, Loading) */
+/* -------------------------------------- */
+
+/* Backdrop */
+.custom-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Modal Box - Base Style */
+.custom-modal-content {
+    background-color: var(--background-dark);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 169, 255, 0.2);
+    width: 90%;
+    max-width: 450px;
+    padding: 30px;
+    text-align: center;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Header/Icon */
+.modal-header {
+    margin-bottom: 20px;
+}
+
+.modal-header i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.custom-modal-content h3 {
+    color: var(--text-light);
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+/* Body Text */
+.modal-body-text {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+.modal-body-text strong {
+    color: var(--warning-color);
+    font-weight: 700;
+}
+
+.modal-secondary-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 30px;
+}
+
+/* Actions */
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.modal-actions button {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+/* 🟢 SUCCESS MODAL STYLES */
+.custom-modal-content.success-modal-style {
+    border: 1px solid var(--success-color);
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4);
+}
+
+.success-icon {
+    color: var(--success-color) !important;
+}
+
+.btn-modal-close {
+    background-color: var(--success-color) !important;
+    color: white !important;
+}
+
+.btn-modal-close:hover {
+    background-color: #388e3c !important;
+}
+
+/* 🔴 DELETE MODAL ENHANCED STYLES */
+.custom-modal-content.delete-modal-style {
+    border: 1px solid var(--danger-color);
+    box-shadow: 0 4px 20px rgba(244, 67, 54, 0.4);
+}
+
+.delete-icon {
+    color: var(--danger-color) !important;
+}
+
+.btn-modal-cancel {
+    background-color: var(--border-color);
+    color: var(--text-light);
+}
+.btn-modal-cancel:hover {
+    background-color: #555555;
+}
+.btn-modal-delete {
+    background-color: var(--danger-color);
+    color: white;
+}
+.btn-modal-delete:hover {
+    background-color: #cc0000;
+}
+
+/* 🌀 LOADING MODAL SPECIFIC STYLES */
+.custom-modal-content.loading-modal-style {
+    max-width: 300px;
+    padding: 40px 30px;
+    border-color: var(--primary-color);
+}
+
+.loading-modal-style h3 {
+    margin-bottom: 25px;
+}
+
+.loading-spinner {
+    font-size: 2rem;
+    color: var(--primary-color);
+    animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 </style>
 
@@ -213,7 +353,9 @@
                             <td data-label="Registrations">{{ event.registrations }}</td>
                             <td data-label="Status" class="status-{{ event.status|lower }}">{{ event.status }}</td>
                             <td data-label="Actions" class="action-buttons">
-                                <button class="btn-action delete" title="Delete Event" onclick="event.stopPropagation()">
+                                <button class="btn-action delete delete-event-btn"
+                                        title="Delete Event"
+                                        data-event-id="{{ event.id }}">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
@@ -244,26 +386,131 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    console.log("Manage Events Script: Initializing AJAX event delegation.");
+// Get the Django CSRF token from the cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
 
-    // Generate correct URL for event details respecting Django URL patterns
+
+$(document).ready(function() {
+
     function getEventDetailsUrl(eventId) {
         return "{% url 'event_details_html' 'EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId);
     }
 
-    // Click handler for rows
+    function getDeleteEventUrl(eventId) {
+        return "{% url 'delete_event' 'EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId);
+    }
+
+    // ⭐ 0. LOADING MODAL LOGIC ⭐
+    function showLoadingModal(message) {
+        $('#custom-loading-modal').remove();
+
+        const modalHtml = `
+            <div id="custom-loading-modal" class="custom-modal-backdrop">
+                <div class="custom-modal-content loading-modal-style">
+                    <h3>${message}</h3>
+                    <i class="fas fa-sync-alt loading-spinner"></i>
+                </div>
+            </div>
+        `;
+
+        $('body').append(modalHtml);
+    }
+
+    function hideLoadingModal() {
+        $('#custom-loading-modal').remove();
+    }
+
+
+    // ⭐ 1. SUCCESS MODAL LOGIC (NO TIMER) ⭐
+    function showSuccessModal(message) {
+        const modalHtml = `
+            <div id="custom-success-modal" class="custom-modal-backdrop">
+                <div class="custom-modal-content success-modal-style">
+                    <div class="modal-header">
+                        <i class="fas fa-check-circle success-icon"></i>
+                        <h3>Success!</h3>
+                    </div>
+                    <p class="modal-body-text">${message}</p>
+                    <div class="modal-actions">
+                        <button class="btn-modal-close">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('body').append(modalHtml);
+
+        const modal = $('#custom-success-modal');
+
+        // Only closes when the user clicks the close button
+        modal.find('.btn-modal-close').on('click', function() {
+            modal.remove();
+        });
+    }
+
+    // ⭐ 2. DELETE CONFIRMATION MODAL LOGIC (IMPROVED UI) ⭐
+    function showDeleteConfirmationModal(eventName, onConfirm) {
+        const modalHtml = `
+            <div id="custom-delete-modal" class="custom-modal-backdrop">
+                <div class="custom-modal-content delete-modal-style">
+                    <div class="modal-header">
+                        <i class="fas fa-exclamation-triangle delete-icon"></i>
+                        <h3>Confirm Event Deletion</h3>
+                    </div>
+                    <p class="modal-body-text">
+                        Are you sure you want to permanently delete the event:
+                        <br>
+                        <strong>"${eventName}"</strong>?
+                    </p>
+                    <p class="modal-secondary-text">
+                        This action cannot be undone. You will lose all associated data.
+                    </p>
+                    <div class="modal-actions">
+                        <button class="btn-modal-cancel">Cancel</button>
+                        <button class="btn-modal-delete">Yes, Delete Event</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('body').append(modalHtml);
+
+        const modal = $('#custom-delete-modal');
+
+        modal.find('.btn-modal-cancel').on('click', function() {
+            modal.remove();
+        });
+
+        modal.find('.btn-modal-delete').on('click', function() {
+            modal.remove();
+            onConfirm();
+        });
+    }
+
+    // --- ROW CLICK HANDLER (View Details) ---
     $(document).on('click', '.clickable-row', function() {
         var eventId = $(this).data('event-id');
         var detailsUrl = getEventDetailsUrl(eventId);
 
-        console.log("Event row clicked. ID:", eventId, "URL:", detailsUrl);
+        $('#event-details-content').data('current-event-id', eventId);
 
-        // 🎯 HIGHLIGHT LOGIC: Remove 'selected' from all, add it to the clicked row
         $('.clickable-row').removeClass('selected');
         $(this).addClass('selected');
 
-        // Hide placeholder and show loading spinner
         $('#initial-details-message').hide();
         var detailsContent = $('#event-details-content').show().html(
             `<p class="text-center" style="color: var(--text-muted); padding: 20px;">
@@ -271,20 +518,88 @@ $(document).ready(function() {
             </p>`
         );
 
-        // AJAX call
         $.ajax({
             url: detailsUrl,
             method: 'GET',
             headers: {'X-Requested-With': 'XMLHttpRequest'},
             success: function(data) {
-                console.log("AJAX Success. Details loaded.");
                 detailsContent.html(data);
             },
             error: function(xhr) {
                 let errorMsg = xhr.responseText || `Error ${xhr.status}: Failed to load event details.`;
                 detailsContent.html(`<div style="color: var(--danger-color); padding: 20px;">${errorMsg}</div>`);
-                console.error("AJAX Error details:", xhr.responseText);
             }
+        });
+    });
+
+    // --- DELETE BUTTON HANDLER (Uses Custom Modal) ---
+    $(document).on('click', '.delete-event-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const eventId = $(this).data('event-id');
+        const eventRow = $(this).closest('.clickable-row');
+        const eventName = eventRow.find('td[data-label="Event Name"]').text();
+
+        // Show the custom confirmation modal
+        showDeleteConfirmationModal(eventName, function() {
+
+            const deleteUrl = getDeleteEventUrl(eventId);
+
+            // ⭐ SHOW LOADING MODAL before AJAX starts
+            showLoadingModal('Deleting Event...');
+
+            // AJAX call to delete the event
+            $.ajax({
+                url: deleteUrl,
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                },
+                success: function(response) {
+                    // ⭐ HIDE LOADING MODAL
+                    hideLoadingModal();
+
+                    if (response.success) {
+                        // Remove the row from the table
+                        eventRow.fadeOut(300, function() {
+                            $(this).remove();
+
+                            // Reset the details panel if the deleted event was selected
+                            if ($('#event-details-content').data('current-event-id') === eventId) {
+                                $('#event-details-content').hide().empty().removeData('current-event-id');
+                                $('#initial-details-message').show();
+                            }
+
+                            // Check for empty state and update the table area
+                            if ($('.events-table tbody tr').length === 0) {
+                                 $('.events-table-responsive').html(`
+                                    <div class="empty-state">
+                                        <i class="fas fa-calendar-times"></i>
+                                        <p>No events found yet.</p>
+                                        <p class="muted">Start by creating your first event using the "New Event" button.</p>
+                                    </div>
+                                `);
+                            }
+                        });
+
+                        // Show the custom SUCCESS modal (no timer)
+                        showSuccessModal(`Event <strong>"${eventName}"</strong> has been successfully deleted.`);
+
+                    } else {
+                        // If the server returns a 200 but indicates an error
+                        alert(`Error deleting event: ${response.error || 'Unknown error'}`);
+                    }
+                },
+                error: function(xhr) {
+                    // ⭐ HIDE LOADING MODAL
+                    hideLoadingModal();
+
+                    console.error("AJAX Delete Error:", xhr.responseText);
+                    alert(`Server Error: Failed to delete event. Status: ${xhr.status}`);
+                }
+            });
         });
     });
 });

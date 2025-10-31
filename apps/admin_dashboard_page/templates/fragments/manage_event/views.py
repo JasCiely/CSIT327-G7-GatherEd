@@ -4,13 +4,15 @@ import traceback
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
-from django.views.decorators.http import require_POST
+# NOTE: Using require_http_methods for DELETE request
+from django.views.decorators.http import require_POST, require_http_methods
 from supabase import create_client
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 
-from apps.admin_dashboard_page.models import Event
+
+# from apps.admin_dashboard_page.models import Event # Removed Django ORM dependency
 
 
 def format_to_readable_date(date_str):
@@ -103,18 +105,18 @@ def manage_events(request):
     return redirect('/admin_dashboard/')
 
 
-
 @login_required
 def modify_event_view(request, event_id):
     """Edit event details (simplified)."""
     if request.method == 'POST':
         messages.success(request, "Event updated successfully.")
-        cache_key = f"manage_events_{request.user.adminprofile.id}"
+        # NOTE: Admin ID is missing here, but keeping structure as is for now.
+        cache_key = f"events_{request.user.adminprofile.id}"
         cache.delete(cache_key)
-        cache.delete(f"{cache_key}_refresh")
         return redirect('manage_event')
 
     return render(request, 'fragments/manage_event/modify_event_form.html', {'event_id': event_id})
+
 
 def _fetch_single_event(event_id, admin_client):
     """Fetches full details for one event and formats the data."""
@@ -137,7 +139,7 @@ def _fetch_single_event(event_id, admin_client):
     start_time_str = data.get('start_time', '')
     end_time_str = data.get('end_time', '')
     event_status = get_event_status(date_str, start_time_str, end_time_str)
-    current_registrations_count = 0 # Placeholder: Integrate registration count here
+    current_registrations_count = 0  # Placeholder: Integrate registration count here
 
     return {
         'id': data['id'],
@@ -152,13 +154,14 @@ def _fetch_single_event(event_id, admin_client):
         'status': event_status,
     }
 
+
 @login_required
 def get_event_details_html(request, event_id):
     """AJAX endpoint to fetch and render the event details fragment."""
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return HttpResponse("Unauthorized", status=403)
 
-    print(f"Received AJAX request for event ID: {event_id}") # Confirming data is received
+    print(f"Received AJAX request for event ID: {event_id}")  # Confirming data is received
 
     try:
         admin_client = create_client(
@@ -169,7 +172,9 @@ def get_event_details_html(request, event_id):
         event_data = _fetch_single_event(event_id, admin_client)
 
         if not event_data:
-            return HttpResponse('<div style="color: red; padding: 20px;">Error 404: Event not found. Check the ID in Supabase.</div>', status=404)
+            return HttpResponse(
+                '<div style="color: red; padding: 20px;">Error 404: Event not found. Check the ID in Supabase.</div>',
+                status=404)
 
         # Renders ONLY the fragment HTML, which is injected into the details panel
         return render(request, 'fragments/manage_event/event_details_fragment.html', {'event': event_data})
@@ -177,17 +182,45 @@ def get_event_details_html(request, event_id):
     except Exception as e:
         error_trace = traceback.format_exc()
         print(f"CRITICAL ERROR in get_event_details_html: {e}\n{error_trace}")
-        return HttpResponse('<div style="color: red; padding: 20px;">Error 500: Server failed to load details. Check the Django console.</div>', status=500)
+        return HttpResponse(
+            '<div style="color: red; padding: 20px;">Error 500: Server failed to load details. Check the Django console.</div>',
+            status=500)
 
 
-@require_POST
+@login_required
+@require_http_methods(["DELETE"])
 def delete_event(request, event_id):
     """
-    Deletes an event and returns JSON response.
+    Deletes an event from Supabase and returns JSON response.
+    This function requires the DELETE HTTP method.
     """
-    event = get_object_or_404(Event, id=event_id)
+    # Ensure the request is an AJAX request for security/correct flow
+    if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'success': False, 'error': 'Unauthorized: Not an AJAX request'}, status=403)
+
+    # Use the logged-in admin's ID for security
+    admin_id = str(request.user.adminprofile.id)
+
     try:
-        event.delete()
+        client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+
+        # 1. Security check: Ensure the event belongs to the current admin
+        fetch_result = client.table('events').select('id').eq('id', event_id).eq('admin_id', admin_id).execute()
+
+        if not getattr(fetch_result, 'data', []):
+            return JsonResponse({'success': False, 'error': 'Event not found or unauthorized to delete.'}, status=404)
+
+        # 2. Proceed with deletion
+        client.table('events').delete().eq('id', event_id).execute()
+
+        # Clear cache for the event list
+        cache_key = f"events_{admin_id}"
+        cache.delete(cache_key)
+
+        print(f"Successfully deleted event ID: {event_id} for admin: {admin_id}")
         return JsonResponse({'success': True})
+
     except Exception as e:
+        error_trace = traceback.format_exc()
+        print(f"Error deleting event ID {event_id}: {e}\n{error_trace}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)

@@ -11,5 +11,6 @@ urlpatterns = [
     # Modify/Edit View
     path('manage/event/<str:event_id>/modify/', views.modify_event_view, name='modify_event_root'),
 
-    path('delete-event/<int:event_id>/', views.delete_event, name='delete_event'),
+    # AJAX Endpoint: The target for the DELETE request
+    path('delete-event/<str:event_id>/', views.delete_event, name='delete_event'),
 ]
