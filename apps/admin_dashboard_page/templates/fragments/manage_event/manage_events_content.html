@@ -4,12 +4,9 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const currentPath = window.location.pathname;
-
     if (currentPath === "/student_dashboard/manage/events/manage/events/") {
         window.location.replace("/admin_dashboard/");
     }
-
-    // Set the current fragment in sessionStorage for reload detection
     sessionStorage.setItem("active_fragment", "manage_events");
 });
 </script>
@@ -21,14 +18,14 @@ document.addEventListener("DOMContentLoaded", function () {
     <!-- Card Header -->
     <div class="card-header">
         <h2>View and Modify Events</h2>
-        <p class="card-subtitle">Manage all active, upcoming, and past events created across the schools.</p>
+        <p class="card-subtitle">Manage all active, upcoming, and completed events created across the schools.</p>
     </div>
 
     <!-- Controls -->
     <div class="events-controls">
-        <input type="text" placeholder="Search events by name..." class="control-input">
-        <select class="control-select">
-            <option value="">All Statuses</option>
+        <input id="search" type="text" placeholder="Search events by name..." class="control-input" onkeyup="filterTable()">
+        <select id="statusFilter" class="control-select" onchange="applyFilter(this.value)">
+            <option value="all">All Statuses</option>
             <option value="active">Active</option>
             <option value="upcoming">Upcoming</option>
             <option value="completed">Completed</option>
@@ -47,7 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
         <div class="events-table-area">
             <div class="events-table-responsive">
                 {% if events_list %}
-                <table class="events-table">
+                <table id="eventsTable" class="events-table">
                     <thead>
                         <tr>
                             <th>Event Name</th>
@@ -63,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             <td data-label="Event Name">{{ event.name }}</td>
                             <td data-label="Date">{{ event.date }}</td>
                             <td data-label="Registrations">{{ event.registrations }}</td>
-                            <td data-label="Status" class="status-{{ event.status|lower }}">{{ event.status }}</td>
+                            <td data-label="Status" class="status">{{ event.status }}</td>
                             <td data-label="Actions" class="action-buttons">
                                 <button class="btn-action edit" title="Edit Event" onclick="event.stopPropagation()"><i class="fas fa-edit"></i></button>
                                 <button class="btn-action delete" title="Delete Event" onclick="event.stopPropagation()"><i class="fas fa-trash"></i></button>
@@ -72,6 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         {% endfor %}
                     </tbody>
                 </table>
+                <div id="noResultsMessage" class="no-results-message"></div>
                 {% else %}
                 <div class="empty-state">
                     <i class="fas fa-calendar-times"></i>
@@ -93,7 +91,70 @@ document.addEventListener("DOMContentLoaded", function () {
     </div>
 </div>
 
-<!-- JS: Initialize clickable rows and handle safe reload -->
+<!-- JS: Search and Status Filter -->
+<script>
+function filterTable() {
+    const input = document.getElementById("search").value.toLowerCase().trim();
+    const rows = document.querySelectorAll("#eventsTable tbody tr");
+    const messageContainer = document.getElementById("noResultsMessage");
+    let visibleCount = 0;
+
+    if (!input) {
+        rows.forEach(row => row.style.display = "");
+        messageContainer.textContent = "";
+        applyFilter(document.getElementById("statusFilter").value);
+        return;
+    }
+
+    try {
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            if (text.includes(input)) {
+                row.style.display = "";
+                visibleCount++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+        messageContainer.textContent = visibleCount === 0 ? "No results found." : "";
+    } catch (error) {
+        console.error("Filter error:", error);
+        messageContainer.textContent = "Something went wrong. Please try again.";
+    }
+}
+
+function applyFilter(value) {
+    const validFilters = ["all", "active", "upcoming", "completed"];
+    const rows = document.querySelectorAll("#eventsTable tbody tr");
+    const messageContainer = document.getElementById("noResultsMessage");
+    let visibleCount = 0;
+
+    if (!validFilters.includes(value)) {
+        messageContainer.textContent = "Invalid filter ignored. Showing default results.";
+        filterTable();
+        return;
+    }
+
+    rows.forEach(row => {
+        const statusCell = row.querySelector(".status");
+        const status = statusCell ? statusCell.textContent.toLowerCase() : "";
+
+        if (value === "all" || status === value) {
+            row.style.display = "";
+            visibleCount++;
+        } else {
+            row.style.display = "none";
+        }
+    });
+
+    const searchText = document.getElementById("search").value.toLowerCase().trim();
+    if (searchText) filterTable(); // reapply text filter on top of status filter
+
+    messageContainer.textContent = visibleCount === 0 ? "No results found." : "";
+}
+</script>
+
+<!-- JS: Initialize clickable rows -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const detailsPanel = document.getElementById("event-details-content");
@@ -103,7 +164,6 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(".clickable-row").forEach(row => {
             row.addEventListener("click", () => {
                 const eventId = row.dataset.eventId;
-
                 placeholder.style.display = "none";
                 detailsPanel.style.display = "block";
                 detailsPanel.innerHTML = `
@@ -112,22 +172,16 @@ document.addEventListener("DOMContentLoaded", function () {
                         <span>Loading event details...</span>
                     </div>
                 `;
-
                 fetch(`/admin-dashboard/event/${eventId}/details/?is_ajax=true`, { cache: "no-store" })
                     .then(res => res.ok ? res.text() : Promise.reject("Failed to fetch"))
                     .then(html => detailsPanel.innerHTML = html)
-                    .catch(() => {
-                        detailsPanel.innerHTML = `<p class="error-text">⚠️ Failed to load event details.</p>`;
-                    });
+                    .catch(() => detailsPanel.innerHTML = `<p class="error-text">⚠️ Failed to load event details.</p>`);
             });
         });
     }
-
     initRows();
 
-    // Detect full reload and redirect if sessionStorage says this fragment was active
     if (!performance.getEntriesByType("navigation")[0].type.includes("reload")) return;
-
     const activeFragment = sessionStorage.getItem("active_fragment");
     if (activeFragment === "manage_events") {
         window.location.replace("/admin_dashboard/?reload_fragment=manage_events");
