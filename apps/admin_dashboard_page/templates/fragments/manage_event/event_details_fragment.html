@@ -1,12 +1,25 @@
 {% load static %}
+<style>
+/* (Include CSS for the event-details-content-wrapper and related styles here) */
+
+.event-details-content-wrapper { padding: 25px; }
+.event-details-content-wrapper h4 { color: var(--primary-color); }
+.status-active { color: var(--success-color); font-weight: 600; }
+.status-upcoming { color: var(--warning-color); font-weight: 600; }
+.status-completed { color: var(--text-muted); }
+.btn-edit-form {
+    background-color: var(--warning-color); color: var(--background-dark);
+    border: none; font-weight: 600; padding: 10px; border-radius: 6px;
+    text-align: center; display: block; width: 100%; cursor: pointer;
+}
+</style>
+
 <div class="event-details-content-wrapper" style="padding: 20px;">
 
-    <!-- Event Name -->
     <h4 style="color: var(--primary-color); font-weight: 700; margin-bottom: 15px;">
         {{ event.name }}
     </h4>
 
-    <!-- Event Info -->
     <div style="font-size: 0.95rem; line-height: 1.6;">
         <p><strong>Date:</strong> {{ event.date }}</p>
         <p><strong>Time:</strong> {{ event.start_time }} - {{ event.end_time }}</p>
@@ -19,26 +32,13 @@
 
     <hr style="border-color: var(--border-color); margin: 15px 0;">
 
-    <!-- Event Description -->
     <p style="color: var(--text-light); margin-bottom: 20px;">
         <strong>Description:</strong> {{ event.description }}
     </p>
 
-    <!-- View Registrants Button -->
-    <a href="javascript:void(0);"
-       onclick="alert('Viewing Registrants for {{ event.name }}');"
-       class="btn w-100 mb-2"
-       style="background-color: var(--secondary-color); color: var(--background-dark); border: none; font-weight: 600;">
-        <i class="fas fa-users"></i> View Registrants ({{ event.registrations }})
-    </a>
-
-    <!-- Full Edit Form Button -->
-    <a href="javascript:void(0);"
-       onclick="handleNavClick(this)"
-       data-url="{% url 'modify_event_root' event_id=event.id %}?is_ajax=true"
-       data-clean-url="{% url 'modify_event_root' event_id=event.id %}"
-       class="btn w-100"
-       style="background-color: var(--warning-color); color: var(--background-dark); border: none; font-weight: 600;">
+    <button class="btn w-100 full-edit-form-btn"
+            data-event-id="{{ event.id }}"
+            style="background-color: var(--warning-color); color: var(--background-dark); border: none; font-weight: 600;">
         <i class="fas fa-edit"></i> Full Edit Form
-    </a>
+    </button>
 </div>
