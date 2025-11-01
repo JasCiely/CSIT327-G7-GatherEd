@@ -5,43 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - GatherEd</title>
     {% load static %}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Optimized CSS Loading -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"></noscript>
+
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" as="style" onload="this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></noscript>
+
     <link rel="stylesheet" href="{% static 'css/student_dashboard_css.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
-    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="{% static 'css/student_dashboard_style.css' %}">
+
+    <!-- Deferred Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous" defer></script>
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-
-    <style>
-        /* Notification container styles */
-        .message-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            min-width: 250px;
-        }
-        .message-item {
-            margin-bottom: 10px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            color: #fff;
-            font-weight: 600;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            opacity: 0.95;
-            transition: all 0.5s ease-in-out;
-        }
-        .message-success { background-color: #28a745; }
-        .message-error { background-color: #dc3545; }
-        .message-info { background-color: #17a2b8; }
-        .fade-out { opacity: 0; transform: translateY(-20px); }
-    </style>
 </head>
+
 <body>
     <div class="dashboard-container">
         <aside class="sidebar">
@@ -88,104 +71,205 @@
                 </div>
             </header>
 
-            <div class="message-container" id="message-container">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="message-item {% if message.tags %}message-{{ message.tags }}{% else %}message-info{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            </div>
-
-            <div id="content-area">
-                {% include 'fragments/dashboard_content.html' %}
+            <div id="content-area" class="fade-container">
+                {% include 'fragments/dashboard_content_student.html' %}
             </div>
         </main>
     </div>
 
-    <script>
-        // Messages fade-out automatically after 4 seconds
-        $(document).ready(function() {
-            setTimeout(() => {
-                $('#message-container .message-item').each(function() {
-                    $(this).addClass('fade-out');
-                });
-            }, 4000);
-            // Remove after fade-out transition
-            setTimeout(() => {
-                $('#message-container').empty();
-            }, 5000);
+    <script defer>
+        // =========================================================
+        // 🧠 Smooth Navigation System (same as admin dashboard)
+        // =========================================================
+        const pageCache = {};
+        const CACHE_TIMEOUT = 60000; // 1 minute
+        let currentController = null;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // ✅ Display Django messages as toast alerts
+            {% if messages %}
+                {% for message in messages %}
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: "{{ message.tags|default:'info' }}",
+                        title: "{{ message|escapejs }}",
+                        showConfirmButton: false,
+                        timer: 4000,
+                        background: "#1e1e1e",
+                        color: "#fff",
+                        iconColor: "{% if message.tags == 'success' %}limegreen{% else %}#ff4d4d{% endif %}"
+                    });
+                {% endfor %}
+            {% endif %}
+
+            // ✅ Welcome popup (once per session)
+            {% if user.is_authenticated %}
+                if (!sessionStorage.getItem("student_welcomed")) {
+                    const fullName = "{{ user_display_name|escapejs }}";
+                    const firstName = fullName.split(" ")[0] || "Student";
+                    Swal.fire({
+                        toast: true,
+                        position: "top-end",
+                        iconHtml: '<i class="fas fa-hand-sparkles" style="color:#FFC107;"></i>',
+                        title: `Welcome back, ${firstName}!`,
+                        text: "Ready to explore new events 🎉",
+                        showConfirmButton: false,
+                        timer: 4000,
+                        background: "linear-gradient(to right, #1e1e1e, #2a2a2a)",
+                        color: "#fff",
+                        icon: false,
+                    });
+                    sessionStorage.setItem("student_welcomed", "true");
+                }
+            {% endif %}
+
+            preloadCommonStudentPages();
         });
 
-        function loadContent(url, linkElement) {
-            const contentArea = document.getElementById('content-area');
-            const pageTitleElement = document.getElementById('page-title');
-            const activeClass = 'active';
-            const cleanUrl = linkElement.getAttribute('data-clean-url');
+        // =========================================================
+        // 🚀 Optimized Fast Navigation
+        // =========================================================
+        window.handleNavClick = function (el) {
+            const url = el.dataset.url;
+            const cleanUrl = el.dataset.cleanUrl;
+            const title = el.textContent.trim();
+            const contentArea = document.getElementById("content-area");
+            const pageTitle = document.getElementById("page-title");
+            const navItems = document.querySelectorAll(".sidebar-nav .nav-item");
 
-            document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => item.classList.remove(activeClass));
-            linkElement.classList.add(activeClass);
+            if (el.classList.contains("active")) return;
 
-            contentArea.innerHTML = '<div class="loader-placeholder"><i class="fas fa-sync-alt fa-spin"></i> Loading content...</div>';
+            navItems.forEach(item => item.classList.remove("active"));
+            el.classList.add("active");
+            pageTitle.textContent = title;
 
-            const titleText = linkElement.textContent.replace(/[\s\r\n]+/g, ' ').replace(/\d+$/, '').trim();
-            pageTitleElement.textContent = titleText;
-            if (cleanUrl) history.pushState(null, titleText, cleanUrl);
+            const now = Date.now();
+            if (pageCache[url] && now - pageCache[url].timestamp < CACHE_TIMEOUT) {
+                contentArea.innerHTML = pageCache[url].html;
+                fadeInContent(contentArea);
+                history.pushState(null, "", cleanUrl);
+                fetchAndCache(url, false);
+                return;
+            }
 
-            fetch(url)
-                .then(response => response.ok ? response.text() : Promise.reject(`HTTP error! status: ${response.status}`))
-                .then(html => contentArea.innerHTML = html)
-                .catch(e => contentArea.innerHTML = '<div class="error-message">Failed to load content. Please try again.</div>');
-        }
+            contentArea.innerHTML = `
+                <div class="fast-loader">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <span class="loading-text">Loading content...</span>
+                </div>`;
+            fetchAndCache(url, true, cleanUrl);
+        };
 
-        function handleNavClick(element) {
-            const url = element.getAttribute('data-url');
-            loadContent(url, element);
-        }
+        function fetchAndCache(url, renderImmediately = false, cleanUrl = "") {
+            const contentArea = document.getElementById("content-area");
 
-        window.onpopstate = function(event) { window.location.reload(); };
+            if (currentController) currentController.aborted = true;
+            const controller = new AbortController();
+            currentController = controller;
 
-        document.getElementById('logout-btn').addEventListener('click', function(e) {
-            e.preventDefault();
-            const logoutUrl = this.getAttribute('href');
+            fetch(url, { cache: "no-store", signal: controller.signal })
+                .then(res => {
+                    if (controller.aborted || currentController !== controller) return;
+                    if (!res.ok) throw new Error("Failed to fetch page");
+                    return res.text();
+                })
+                .then(html => {
+                    if (controller.aborted || currentController !== controller) return;
 
-            Swal.fire({
-                title: 'Log out from GatherEd?',
-                text: 'You will need to log in again to access your student dashboard.',
-                icon: 'question',
-                background: '#1e1e1e',
-                color: '#ffffff',
-                showCancelButton: true,
-                confirmButtonColor: '#007bff',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Yes, log out',
-                cancelButtonText: 'Cancel',
-                customClass: { popup: 'rounded-4 shadow-lg', title: 'fw-bold', confirmButton: 'px-4 py-2', cancelButton: 'px-4 py-2' }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Logging out...',
-                        text: 'Please wait a moment.',
-                        background: '#1e1e1e',
-                        color: '#fff',
-                        allowOutsideClick: false,
-                        didOpen: () => { Swal.showLoading(); setTimeout(() => { window.location.href = logoutUrl; }, 1000); }
+                    pageCache[url] = { html, timestamp: Date.now() };
+                    if (renderImmediately) {
+                        contentArea.classList.add("fade-out");
+                        setTimeout(() => {
+                            contentArea.innerHTML = html;
+                            contentArea.classList.remove("fade-out");
+                            fadeInContent(contentArea);
+                            if (cleanUrl) history.pushState(null, "", cleanUrl);
+                        }, 150);
+                    }
+
+                    const temp = document.createElement("div");
+                    temp.innerHTML = html;
+                    temp.querySelectorAll("script:not([src])").forEach(s => {
+                        try { eval(s.textContent); } catch (e) {}
                     });
+                })
+                .catch(() => {
+                    if (!controller.aborted && currentController === controller) {
+                        contentArea.innerHTML = `<div class="error-message">⚠️ Failed to load content.</div>`;
+                    }
+                });
+        }
+
+        // =========================================================
+        // 💨 Fade-In Transition
+        // =========================================================
+        function fadeInContent(element) {
+            element.style.opacity = 1;
+        }
+
+        // =========================================================
+        // ⚙️ Preload Common Pages (student pages)
+        // =========================================================
+        function preloadCommonStudentPages() {
+            document.querySelectorAll(".sidebar-nav .nav-item").forEach(link => {
+                const url = link.dataset.url;
+                if (url.includes("event_list") || url.includes("my_events") || url.includes("submit_feedback")) {
+                    fetch(url, { cache: "no-store" })
+                        .then(res => res.text())
+                        .then(html => pageCache[url] = { html, timestamp: Date.now() })
+                        .catch(() => {});
                 }
             });
-        });
-
-        if (window.history && window.history.pushState) {
-            window.history.pushState(null, null, window.location.href);
-            window.onpopstate = function() { window.history.pushState(null, null, window.location.href); };
         }
 
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
-                window.location.href = "{% url 'student_dashboard' %}";
+        // =========================================================
+        // 🚪 Logout Confirmation
+        // =========================================================
+        document.addEventListener("DOMContentLoaded", () => {
+            const logoutBtn = document.getElementById("logout-btn");
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    const logoutUrl = this.href;
+                    Swal.fire({
+                        title: "Log out from GatherEd?",
+                        text: "You will need to log in again to access your student dashboard.",
+                        icon: "question",
+                        background: "#1e1e1e",
+                        color: "#fff",
+                        showCancelButton: true,
+                        confirmButtonColor: "#007bff",
+                        cancelButtonColor: "#6c757d",
+                        confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Log out',
+                        cancelButtonText: "Cancel",
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            Swal.fire({
+                                title: "Logging out...",
+                                background: "#1e1e1e",
+                                color: "#fff",
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                    setTimeout(() => (window.location.href = logoutUrl), 600);
+                                },
+                            });
+                        }
+                    });
+                });
             }
         });
+
+        // =========================================================
+        // 🧠 Prevent Back Navigation Cache
+        // =========================================================
+        if (window.history && window.history.pushState) {
+            window.history.pushState(null, null, window.location.href);
+            window.onpopstate = function () {
+                window.history.pushState(null, null, window.location.href);
+            };
+        }
     </script>
 </body>
 </html>

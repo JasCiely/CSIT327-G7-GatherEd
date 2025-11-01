@@ -2,9 +2,12 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
 from django.contrib import messages
-
-# Assuming this import path is correct based on your snippet
 from apps.register_page.models import StudentProfile
+
+
+# NOTE: In a real implementation, you would import Event, Registration, and Feedback models here.
+# from your_app.models import Event, Registration, Feedback
+# from django.db.models import Count, Max
 
 
 def logout_view(request):
@@ -21,26 +24,42 @@ def logout_view(request):
 def student_dashboard(request):
     is_ajax = request.GET.get('is_ajax') == 'true'
 
-    # 🌟 FETCH LOGIC: Get the student's name from StudentProfile
     try:
         student_profile = StudentProfile.objects.get(user=request.user)
-        # Use the 'name' field from your StudentProfile model
         user_display_name = student_profile.name
     except StudentProfile.DoesNotExist:
-        # Fallback to email if a profile hasn't been created for the user
-        user_display_name = request.user.email
+        user_display_name = request.user.email or "Student"
+
+    # --- PLACEHOLDER LOGIC STARTS HERE ---
+
+    # 1. Logic to calculate Total Events Attended (Count where attendance is confirmed)
+    # Placeholder: Replace 0 with a query like: Registration.objects.filter(student=student_profile, attended=True).count()
+    events_attended = 0
+
+    # 2. Logic to calculate Total Attendance Recorded (Count of all events the student is registered for)
+    # Placeholder: Replace 0 with a query like: Registration.objects.filter(student=student_profile).count()
+    total_registered = 0
+
+    # 3. Logic to calculate Total Feedback Sent (Count of feedback submitted by the student)
+    # Placeholder: Replace 0 with a query like: Feedback.objects.filter(student=student_profile).count()
+    total_feedback_sent = 0
+
+    # 4. Logic to find the Next Upcoming Registered Event
+    # Placeholder: Replace None with a query like:
+    # Registration.objects.filter(student=student_profile, event__date__gte=date.today()).order_by('event__date').first().event
+    next_event_data = None
+
+    # --- PLACEHOLDER LOGIC ENDS HERE ---
 
     template_context = {
-        'upcoming_events_count': 0,
-        'total_registered_count': 0,
-        'events_attended_count': 0,
-        'next_event': None,
-        # PASS THE NAME: This variable is used in the HTML
         'user_display_name': user_display_name,
+        'events_attended_count': events_attended,  # Maps to Total Events Attended (Stat Box 1)
+        'total_registered_count': total_registered,  # Maps to Total Attendance Recorded (Stat Box 2)
+        'upcoming_events_count': total_feedback_sent,  # Maps to Total Feedback Sent (Stat Box 3)
+        'next_event': next_event_data,  # Maps to Upcoming Registered Events section
     }
 
     if is_ajax:
-        return render(request, 'fragments/dashboard_content.html', template_context)
-    else:
-        # Pass the context to the main dashboard template
-        return render(request, 'student_dashboard.html', template_context)
+        return render(request, 'fragments/dashboard_content_student.html', template_context)
+
+    return render(request, 'student_dashboard.html', template_context)
