@@ -81,6 +81,9 @@
 
 .btn-action.delete { color: var(--danger-color); }
 .btn-action.delete:hover { color: #cc0000; }
+.btn-action.edit { color: var(--primary-color); }
+.btn-action.edit:hover { color: #007bb5; }
+
 
 /* Empty State */
 .empty-state {
@@ -303,6 +306,16 @@
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* No results message */
+.no-results-message {
+    text-align: center;
+    padding: 20px;
+    color: var(--warning-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
 </style>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -315,9 +328,9 @@
     </div>
 
     <div class="events-controls">
-        <input type="text" placeholder="Search events by name..." class="control-input">
-        <select class="control-select">
-            <option value="">All Statuses</option>
+        <input id="search" type="text" placeholder="Search events by name..." class="control-input" onkeyup="filterTableByName()">
+        <select id="statusFilter" class="control-select" onchange="filterTableByStatus(this.value)">
+            <option value="all">All Statuses</option>
             <option value="active">Active</option>
             <option value="upcoming">Upcoming</option>
             <option value="completed">Completed</option>
@@ -335,7 +348,7 @@
         <div class="events-table-area">
             <div class="events-table-responsive">
                 {% if events_list %}
-                <table class="events-table">
+                <table id="eventsTable" class="events-table">
                     <thead>
                         <tr>
                             <th>Event Name</th>
@@ -351,18 +364,20 @@
                             <td data-label="Event Name">{{ event.name }}</td>
                             <td data-label="Date">{{ event.date }}</td>
                             <td data-label="Registrations">{{ event.registrations }}</td>
-                            <td data-label="Status" class="status-{{ event.status|lower }}">{{ event.status }}</td>
+                            <td data-label="Status" class="status status-{{ event.status|lower }}">{{ event.status }}</td>
                             <td data-label="Actions" class="action-buttons">
                                 <button class="btn-action delete delete-event-btn"
                                         title="Delete Event"
-                                        data-event-id="{{ event.id }}">
+                                        data-event-id="{{ event.id }}"
+                                        **onclick="event.stopPropagation()"**>
                                     <i class="fas fa-trash"></i>
                                 </button>
-                            </td>
+                                </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+                <div id="noResultsMessage" class="no-results-message" style="display: none;"></div>
                 {% else %}
                 <div class="empty-state">
                     <i class="fas fa-calendar-times"></i>
@@ -404,7 +419,7 @@ function getCookie(name) {
 const csrftoken = getCookie('csrftoken');
 
 
-// --- MODAL UTILITY FUNCTIONS (Ensure these are defined globally) ---
+// --- MODAL UTILITY FUNCTIONS ---
 function showLoadingModal(message) {
     $('#custom-loading-modal').remove();
     const modalHtml = `<div id="custom-loading-modal" class="custom-modal-backdrop"><div class="custom-modal-content loading-modal-style"><h3>${message}</h3><i class="fas fa-sync-alt loading-spinner"></i></div></div>`;
@@ -416,7 +431,6 @@ function hideLoadingModal() {
 }
 
 function showSuccessModal(message) {
-    // Using custom modal for success for consistency
     const modalHtml = `<div id="custom-success-modal" class="custom-modal-backdrop"><div class="custom-modal-content success-modal-style"><div class="modal-header"><i class="fas fa-check-circle success-icon"></i><h3>Success!</h3></div><p class="modal-body-text">${message}</p><div class="modal-actions"><button class="btn-modal-close">Close</button></div></div></div>`;
     $('body').append(modalHtml);
     $('#custom-success-modal').find('.btn-modal-close').on('click', function() {
@@ -425,7 +439,6 @@ function showSuccessModal(message) {
 }
 
 function showDeleteConfirmationModal(eventName, onConfirm) {
-    // Fallback to custom modal for deletion if SweetAlert is not available
     const modalHtml = `
             <div id="custom-delete-modal" class="custom-modal-backdrop">
                 <div class="custom-modal-content delete-modal-style">
@@ -468,19 +481,18 @@ function getDeleteEventUrl(eventId) {
 }
 
 function getModifyEventUrl(eventId) {
-    // Uses the 'modify_event_root' name from your urls.py (CRITICAL FOR FIXING 404)
+    // Uses the 'modify_event_root' name from your urls.py
     return "{% url 'modify_event_root' event_id='EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId);
 }
 
 
-// 🚀 THE CRITICAL FIX: Function to load and render the edit form correctly.
+// 🚀 FUNCTION TO LOAD AND RENDER THE EDIT FORM
 function loadEditForm(eventId) {
     // 1. Remove any existing modal instance to ensure a clean load
     $('#custom-form-modal').remove();
 
     // 2. Create the base modal structure
     const $modal = $('<div id="custom-form-modal" class="custom-modal-backdrop"></div>');
-    // Set max-width here for the large form
     const $modalContent = $(`<div class="custom-modal-content" style="max-width: 700px; padding: 0; text-align: left;"></div>`);
 
     $modal.append($modalContent);
@@ -488,7 +500,6 @@ function loadEditForm(eventId) {
 
     showLoadingModal('Loading Edit Form...');
 
-    // 🎯 Use the dedicated URL function to get the correct path
     const url = getModifyEventUrl(eventId) + '?is_ajax=true';
 
     $.ajax({
@@ -515,14 +526,66 @@ function loadEditForm(eventId) {
         },
         error: function(xhr) {
             hideLoadingModal();
-            // This is the error message you saw for 404/500
             $modalContent.html(`<div class="error-message" style="padding: 30px; color:var(--danger-color);">Network Error: Could not fetch form (Status ${xhr.status}).</div>`);
         }
     });
 }
 // -------------------------------------------------------------
 
+// -------------------------------------------------------------
+// 🎯 CONTROL FUNCTIONALITY: Search and Status Filter Logic
+// -------------------------------------------------------------
 
+let currentSearchTerm = '';
+let currentStatusFilter = 'all';
+
+function applyCombinedFilter() {
+    const $table = $('#eventsTable');
+    if ($table.length === 0) return;
+
+    const $rows = $table.find('tbody tr');
+    let visibleCount = 0;
+
+    $rows.each(function() {
+        const $row = $(this);
+        const nameText = $row.find('td[data-label="Event Name"]').text().toLowerCase();
+        const statusText = $row.find('td[data-label="Status"]').text().toLowerCase().trim();
+
+        const matchesSearch = nameText.includes(currentSearchTerm);
+        const matchesStatus = currentStatusFilter === 'all' || statusText === currentStatusFilter;
+
+        if (matchesSearch && matchesStatus) {
+            $row.show();
+            visibleCount++;
+        } else {
+            $row.hide();
+        }
+    });
+
+    const $messageContainer = $('#noResultsMessage');
+    const $tableElement = $('#eventsTable');
+
+    if (visibleCount === 0 && ($rows.length > 0)) {
+        $tableElement.hide();
+        $messageContainer.text("No events found matching your filter criteria.").show();
+    } else if (visibleCount > 0) {
+        $tableElement.show();
+        $messageContainer.hide();
+    }
+}
+
+function filterTableByName() {
+    currentSearchTerm = $('#search').val().toLowerCase().trim();
+    applyCombinedFilter();
+}
+
+function filterTableByStatus(value) {
+    currentStatusFilter = value;
+    applyCombinedFilter();
+}
+
+
+// --- DOCUMENT READY LOGIC ---
 $(document).ready(function() {
 
     // --- ROW CLICK HANDLER (View Details) ---
@@ -549,12 +612,12 @@ $(document).ready(function() {
             success: function(data) {
                 detailsContent.html(data);
 
-                // ✅ ATTACH THE CLICK HANDLER TO THE NEWLY LOADED EDIT BUTTON
+                // This is the handler for the Edit button *inside* the details panel (if present)
                 detailsContent.find('.full-edit-form-btn').off('click').on('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    const eventId = $(this).data('event-id'); // Get ID from the button
-                    loadEditForm(eventId); // Call the dedicated fix function
+                    const eventId = $(this).data('event-id');
+                    loadEditForm(eventId);
                 });
             },
             error: function(xhr) {
@@ -564,10 +627,10 @@ $(document).ready(function() {
         });
     });
 
-    // --- DELETE BUTTON HANDLER ---
+    // 🔴 DELETE BUTTON HANDLER (Functional via event.stopPropagation() in HTML)
     $(document).on('click', '.delete-event-btn', function(e) {
         e.preventDefault();
-        e.stopPropagation();
+        // **event.stopPropagation() is handled in the HTML, ensuring the row click doesn't fire.**
 
         const eventId = $(this).data('event-id');
         const eventRow = $(this).closest('.clickable-row');
@@ -591,6 +654,7 @@ $(document).ready(function() {
                     if (response.success) {
                         eventRow.fadeOut(300, function() {
                             $(this).remove();
+                            applyCombinedFilter(); // Re-apply filter after deletion
 
                             if ($('#event-details-content').data('current-event-id') === eventId) {
                                 $('#event-details-content').hide().empty().removeData('current-event-id');
@@ -612,5 +676,23 @@ $(document).ready(function() {
             });
         });
     });
+
+    // 🟢 EDIT BUTTON HANDLER (Functional via event.stopPropagation() in HTML - not currently in the provided HTML but kept for reference)
+    $(document).on('click', '.edit-event-btn', function(e) {
+        e.preventDefault();
+        // e.stopPropagation() is in the HTML, calling loadEditForm directly.
+
+        const eventId = $(this).data('event-id');
+        // loadEditForm(eventId) is typically called directly from the HTML click attribute for buttons *other* than this JQuery handler.
+    });
+
+
+    // Expose filter functions globally
+    window.filterTableByName = filterTableByName;
+    window.filterTableByStatus = filterTableByStatus;
+    window.loadEditForm = loadEditForm; // Expose the function globally
+
+    // Run the filter on load
+    applyCombinedFilter();
 });
 </script>
