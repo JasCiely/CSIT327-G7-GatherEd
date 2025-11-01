@@ -1,0 +1,313 @@
+/* ------------------------------------------- */
+/* --- Root Variables: Final Compact Settings --- */
+/* ------------------------------------------- */
+:root {
+    --primary-color: #00A9FF;
+    --secondary-color: #2F93FF;
+    --background-dark: #0A0A0A;
+    --background-medium: #181818;
+    --background-light: #252525;
+    --text-light: #F0F0F0;
+    --text-muted: #9E9E9E;
+    --border-color: #333333;
+    --card-shadow-color: rgba(0, 0, 0, 0.8);
+    --card-hover-shadow: 0 4px 12px rgba(0, 169, 255, 0.2);
+    --warning-color: #FFC107;
+    --success-color: #6BFF8E;
+    --attention-color: #FF6B6B;
+    --info-color: #FFD26B;
+}
+
+/* --- General Styles --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', 'Roboto', sans-serif;
+    line-height: 1.6;
+    color: var(--text-light);
+    background-color: var(--background-dark);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* --- Message Box Styles --- */
+.message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 250px;
+}
+.message-item {
+    margin-bottom: 10px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    opacity: 0.95;
+    transition: all 0.5s ease-in-out;
+}
+.message-success { background-color: #28a745; }
+.message-error { background-color: #dc3545; }
+.message-info { background-color: #17a2b8; }
+.fade-out { opacity: 0; transform: translateY(-20px); }
+
+/* ------------------------------------------- */
+/* --- 1. Sidebar & Navigation (COMPACT) --- */
+/* ------------------------------------------- */
+
+.sidebar {
+    width: 230px;
+    background-color: var(--background-medium);
+    box-shadow: 3px 0 8px var(--card-shadow-color);
+    padding: 15px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    left: 0;
+    border-right: 1px solid var(--border-color);
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-nav {
+    flex-grow: 1;
+    margin-bottom: 20px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s;
+}
+
+.nav-item:hover {
+    background-color: rgba(0, 169, 255, 0.1);
+    color: var(--text-light);
+    transform: translateX(2px);
+}
+
+.nav-item.active {
+    background-color: rgba(0, 169, 255, 0.15);
+    color: var(--primary-color);
+    border-left: 3px solid var(--primary-color);
+    padding-left: 12px;
+    font-weight: 600;
+}
+.nav-item.active i {
+    color: var(--primary-color);
+}
+
+.nav-item i {
+    margin-right: 12px;
+    font-size: 16px;
+}
+
+.sidebar-footer {
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.sidebar-footer .logout {
+    padding: 12px 15px;
+    color: #777777;
+    font-size: 14px;
+}
+
+.sidebar-footer .logout:hover {
+    color: var(--attention-color);
+    background-color: rgba(255, 107, 107, 0.1);
+    transform: translateX(2px);
+}
+
+/* ------------------------------------------- */
+/* --- 2. Main Content & Header (LARGER HEIGHT) --- */
+/* ------------------------------------------- */
+
+.main-content {
+    flex-grow: 1;
+    padding: 30px;
+}
+
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    background-color: var(--background-medium);
+    padding: 18px 30px;
+    border-radius: 6px;
+    box-shadow: 0 1px 8px var(--card-shadow-color);
+    border: 1px solid var(--border-color);
+    height: 100px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.profile-name {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.user-profile i {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+/* ------------------------------------------- */
+/* --- 3. Dashboard Grid and Card Design --- */
+/* ------------------------------------------- */
+
+.student-dashboard-overview {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0;
+}
+
+/* Welcome Card */
+.welcome-card {
+    padding: 20px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 169, 255, 0.2);
+    border: 1px solid var(--primary-color);
+}
+.welcome-card h2 { font-size: 2rem; font-weight: 800; }
+.welcome-card .subtitle { font-size: 0.95rem; margin-top: 5px; }
+
+/* Stat Grid */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+.card {
+    background-color: var(--background-medium);
+    border-radius: 6px;
+    padding: 18px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-hover-shadow);
+}
+.card-icon { font-size: 35px; margin-right: 12px; }
+.card-label { font-size: 13px; margin-bottom: 2px; text-transform: uppercase; }
+.card-value { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+
+/* Events Section */
+.my-events-section {
+    background-color: var(--background-medium);
+    border-radius: 6px;
+    padding: 18px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+}
+.my-events-section h3 {
+    color: var(--text-light);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 18px;
+    padding-bottom: 7px;
+    position: relative;
+}
+.my-events-section h3::after {
+    content: '';
+    width: 50px;
+    height: 2px;
+    background-color: var(--primary-color);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    border-radius: 1px;
+}
+
+.next-event-card {
+    background-color: var(--background-light);
+    padding: 18px;
+    border-radius: 6px;
+    border-left: 3px solid var(--primary-color);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+.event-title { font-size: 1.2rem; font-weight: 700; margin: 0 0 6px; }
+.event-details, .event-school { font-size: 0.9rem; color: var(--text-muted); margin: 5px 0; }
+.event-details i, .event-school i { margin-right: 8px; color: var(--primary-color); }
+.btn-view-event {
+    padding: 8px 18px;
+    border-radius: 5px;
+    font-weight: 600;
+    background-color: var(--primary-color);
+    color: var(--background-dark);
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+
+/* Media Queries */
+@media (max-width: 1200px) {
+    .welcome-card h2 { font-size: 1.8rem; }
+    .card-value { font-size: 2rem; }
+    .main-content { padding: 20px; }
+    .top-nav { padding: 18px 20px; }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container { flex-direction: column; }
+    .sidebar { width: 100%; position: relative; }
+    .main-content { padding: 15px; }
+    .top-nav { margin-bottom: 15px; padding: 15px; height: auto; }
+    .welcome-card h2 { font-size: 1.4rem; }
+    .welcome-card .subtitle { font-size: 0.8rem; }
+    .stat-grid { gap: 12px; }
+    .card { padding: 12px; }
+    .card-icon { font-size: 28px; margin-right: 8px; }
+    .card-value { font-size: 1.8rem; }
+    .next-event-card { gap: 8px; }
+    .btn-view-event { width: 100%; text-align: center; padding: 7px 15px; }
+}

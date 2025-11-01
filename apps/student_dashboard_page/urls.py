@@ -2,7 +2,8 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path('', views.student_dashboard, name='student_dashboard'),  # /student_dashboard/
+    path('', views.student_dashboard, name='student_dashboard'),
+    path('logout/', views.logout_view, name='logout'),
 
     # Student features
     path('events/', include('apps.student_dashboard_page.templates.fragments.event_list.urls')),
