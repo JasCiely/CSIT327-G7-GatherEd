@@ -2,6 +2,13 @@
 <link rel="stylesheet" href="{% static 'css/manage_feedback_css.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
+{# ------------------------------------------------------------------ #}
+{# SELECT2 (Searchable Dropdown Library) LINKS #}
+{# ------------------------------------------------------------------ #}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 
 <div class="full-width-card feedback-container">
     <div class="card-header">
@@ -31,39 +38,29 @@
 
     {# --- FILTER AND SORT BAR --- #}
     <div class="feedback-controls">
-        <select class="control-select">
+        <select id="event-filter" class="control-select">
             <option value="">All Events</option>
             {% for event in events_list %}
-            <option value="{{ event.id }}">{{ event.name }}</option>
+            <option value="{{ event.id }}">{{ event.title }}</option>
             {% empty %}
-            {# Optionally show this if no events are found, though 'All Events' covers it #}
             {% endfor %}
         </select>
-        <select class="control-select">
-            <option>Sort by Date (Newest)</option>
-            <option>Sort by Rating (High)</option>
-            <option>Sort by Rating (Low)</option>
+        <select id="sort-filter" class="control-select">
+            <option value="date_desc">Sort by Date (Newest)</option>
+            <option value="rating_desc">Sort by Rating (High)</option>
+            <option value="rating_asc">Sort by Rating (Low)</option>
         </select>
-        <button class="control-button btn-secondary"><i class="fas fa-sync-alt"></i> Refresh</button>
+
+        <button id="refresh-button" class="control-button btn-secondary"><i class="fas fa-sync-alt"></i> Refresh</button>
     </div>
 
-    {# --- FEEDBACK LIST --- #}
-    <div class="feedback-list">
+    {# --- FEEDBACK LIST CONTAINER (This content will be updated by AJAX) --- #}
+    <div id="feedback-list-container" class="feedback-list">
         {% if feedback_list %}
             {% for feedback in feedback_list %}
-            <div class="feedback-card {% if feedback.is_new %} new-feedback-card {% endif %}">
-                <div class="card-rating">
-                    <span class="rating-value">{{ feedback.rating }}/5</span>
-                    <i class="fas fa-star"></i>
-                </div>
-                <div class="card-content">
-                    <p class="comment-text">{{ feedback.comment|default:"No comment provided." }}</p>
-                    <div class="card-meta">
-                        <span class="event-name"><i class="fas fa-calendar-alt"></i> {{ feedback.event_name }}</span>
-                        <span class="user-id"><i class="fas fa-user-circle"></i> User ID: {{ feedback.user_id }}</span>
-                        <span class="submission-date"><i class="fas fa-clock"></i> {{ feedback.submission_date }}</span>
-                    </div>
-                </div>
+            {# Placeholder for future feedback rendering #}
+            <div class="feedback-card">
+                <p>Feedback card placeholder...</p>
             </div>
             {% endfor %}
         {% else %}
@@ -75,3 +72,84 @@
         {% endif %}
     </div>
 </div>
+
+
+{# ------------------------------------------------------------------ #}
+{# JAVASCRIPT/JQUERY LOGIC to enable searchable dropdown and refresh #}
+{# ------------------------------------------------------------------ #}
+<script>
+$(document).ready(function() {
+    var eventFilter = $('#event-filter');
+    var refreshButton = $('#refresh-button');
+    var feedbackContainer = $('#feedback-list-container');
+    var currentUrl = "{% url 'manage_feedback' %}";
+
+    // 1. Initialize Select2 for searchable dropdown
+    eventFilter.select2({
+        placeholder: "Select an Event or Search...",
+        allowClear: true
+    });
+
+    /**
+     * Executes the AJAX call to refresh the feedback data based on current filters.
+     */
+    function loadFeedbackData() {
+        // Get current filter and sort values
+        var selectedEventId = eventFilter.val();
+        var selectedSort = $('#sort-filter').val();
+
+        // Build the query string for the Django view
+        var queryParams = {
+            'is_ajax': 'true',
+            'event_id': selectedEventId,
+            'sort_by': selectedSort
+        };
+
+        // Perform the AJAX request
+        $.ajax({
+            url: currentUrl,
+            type: 'GET',
+            data: queryParams,
+            beforeSend: function() {
+                // Show loading state
+                refreshButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Loading');
+                feedbackContainer.css('opacity', '0.5');
+            },
+            success: function(response) {
+                // Replace the content of the feedback list container with the response
+                feedbackContainer.html(response);
+            },
+            error: function(xhr, status, error) {
+                console.error("Feedback refresh failed:", error);
+                alert("Failed to refresh feedback data. Please try again.");
+            },
+            complete: function() {
+                // Restore button and container state
+                refreshButton.prop('disabled', false).html('<i class="fas fa-sync-alt"></i> Refresh');
+                feedbackContainer.css('opacity', '1');
+
+                // Re-initialize Select2 because the AJAX call replaces the entire fragment,
+                // potentially destroying the Select2 element.
+                eventFilter.select2({
+                    placeholder: "Select an Event or Search...",
+                    allowClear: true
+                });
+            }
+        });
+    }
+
+    // 2. Attach handlers to trigger data refresh
+    refreshButton.on('click', function(e) {
+        e.preventDefault();
+        loadFeedbackData();
+    });
+
+    eventFilter.on('change', function() {
+        loadFeedbackData();
+    });
+
+    $('#sort-filter').on('change', function() {
+        loadFeedbackData();
+    });
+});
+</script>
