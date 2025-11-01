@@ -2,6 +2,10 @@
 <link rel="stylesheet" href="{% static 'css/track_attendance_css.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 
 <div class="full-width-card attendance-container">
     <div class="card-header">
@@ -11,12 +15,17 @@
 
     <div class="attendance-controls">
         <label for="event-select" class="control-label">Select Event:</label>
+
+        {# 2. The Select Element: Select2 will transform this #}
         <select id="event-select" class="control-select">
             <option value="">-- Choose an Event --</option>
             {% for event in events_list %}
-            <option value="{{ event.id }}" data-status="{{ event.status }}">{{ event.name }}</option>
+            <option value="{{ event.id }}" data-status="{{ event.status|default:'SCHEDULED' }}">
+                {{ event.title }}
+            </option>
             {% endfor %}
         </select>
+
         <button id="start-live-mode" class="btn btn-secondary start-button" disabled>
             <i class="fas fa-play-circle"></i> Start Live Mode
         </button>
@@ -29,3 +38,47 @@
         </p>
     </div>
 </div>
+
+
+<script>
+$(document).ready(function() {
+    var startButton = $('#start-live-mode');
+    var eventSelect = $('#event-select');
+
+    // **CRUCIAL LINE:** This initializes Select2, making your dropdown searchable.
+    eventSelect.select2({
+        placeholder: "-- Choose an Event --",
+        allowClear: true
+    });
+
+    // Function to check if an event is selected
+    function checkSelection() {
+        if (eventSelect.val() && eventSelect.val() !== "") {
+            startButton.prop('disabled', false);
+        } else {
+            startButton.prop('disabled', true);
+        }
+    }
+
+    // Attach change event listener to the Select2 instance
+    eventSelect.on('change', function() {
+        checkSelection();
+    });
+
+    // Initial check
+    checkSelection();
+
+    // Handle the "Start Live Mode" click (Placeholder)
+    startButton.on('click', function(e) {
+        e.preventDefault();
+        var eventId = eventSelect.val();
+        var eventTitle = eventSelect.find('option:selected').text();
+
+        if (eventId) {
+            console.log('Starting Live Mode for Event:', eventTitle, 'ID:', eventId);
+            alert('Live Mode Ready for Event: ' + eventTitle);
+            // TODO: Add your actual redirect or AJAX call here
+        }
+    });
+});
+</script>
