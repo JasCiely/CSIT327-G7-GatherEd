@@ -1,35 +1,60 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/event_list_css.css' %}">
+<link rel="stylesheet" href="{% static 'css/event_list_style.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-<div class="full-width-card event-list-container">
+<div class="full-width-card student-events-container">
     <div class="card-header">
         <h2>Available Events</h2>
-        <p class="card-subtitle">Browse and register for events across your school. Conflicting dates are flagged.</p>
+        <div class="card-header-actions">
+            <p class="card-subtitle">Find exciting events happening soon—register now!</p>
+            <button id="refreshEventsBtn" class="btn-refresh" onclick="refreshEventList()">
+                <i class="fas fa-sync-alt"></i> Refresh List
+            </button>
+        </div>
     </div>
 
-    {# --- SEARCH AND FILTER BAR --- #}
-    <div class="event-search-controls">
-        <input type="text" placeholder="Search event titles or hosts..." class="control-input">
-        <select class="control-select">
-            <option value="">All Categories</option>
-            <option value="academic">Academic</option>
-            <option value="social">Social</option>
-            <option value="sports">Sports</option>
-        </select>
-        <button class="btn btn-search"><i class="fas fa-search"></i> Search</button>
-    </div>
+    <div class="events-content-wrapper" style="display: flex; flex-direction: row; gap: 20px;">
+        <div class="events-table-area">
+            <div class="events-table-responsive">
+                <div class="events-table-content">
 
-    {# --- EVENT CARDS LIST --- #}
-    <div class="events-grid">
-        {% if event_list %}
-            {# Backend loop will go here #}
-        {% else %}
-            <div class="empty-state">
-                <i class="fas fa-calendar-plus"></i>
-                <p>No available events right now.</p>
-                <p class="muted">Check back soon for new registration opportunities!</p>
+                    <table id="studentEventsTable" class="events-table">
+                        <thead>
+                            <tr>
+                                <th>Event Name</th>
+                                <th>Date & Time</th>
+                                <th>Organization</th>
+                                <th>Location</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+
+                    <div id="noResultsMessage" class="no-results-message" style="display: none;"></div>
+
+                    </div>
             </div>
-        {% endif %}
+        </div>
+
+        <div class="event-details-panel">
+            <div id="initial-details-message" class="details-placeholder" style="display: block;">
+                <i class="fas fa-hand-pointer"></i>
+                <h3>Select an Event</h3>
+                <p>Click any row in the table to view event information, registration status, and deadlines here.</p>
+            </div>
+
+            <div id="event-details-content" style="display: none;">
+                </div>
+        </div>
     </div>
 </div>
+
+<script>
+    // Placeholder function for refresh logic
+    function refreshEventList() {
+        alert("Refreshing event list... (Implement your AJAX call here)");
+        // Add logic to perform an AJAX call to reload the table data
+    }
+</script>
