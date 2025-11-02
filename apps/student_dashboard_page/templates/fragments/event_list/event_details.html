@@ -1,0 +1,71 @@
+<div class="event-details-content-wrapper">
+
+    <div class="details-header">
+        <h3 class="event-title">{{ event.name }}</h3>
+        <p class="event-organization">{{ event.organization }}</p>
+    </div>
+
+    <div class="details-badges">
+        <span class="badge status-{{ registration_status|lower }}">
+            Status: {{ registration_status|capfirst }}
+        </span>
+        {% if event.is_online %}
+            <span class="badge badge-online">Online Event</span>
+        {% else %}
+            <span class="badge badge-physical">Physical Event</span>
+        {% endif %}
+    </div>
+
+    <div class="details-info-block">
+        <div class="info-item">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="info-label">Date:</span>
+            <span class="info-value">{{ event.date|date:"F j, Y" }}</span>
+        </div>
+        <div class="info-item">
+            <i class="fas fa-clock"></i>
+            <span class="info-label">Time:</span>
+            <span class="info-value">{{ event.time|time:"h:i A" }}</span>
+        </div>
+        <div class="info-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <span class="info-label">Location:</span>
+            <span class="info-value">{{ event.location }}</span>
+        </div>
+        <div class="info-item">
+            <i class="fas fa-users"></i>
+            <span class="info-label">Capacity:</span>
+            <span class="info-value">{{ event.registered_count }}/{{ event.capacity }}</span>
+        </div>
+        <div class="info-item">
+            <i class="fas fa-layer-group"></i>
+            <span class="info-label">Category:</span>
+            <span class="info-value">{{ event.category }}</span>
+        </div>
+    </div>
+
+    <div class="details-description">
+        <h4>Description</h4>
+        <p>{{ event.description|default:"No detailed description provided for this event." }}</p>
+    </div>
+
+    <div class="details-action-area">
+        {% if registration_status == 'available' %}
+            <button class="btn-primary btn-register" onclick="handleRegistration({{ event.id }})">
+                <i class="fas fa-clipboard-list"></i> Register Now
+            </button>
+        {% elif registration_status == 'registered' %}
+            <button class="btn-primary btn-registered" disabled>
+                <i class="fas fa-check-circle"></i> Registered
+            </button>
+            <button class="btn-secondary btn-cancel" onclick="handleCancellation({{ event.id }})">
+                Cancel Registration
+            </button>
+        {% elif registration_status == 'full' %}
+            <button class="btn-primary btn-full" disabled>
+                <i class="fas fa-exclamation-triangle"></i> Full
+            </button>
+        {% endif %}
+    </div>
+
+</div>

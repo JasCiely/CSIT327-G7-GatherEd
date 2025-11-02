@@ -1,3 +1,4 @@
+# apps/student_dashboard_page/urls.py
 from django.urls import path, include
 from . import views
 
