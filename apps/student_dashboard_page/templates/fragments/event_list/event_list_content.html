@@ -1,40 +1,65 @@
+<!-- apps/student_dashboard_page/templates/fragments/event_list/event_list_content.html -->
+
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/event_list_style.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <div class="full-width-card student-events-container">
     <div class="card-header">
         <h2>Available Events</h2>
-        <div class="card-header-actions">
-            <p class="card-subtitle">Find exciting events happening soon—register now!</p>
-            <button id="refreshEventsBtn" class="btn-refresh" onclick="refreshEventList()">
-                <i class="fas fa-sync-alt"></i> Refresh List
-            </button>
-        </div>
+        <p class="card-subtitle">Browse and register for upcoming events organized by your school or organization.</p>
+    </div>
+
+    <div class="events-controls">
+        <input id="search" type="text" placeholder="Search events by name..." class="control-input" onkeyup="filterTableByName()">
+        <select id="statusFilter" class="control-select" onchange="filterTableByStatus(this.value)">
+            <option value="all">All Events</option>
+            <option value="available">Available</option>
+            <option value="registered">Registered</option>
+            <option value="full">Full</option>
+        </select>
+        <button id="refreshEventsBtn" class="btn-primary" onclick="refreshEventList()">
+            <i class="fas fa-sync-alt"></i> Refresh List
+        </button>
     </div>
 
     <div class="events-content-wrapper" style="display: flex; flex-direction: row; gap: 20px;">
         <div class="events-table-area">
             <div class="events-table-responsive">
-                <div class="events-table-content">
-
-                    <table id="studentEventsTable" class="events-table">
-                        <thead>
-                            <tr>
-                                <th>Event Name</th>
-                                <th>Date & Time</th>
-                                <th>Organization</th>
-                                <th>Location</th>
-                                <th class="text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            </tbody>
-                    </table>
-
-                    <div id="noResultsMessage" class="no-results-message" style="display: none;"></div>
-
-                    </div>
+                {% if events_list %}
+                <table id="studentEventsTable" class="events-table">
+                    <thead>
+                        <tr>
+                            <th>Event Name</th>
+                            <th>Date & Time</th>
+                            <th>Organization</th>
+                            <th>Location</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events_list %}
+                        <tr class="clickable-row" data-event-id="{{ event.id }}" data-status="{{ event.status|lower }}">
+                            <td data-label="Event Name">{{ event.name }}</td>
+                            <td data-label="Date & Time">{{ event.date }} {{ event.time }}</td>
+                            <td data-label="Organization">{{ event.organization }}</td>
+                            <td data-label="Location">{{ event.location }}</td>
+                            <td data-label="Status" class="text-center status status-{{ event.status|lower }}">
+                                {{ event.status }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div id="noResultsMessage" class="no-results-message" style="display: none;"></div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>No events are currently available.</p>
+                    <p class="muted">Please check back later for new opportunities.</p>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -42,19 +67,191 @@
             <div id="initial-details-message" class="details-placeholder" style="display: block;">
                 <i class="fas fa-hand-pointer"></i>
                 <h3>Select an Event</h3>
-                <p>Click any row in the table to view event information, registration status, and deadlines here.</p>
+                <p>Click any row in the table to view event details, registration status, and deadlines here.</p>
             </div>
 
-            <div id="event-details-content" style="display: none;">
-                </div>
+            <div id="event-details-content" style="display: none;"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // Placeholder function for refresh logic
-    function refreshEventList() {
-        alert("Refreshing event list... (Implement your AJAX call here)");
-        // Add logic to perform an AJAX call to reload the table data
+    // --- MODAL UTILITY FUNCTIONS ---
+
+    // Uses CSS classes for dark theme instead of hardcoded inline styles.
+    function showLoadingModal(message) {
+        $('#custom-loading-modal').remove();
+
+        const modalHtml = `
+            <div id="custom-loading-modal" class="custom-modal-backdrop">
+                <div class="custom-modal-content loading-modal-style">
+                    <h3>${message}</h3>
+                    <i class="fas fa-sync-alt loading-spinner"></i>
+                </div>
+            </div>`;
+
+        $('body').append(modalHtml);
     }
+
+    function hideLoadingModal() {
+        $('#custom-loading-modal').remove();
+    }
+
+    // 🔄 REFRESH FUNCTIONALITY (MODAL + TARGETED TABLE REPLACEMENT)
+    function refreshEventList() {
+        showLoadingModal('Refreshing Event List...');
+
+        // 🎯 AJAX call to the Django view that renders this fragment
+        $.ajax({
+            url: "{% url 'event_list' %}",
+            method: 'GET',
+            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            success: function(data) {
+                const $newContent = $(data).find('.events-table-responsive').html();
+
+                if ($newContent) {
+                    $('.events-table-responsive').html($newContent);
+                    $('#event-details-content').hide().empty();
+                    $('#initial-details-message').show();
+                } else {
+                    console.error("Could not find new table content.");
+                }
+
+                hideLoadingModal();
+                applyCombinedFilter();
+            },
+            error: function(xhr) {
+                hideLoadingModal();
+                alert(`Error refreshing list: ${xhr.status} ${xhr.statusText}`);
+            }
+        });
+    }
+
+    // -------------------------------------------------------------
+    // 🎯 FILTERING FUNCTIONS (Unchanged)
+    // -------------------------------------------------------------
+    let currentSearchTerm = '';
+    let currentStatusFilter = 'all';
+
+    function applyCombinedFilter() {
+        const $table = $('#studentEventsTable');
+        if ($table.length === 0) return;
+
+        const $rows = $table.find('tbody tr');
+        let visibleCount = 0;
+
+        $rows.each(function() {
+            const $row = $(this);
+            const nameText = $row.find('td[data-label="Event Name"]').text().toLowerCase();
+            const status = $row.data('status') || '';
+            const matchesSearch = nameText.includes(currentSearchTerm);
+
+            let matchesStatus = false;
+            switch (currentStatusFilter) {
+                case 'all':
+                    matchesStatus = true;
+                    break;
+                case 'available':
+                    matchesStatus = status === 'available';
+                    break;
+                case 'registered':
+                    matchesStatus = status === 'registered';
+                    break;
+                case 'full':
+                    matchesStatus = status === 'full';
+                    break;
+            }
+
+            if (matchesSearch && matchesStatus) {
+                $row.show();
+                visibleCount++;
+            } else {
+                $row.hide();
+            }
+        });
+
+        const $messageContainer = $('#noResultsMessage');
+        const $tableElement = $('#studentEventsTable');
+
+        if (visibleCount === 0 && ($rows.length > 0)) {
+            $tableElement.hide();
+            $messageContainer.text("No events found matching your filters.").show();
+        } else if (visibleCount > 0) {
+            $tableElement.show();
+            $messageContainer.hide();
+        }
+    }
+
+    function filterTableByName() {
+        currentSearchTerm = $('#search').val().toLowerCase().trim();
+        applyCombinedFilter();
+    }
+
+    function filterTableByStatus(value) {
+        currentStatusFilter = value;
+        applyCombinedFilter();
+    }
+
+    // -------------------------------------------------------------
+    // 🎯 DETAILS PANEL BEHAVIOR & INITIALIZATION
+    // -------------------------------------------------------------
+    $(document).ready(function() {
+
+        // --- Event Delegation for Row Click ---
+        $(document).on('click', '.clickable-row', function() {
+            var eventId = $(this).data('event-id');
+
+            $('.clickable-row').removeClass('selected');
+            $(this).addClass('selected');
+
+            $('#initial-details-message').hide();
+
+            // 🚀 SIMPLE, PERFECTLY CENTERED, LIGHT-THEMED LOADER
+            var detailsContent = $('#event-details-content').show().html(
+                // Inline styles for perfect vertical and horizontal centering
+                `<div style="
+                    width: 100%; height: 100%;
+                    display: flex; flex-direction: column;
+                    justify-content: center; align-items: center;
+                    color: var(--text-light); /* Use light color to mimic modal text */
+                    text-align: center;
+                ">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 1.2rem; margin-bottom: 5px; color: var(--text-light);"></i>
+                    <p style="font-size: 0.9rem;">Loading details...</p>
+                </div>`
+            );
+
+            // AJAX call to fetch event details
+            $.ajax({
+                url: `/student/events/${eventId}/details/`,
+                method: 'GET',
+                success: function(data) {
+                    detailsContent.html(data);
+                },
+                error: function(xhr) {
+                    // 🚨 SIMPLE, RED, PERFECTLY CENTERED ERROR MESSAGE
+                    detailsContent.html(
+                        `<div style="
+                            width: 100%; height: 100%;
+                            display: flex; flex-direction: column;
+                            justify-content: center; align-items: center;
+                            color: var(--danger-color); text-align: center;
+                        ">
+                            <i class="fas fa-exclamation-circle" style="font-size: 1.2rem; margin-bottom: 5px;"></i>
+                            <p style="font-size: 0.9rem;">Failed to load event details.</p>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">(Error ${xhr.status})</p>
+                        </div>`
+                    );
+                }
+            });
+        });
+
+        // --- GLOBAL EXPOSURE (Ensure functions are callable from HTML attributes) ---
+        window.refreshEventList = refreshEventList;
+        window.filterTableByName = filterTableByName;
+        window.filterTableByStatus = filterTableByStatus;
+
+        // Run filter once at load
+        applyCombinedFilter();
+    });
 </script>

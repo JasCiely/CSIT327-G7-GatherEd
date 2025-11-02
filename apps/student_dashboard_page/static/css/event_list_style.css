@@ -176,6 +176,7 @@
 .events-table td {
     padding: 15px;
     text-align: left;
+    /* This defines the default bottom border for all cells */
     border-bottom: 1px solid var(--border-color);
     color: var(--text-light);
 }
@@ -218,10 +219,31 @@
     background-color: #253343;
 }
 
+/* --- FIX FOR TABLE STATUS APPEARANCE --- */
+/* CRITICAL FIX: Ensure the entire status cell background is transparent */
+.events-table td.status {
+    background-color: transparent !important;
+    /* RE-APPLY the bottom border to match the rest of the row */
+    border-bottom: 1px solid var(--border-color) !important;
+    /* Remove unwanted side borders */
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    padding-left: 15px !important; /* Restore normal padding */
+}
+
 /* Status Badges */
 .status-active { color: var(--success-color); font-weight: 600; }
 .status-upcoming { color: var(--warning-color); font-weight: 600; }
 .status-completed { color: var(--text-muted); }
+/* FINAL FIX: Only sets text color and removes any residual background/border */
+.status-available {
+    color: var(--text-light) !important;
+    font-weight: 600;
+    background-color: transparent !important;
+    border: none !important; /* Ensure no border comes from this class either (only affects content) */
+}
+/* -------------------------------------- */
 
 
 /* -------------------------------------- */
@@ -249,7 +271,7 @@
     padding: 0 !important;
     box-shadow: 0 5px 25px var(--accent-blue-rgba);
     color: var(--text-light);
-    position: sticky;
+    position: relative;
     top: 20px;
     height: 100% !important;
 }
@@ -479,4 +501,182 @@
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* -------------------------------------- */
+/* 7. MODAL STYLES (Duplicate Section - Keeping only the necessary parts) */
+/* -------------------------------------- */
+
+/* Backdrop (Darkens background) */
+.custom-modal-backdrop {
+    /* Styles already defined above */
+}
+
+/* Base Modal Container */
+.custom-modal-content {
+    /* Styles already defined above */
+}
+
+/* Loading Modal Specific Styling */
+.custom-modal-content.loading-modal-style {
+    /* Styles already defined above */
+}
+.loading-modal-style h3 { margin-bottom: 25px; }
+
+/* The Spinning Icon */
+.loading-spinner {
+    /* Styles already defined above */
+}
+
+/* -------------------------------------- */
+/* 8. EVENT DETAILS CONTENT STYLES */
+/* -------------------------------------- */
+
+/* Main wrapper to allow scrolling inside the panel */
+.event-details-content-wrapper {
+    /* Apply internal padding to the content, while the panel itself has the border */
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto; /* Allows content to scroll if it exceeds panel height */
+    position: relative;
+}
+
+/* Header */
+.details-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+.event-title {
+    font-size: 1.6rem;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+.event-organization {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Badges (Status and Type) */
+.details-badges {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.details-badges .badge {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Status Badges - This is the badge that appears in the DETAILS PANEL */
+.status-available {
+    background-color: var(--background-dark);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+.status-registered { background-color: var(--secondary-color); color: var(--background-dark); }
+.status-full { background-color: var(--danger-color); color: var(--text-light); }
+
+/* Type Badges */
+.badge-online { background-color: #333; color: var(--primary-color); border: 1px solid var(--primary-color); }
+.badge-physical { background-color: #333; color: var(--warning-color); border: 1px solid var(--warning-color); }
+
+
+/* Key Information Block */
+.details-info-block {
+    display: grid;
+    grid-template-columns: 1fr; /* Single column layout for smaller panel */
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: var(--background-dark);
+    border-radius: 8px;
+}
+.info-item {
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    color: var(--text-light);
+}
+.info-item i {
+    color: var(--primary-color);
+    width: 20px;
+    margin-right: 10px;
+}
+.info-label {
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-right: 5px;
+}
+.info-value {
+    font-weight: 600;
+}
+
+/* Description */
+.details-description {
+    margin-bottom: 30px;
+}
+.details-description h4 {
+    font-size: 1.2rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+    border-left: 3px solid var(--primary-color);
+    padding-left: 10px;
+}
+.details-description p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+/* Action Area (Buttons) */
+.details-action-area {
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    position: sticky; /* Keep buttons visible at the bottom of the scrollable content */
+    bottom: -20px; /* Offset by padding to stick to the visible bottom */
+    background-color: var(--panel-background);
+    padding-bottom: 20px;
+}
+
+/* Button overrides */
+.btn-register, .btn-registered, .btn-full {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    font-weight: 700;
+}
+.btn-registered {
+    background-color: var(--secondary-color);
+}
+.btn-full {
+    background-color: var(--danger-color);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.btn-secondary.btn-cancel {
+    background-color: var(--background-dark);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    width: 100%;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+.btn-secondary.btn-cancel:hover {
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Ensure the scrollable content doesn't fight the sticky button area */
+.event-details-content-wrapper {
+    /* Need extra padding at the bottom to account for the sticky action area */
+    padding-bottom: 100px;
 }
