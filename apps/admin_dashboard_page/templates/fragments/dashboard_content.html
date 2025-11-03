@@ -1,31 +1,86 @@
-<div class="dashboard-grid">
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/dashboard_style.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<style>
+    /* Add ALL your existing UI/Design CSS here */
+    /* ... (CSS for summary cards, events table, etc.) ... */
+
+    /* --- Themed UI for Spinner/Modal (Matching your image) --- */
+    .custom-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.85); /* Darker, more opaque background */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .custom-modal-content.loading-modal-style {
+        background: #1e1e1e; /* Dark background for the modal content */
+        border: 1px solid #007bff; /* Blue border as seen in image */
+        border-radius: 8px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+        padding: 40px;
+        max-width: 300px;
+        text-align: center;
+        color: #e0e0e0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .loading-modal-style h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        color: #e0e0e0;
+        font-weight: 500;
+    }
+
+    .loading-spinner {
+        font-size: 3rem;
+        color: #007bff;
+        animation: spin 1.2s linear infinite;
+        display: block;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<div class="dashboard-grid">
     <div class="card summary-card events">
         <div class="card-icon"><i class="fas fa-calendar-alt"></i></div>
         <div class="card-content">
             <span class="card-label">Total Events Managed</span>
-            <span class="card-value">{{ total_events }}</span> </div>
+            <span class="card-value" id="totalEventsManaged">{{ total_events }}</span> </div>
     </div>
-
     <div class="card summary-card attendance">
         <div class="card-icon"><i class="fas fa-check-double"></i></div>
         <div class="card-content">
             <span class="card-label">Total Attendance Recorded</span>
-            <span class="card-value">{{ total_attendance }}</span>
+            <span class="card-value" id="totalAttendanceRecorded">{{ total_attendance }}</span>
         </div>
     </div>
-
     <div class="card summary-card feedback">
         <div class="card-icon"><i class="fas fa-star"></i></div>
         <div class="card-content">
             <span class="card-label">New Feedback Received</span>
-            <span class="card-value">{{ new_feedback }}</span>
+            <span class="card-value" id="newFeedbackReceived">{{ new_feedback }}</span>
         </div>
     </div>
 </div>
 
 <div class="dashboard-grid">
-    </div>
+</div>
 
 <div class="full-width-card manage-events-container" style="margin-top: 40px;">
     <div class="card-header">
@@ -33,16 +88,15 @@
         <p class="card-subtitle">A quick overview of events scheduled for your organization.</p>
 
         <a href="javascript:void(0);"
-           data-url="{% url 'create_event' %}?is_ajax=true"
-           data-clean-url="{% url 'create_event' %}"
            class="btn btn-primary create-event-button"
-           onclick="handleNavClick(this)">
-            <i class="fas fa-plus"></i> New Event
+           onclick="refreshDashboardContent()">
+            <i class="fas fa-sync-alt"></i> Refresh List
         </a>
     </div>
 
     {# --- EVENTS TABLE --- #}
-    <div class="events-table-responsive">
+    <div class="events-table-responsive" id="eventsTableArea">
+        {# The content of this div will be replaced by AJAX #}
         {% if events %}
         <table class="events-table" style="width: 100%;">
             <thead>
@@ -63,13 +117,9 @@
                     {% endif %}">
 
                     <td data-label="Title">{{ event.title }}</td>
-
                     <td data-label="Date">{{ event.start_date }}</td>
-
                     <td data-label="Time">{{ event.start_time }}</td>
-
                     <td data-label="Location">{{ event.location }}</td>
-
                     <td data-label="Time Remaining">
                         <span class="time-countdown"
                               style="{% if event.time_remaining == 'Active/Started' %}
@@ -86,9 +136,55 @@
         <div class="empty-state">
             <i class="fas fa-calendar-times"></i>
             <p>No upcoming events found.</p>
-            <p class="muted">Click the "New Event" button to get started!</p>
+            <p class="muted">Click the "Refresh List" button to check for new events.</p>
         </div>
         {% endif %}
     </div>
-
 </div>
+
+<script>
+    // --- MODAL UTILITY FUNCTIONS ---
+    function showLoadingModal(message) {
+        $('#custom-loading-modal').remove();
+        const modalHtml = `
+            <div id="custom-loading-modal" class="custom-modal-backdrop">
+                <div class="custom-modal-content loading-modal-style">
+                    <h3>${message}</h3>
+                    <i class="fas fa-sync-alt loading-spinner"></i>
+                </div>
+            </div>
+        `;
+        $('body').append(modalHtml);
+    }
+
+    function hideLoadingModal() {
+        $('#custom-loading-modal').remove();
+    }
+
+    // --- AJAX REFRESH FUNCTIONALITY (CLEANED) ---
+
+    /**
+     * This function now only shows the loading modal and simulates the delay,
+     * without performing any actual data updates, as requested.
+     */
+    function refreshDashboardContent() {
+        // 1. Show the loading indicator
+        showLoadingModal('Refreshing Dashboard Data...');
+
+        // 2. Simulate server communication time (1.5 seconds)
+        setTimeout(function() {
+
+            // NOTE: All previous mock data generation and DOM updates are REMOVED.
+            // When you implement real AJAX, you'll place your calls here.
+
+            // 3. Cleanup: Hide the loading indicator
+            hideLoadingModal();
+            console.log('Dashboard refresh simulation complete (NO data updated)');
+        }, 1500);
+    }
+
+    // Expose the refresh function globally
+    window.refreshDashboardContent = refreshDashboardContent;
+
+    // --- You would place your other document.ready logic here ---
+</script>
