@@ -36,7 +36,8 @@
                             <th>Event Name</th>
                             <th>Date</th>
                             <th>Registrations</th>
-                            <th>Status</th>
+                            <th>Event Status</th>
+                            <th>Registration Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -46,15 +47,15 @@
                             <td data-label="Event Name">{{ event.name }}</td>
                             <td data-label="Date">{{ event.date }}</td>
                             <td data-label="Registrations">{{ event.registrations }}</td>
-                            <td data-label="Status" class="status status-{{ event.status|lower }}">{{ event.status }}</td>
+                            <td data-label="Event Status" class="status status-{{ event.event_status|lower }}">{{ event.event_status }}</td>
+                            <td data-label="Registration Status" class="status status-{{ event.registration_status|lower }}">{{ event.registration_status }}</td>
                             <td data-label="Actions" class="action-buttons">
                                 <button class="btn-action delete delete-event-btn"
                                         title="Delete Event"
-                                        data-event-id="{{ event.id }}"
-                                        **onclick="event.stopPropagation()"**>
+                                        data-event-id="{{ event.id }}">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                                </td>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -100,108 +101,74 @@ function getCookie(name) {
 }
 const csrftoken = getCookie('csrftoken');
 
-
 // --- MODAL UTILITY FUNCTIONS ---
 function showLoadingModal(message) {
     $('#custom-loading-modal').remove();
     const modalHtml = `<div id="custom-loading-modal" class="custom-modal-backdrop"><div class="custom-modal-content loading-modal-style"><h3>${message}</h3><i class="fas fa-sync-alt loading-spinner"></i></div></div>`;
     $('body').append(modalHtml);
 }
-
-function hideLoadingModal() {
-    $('#custom-loading-modal').remove();
-}
+function hideLoadingModal() { $('#custom-loading-modal').remove(); }
 
 function showSuccessModal(message) {
     const modalHtml = `<div id="custom-success-modal" class="custom-modal-backdrop"><div class="custom-modal-content success-modal-style"><div class="modal-header"><i class="fas fa-check-circle success-icon"></i><h3>Success!</h3></div><p class="modal-body-text">${message}</p><div class="modal-actions"><button class="btn-modal-close">Close</button></div></div></div>`;
     $('body').append(modalHtml);
-    $('#custom-success-modal').find('.btn-modal-close').on('click', function() {
-        $('#custom-success-modal').remove();
-    });
+    $('#custom-success-modal').find('.btn-modal-close').on('click', function() { $('#custom-success-modal').remove(); });
 }
 
 function showDeleteConfirmationModal(eventName, onConfirm) {
     const modalHtml = `
-            <div id="custom-delete-modal" class="custom-modal-backdrop">
-                <div class="custom-modal-content delete-modal-style">
-                    <div class="modal-header">
-                        <i class="fas fa-exclamation-triangle delete-icon"></i>
-                        <h3>Confirm Event Deletion</h3>
-                    </div>
-                    <p class="modal-body-text">
-                        Are you sure you want to permanently delete the event:
-                        <br>
-                        <strong>"${eventName}"</strong>?
-                    </p>
-                    <p class="modal-secondary-text">
-                        This action cannot be undone. You will lose all associated data.
-                    </p>
-                    <div class="modal-actions">
-                        <button class="btn-modal-cancel">Cancel</button>
-                        <button class="btn-modal-delete">Yes, Delete Event</button>
-                    </div>
+        <div id="custom-delete-modal" class="custom-modal-backdrop">
+            <div class="custom-modal-content delete-modal-style">
+                <div class="modal-header">
+                    <i class="fas fa-exclamation-triangle delete-icon"></i>
+                    <h3>Confirm Event Deletion</h3>
+                </div>
+                <p class="modal-body-text">
+                    Are you sure you want to permanently delete the event:
+                    <br>
+                    <strong>"${eventName}"</strong>?
+                </p>
+                <p class="modal-secondary-text">
+                    This action cannot be undone. You will lose all associated data.
+                </p>
+                <div class="modal-actions">
+                    <button class="btn-modal-cancel">Cancel</button>
+                    <button class="btn-modal-delete">Yes, Delete Event</button>
                 </div>
             </div>
-        `;
+        </div>
+    `;
     $('body').append(modalHtml);
     const modal = $('#custom-delete-modal');
     modal.find('.btn-modal-cancel').on('click', function() { modal.remove(); });
     modal.find('.btn-modal-delete').on('click', function() { modal.remove(); onConfirm(); });
 }
 
-
-// --- URL HELPER FUNCTIONS (Uses Django URL template tags) ---
-
-function getEventDetailsUrl(eventId) {
-    // Uses the 'event_details_html' name from your urls.py
-    return "{% url 'event_details_html' event_id='EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId);
-}
-
-function getDeleteEventUrl(eventId) {
-    // Uses the 'delete_event' name from your urls.py
-    return "{% url 'delete_event' event_id='EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId);
-}
-
-function getModifyEventUrl(eventId) {
-    // Uses the 'modify_event_root' name from your urls.py
-    return "{% url 'modify_event_root' event_id='EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId);
-}
-
+// --- URL HELPER FUNCTIONS ---
+function getEventDetailsUrl(eventId) { return "{% url 'event_details_html' event_id='EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId); }
+function getDeleteEventUrl(eventId) { return "{% url 'delete_event' event_id='EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId); }
+function getModifyEventUrl(eventId) { return "{% url 'modify_event_root' event_id='EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId); }
 
 // 🚀 FUNCTION TO LOAD AND RENDER THE EDIT FORM
 function loadEditForm(eventId) {
-    // 1. Remove any existing modal instance to ensure a clean load
     $('#custom-form-modal').remove();
-
-    // 2. Create the base modal structure
     const $modal = $('<div id="custom-form-modal" class="custom-modal-backdrop"></div>');
     const $modalContent = $(`<div class="custom-modal-content" style="max-width: 700px; padding: 0; text-align: left;"></div>`);
-
     $modal.append($modalContent);
     $('body').append($modal);
 
     showLoadingModal('Loading Edit Form...');
-
     const url = getModifyEventUrl(eventId) + '?is_ajax=true';
 
     $.ajax({
         url: url,
         method: 'GET',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
         success: function(response) {
             hideLoadingModal();
-
             if (response.success && response.html) {
-                // *** 🎯 Render the HTML string returned by the server-side view ***
                 $modalContent.html(response.html);
-
-                // Add event listener for the close/cancel buttons inside the form
-                $modalContent.find('.modal-close-btn, .btn-cancel-event').on('click', function() {
-                    $('#custom-form-modal').remove();
-                });
-
+                $modalContent.find('.modal-close-btn, .btn-cancel-event').on('click', function() { $('#custom-form-modal').remove(); });
             } else {
                 $modalContent.html('<div class="error-message" style="padding: 30px; color:var(--danger-color);">Failed to load form: ' + (response.error || 'Unknown error') + '</div>');
             }
@@ -212,169 +179,89 @@ function loadEditForm(eventId) {
         }
     });
 }
-// -------------------------------------------------------------
 
-// -------------------------------------------------------------
 // 🎯 CONTROL FUNCTIONALITY: Search and Status Filter Logic
-// -------------------------------------------------------------
-
 let currentSearchTerm = '';
 let currentStatusFilter = 'all';
 
 function applyCombinedFilter() {
     const $table = $('#eventsTable');
     if ($table.length === 0) return;
-
     const $rows = $table.find('tbody tr');
     let visibleCount = 0;
 
     $rows.each(function() {
         const $row = $(this);
         const nameText = $row.find('td[data-label="Event Name"]').text().toLowerCase();
-        const statusText = $row.find('td[data-label="Status"]').text().toLowerCase().trim();
-
+        const statusText = $row.find('td[data-label="Event Status"]').text().toLowerCase().trim();
         const matchesSearch = nameText.includes(currentSearchTerm);
         const matchesStatus = currentStatusFilter === 'all' || statusText === currentStatusFilter;
-
-        if (matchesSearch && matchesStatus) {
-            $row.show();
-            visibleCount++;
-        } else {
-            $row.hide();
-        }
+        if (matchesSearch && matchesStatus) { $row.show(); visibleCount++; } else { $row.hide(); }
     });
 
     const $messageContainer = $('#noResultsMessage');
     const $tableElement = $('#eventsTable');
-
-    if (visibleCount === 0 && ($rows.length > 0)) {
-        $tableElement.hide();
-        $messageContainer.text("No events found matching your filter criteria.").show();
-    } else if (visibleCount > 0) {
-        $tableElement.show();
-        $messageContainer.hide();
-    }
+    if (visibleCount === 0 && ($rows.length > 0)) { $tableElement.hide(); $messageContainer.text("No events found matching your filter criteria.").show(); }
+    else if (visibleCount > 0) { $tableElement.show(); $messageContainer.hide(); }
 }
 
-function filterTableByName() {
-    currentSearchTerm = $('#search').val().toLowerCase().trim();
-    applyCombinedFilter();
-}
-
-function filterTableByStatus(value) {
-    currentStatusFilter = value;
-    applyCombinedFilter();
-}
-
+function filterTableByName() { currentSearchTerm = $('#search').val().toLowerCase().trim(); applyCombinedFilter(); }
+function filterTableByStatus(value) { currentStatusFilter = value; applyCombinedFilter(); }
 
 // --- DOCUMENT READY LOGIC ---
 $(document).ready(function() {
-
-    // --- ROW CLICK HANDLER (View Details) ---
+    // Click row to view details
     $(document).on('click', '.clickable-row', function() {
         var eventId = $(this).data('event-id');
-        var detailsUrl = getEventDetailsUrl(eventId);
-
         $('#event-details-content').data('current-event-id', eventId);
-
         $('.clickable-row').removeClass('selected');
         $(this).addClass('selected');
-
         $('#initial-details-message').hide();
-        var detailsContent = $('#event-details-content').show().html(
-            `<p class="text-center" style="color: var(--text-muted); padding: 20px;">
-                <i class="fas fa-spinner fa-spin"></i> Loading details...
-            </p>`
-        );
-
+        var detailsContent = $('#event-details-content').show().html(`<p class="text-center" style="color: var(--text-muted); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading details...</p>`);
         $.ajax({
-            url: detailsUrl,
+            url: getEventDetailsUrl(eventId),
             method: 'GET',
-            headers: {'X-Requested-With': 'XMLHttpRequest'},
+            headers: {'X-Requested-With':'XMLHttpRequest'},
             success: function(data) {
                 detailsContent.html(data);
-
-                // This is the handler for the Edit button *inside* the details panel (if present)
-                detailsContent.find('.full-edit-form-btn').off('click').on('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const eventId = $(this).data('event-id');
-                    loadEditForm(eventId);
-                });
+                detailsContent.find('.full-edit-form-btn').off('click').on('click', function(e){ e.preventDefault(); e.stopPropagation(); loadEditForm($(this).data('event-id')); });
             },
-            error: function(xhr) {
-                let errorMsg = xhr.responseText || `Error ${xhr.status}: Failed to load event details.`;
-                detailsContent.html(`<div style="color: var(--danger-color); padding: 20px;">${errorMsg}</div>`);
-            }
+            error: function(xhr) { detailsContent.html(`<div style="color: var(--danger-color); padding: 20px;">${xhr.responseText || `Error ${xhr.status}: Failed to load event details.`}</div>`); }
         });
     });
 
-    // 🔴 DELETE BUTTON HANDLER (Functional via event.stopPropagation() in HTML)
+    // Delete button functionality (fixed)
     $(document).on('click', '.delete-event-btn', function(e) {
         e.preventDefault();
-        // **event.stopPropagation() is handled in the HTML, ensuring the row click doesn't fire.**
-
+        e.stopPropagation(); // Prevent row click
         const eventId = $(this).data('event-id');
         const eventRow = $(this).closest('.clickable-row');
         const eventName = eventRow.find('td[data-label="Event Name"]').text();
-
         showDeleteConfirmationModal(eventName, function() {
-
-            const deleteUrl = getDeleteEventUrl(eventId);
             showLoadingModal('Deleting Event...');
-
             $.ajax({
-                url: deleteUrl,
+                url: getDeleteEventUrl(eventId),
                 method: 'DELETE',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrftoken
-                },
+                headers: {'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrftoken},
                 success: function(response) {
                     hideLoadingModal();
-
-                    if (response.success) {
-                        eventRow.fadeOut(300, function() {
-                            $(this).remove();
-                            applyCombinedFilter(); // Re-apply filter after deletion
-
-                            if ($('#event-details-content').data('current-event-id') === eventId) {
+                    if(response.success){
+                        eventRow.fadeOut(300,function(){ $(this).remove(); applyCombinedFilter();
+                            if($('#event-details-content').data('current-event-id')===eventId){
                                 $('#event-details-content').hide().empty().removeData('current-event-id');
                                 $('#initial-details-message').show();
                             }
                         });
-
                         showSuccessModal(`Event <strong>"${eventName}"</strong> has been successfully deleted.`);
-
-                    } else {
-                        alert(`Error deleting event: ${response.error || 'Unknown error'}`);
-                    }
+                    } else { alert(`Error deleting event: ${response.error || 'Unknown error'}`); }
                 },
-                error: function(xhr) {
-                    hideLoadingModal();
-                    console.error("AJAX Delete Error:", xhr.responseText);
-                    alert(`Server Error: Failed to delete event. Status: ${xhr.status}`);
-                }
+                error: function(xhr){ hideLoadingModal(); alert(`Server Error: Failed to delete event. Status: ${xhr.status}`); }
             });
         });
     });
 
-    // 🟢 EDIT BUTTON HANDLER (Functional via event.stopPropagation() in HTML - not currently in the provided HTML but kept for reference)
-    $(document).on('click', '.edit-event-btn', function(e) {
-        e.preventDefault();
-        // e.stopPropagation() is in the HTML, calling loadEditForm directly.
-
-        const eventId = $(this).data('event-id');
-        // loadEditForm(eventId) is typically called directly from the HTML click attribute for buttons *other* than this JQuery handler.
-    });
-
-
-    // Expose filter functions globally
     window.filterTableByName = filterTableByName;
     window.filterTableByStatus = filterTableByStatus;
-    window.loadEditForm = loadEditForm; // Expose the function globally
-
-    // Run the filter on load
+    window.loadEditForm = loadEditForm;
     applyCombinedFilter();
 });
-</script>

@@ -23,6 +23,34 @@ class Event(models.Model):
     picture_url = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # 🟩 These fields support the manual registration override logic
+
+    manual_status_override = models.CharField(
+        max_length=50,
+        choices=[
+            ('AUTO', 'Auto'),
+            ('OPEN_MANUAL', 'Registration Open (Manual Override)'),  # Updated choice for clarity
+            ('CLOSED_MANUAL', 'Registration Closed (Manual Override)'), # Updated choice for clarity
+            ('ONGOING', 'Closed – Event Ongoing'),
+        ],
+        default='AUTO',
+        null=False,
+        blank=False
+    )
+
+    # ⭐ CRITICAL ADDITION: The date field that caused the error
+    manual_close_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="The date when the manual override status will expire."
+    )
+
+    manual_close_time = models.TimeField(
+        null=True,
+        blank=True,
+        help_text="The time when the manual override status will expire."
+    )
+
     class Meta:
         db_table = 'events'
 
