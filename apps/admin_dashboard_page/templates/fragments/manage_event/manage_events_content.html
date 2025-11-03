@@ -3,6 +3,41 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<style>
+    /* Targeting the Refresh List button specifically by its ID and classes */
+    .refresh-list-button,
+    #refreshEventsBtn {
+        /* Your desired bright blue color */
+        background-color: #007bff; /* Example blue, adjust if needed */
+        color: white; /* White text for contrast */
+        border: none;
+        border-radius: 6px; /* Rounded corners */
+        padding: 10px 15px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px; /* Space between icon and text */
+        transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    /* Hover effect */
+    .refresh-list-button:hover,
+    #refreshEventsBtn:hover {
+        background-color: #0056b3; /* Slightly darker blue on hover */
+        transform: translateY(-1px);
+        text-decoration: none;
+        color: white;
+    }
+
+    /* Active/Click state */
+    .refresh-list-button:active,
+    #refreshEventsBtn:active {
+        background-color: #004085;
+        transform: translateY(0);
+    }
+</style>
+
 <div class="full-width-card manage-events-container">
     <div class="card-header">
         <h2>View and Modify Events</h2>
@@ -18,11 +53,10 @@
             <option value="completed">Completed</option>
         </select>
         <a href="javascript:void(0);"
-           data-url="{% url 'create_event' %}?is_ajax=true"
-           data-clean-url="{% url 'create_event' %}"
-           class="btn btn-primary create-event-button"
-           onclick="handleNavClick(this)">
-            <i class="fas fa-plus"></i> New Event
+           class="btn btn-secondary refresh-list-button"
+           id="refreshEventsBtn"
+           onclick="loadEventsList()">
+            <i class="fas fa-sync-alt"></i> Refresh List
         </a>
     </div>
 
@@ -41,7 +75,7 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="eventsTableBody">
                         {% for event in events_list %}
                         <tr class="clickable-row" data-event-id="{{ event.id }}">
                             <td data-label="Event Name">{{ event.name }}</td>
@@ -65,7 +99,7 @@
                 <div class="empty-state">
                     <i class="fas fa-calendar-times"></i>
                     <p>No events found yet.</p>
-                    <p class="muted">Start by creating your first event using the "New Event" button.</p>
+                    <p class="muted">Click the "Refresh List" button to check for new events.</p>
                 </div>
                 {% endif %}
             </div>
@@ -149,6 +183,7 @@ function getEventDetailsUrl(eventId) { return "{% url 'event_details_html' event
 function getDeleteEventUrl(eventId) { return "{% url 'delete_event' event_id='EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId); }
 function getModifyEventUrl(eventId) { return "{% url 'modify_event_root' event_id='EVENT_ID_PLACEHOLDER' %}".replace('EVENT_ID_PLACEHOLDER', eventId); }
 
+
 // 🚀 FUNCTION TO LOAD AND RENDER THE EDIT FORM
 function loadEditForm(eventId) {
     $('#custom-form-modal').remove();
@@ -186,9 +221,17 @@ let currentStatusFilter = 'all';
 
 function applyCombinedFilter() {
     const $table = $('#eventsTable');
-    if ($table.length === 0) return;
-    const $rows = $table.find('tbody tr');
+    const $rows = $('#eventsTableBody').find('tr');
     let visibleCount = 0;
+
+    const $messageContainer = $('#noResultsMessage');
+    const $tableElement = $('#eventsTable');
+
+    if ($table.length === 0 || $rows.length === 0) {
+        $tableElement.hide();
+        $messageContainer.hide();
+        return;
+    }
 
     $rows.each(function() {
         const $row = $(this);
@@ -199,14 +242,58 @@ function applyCombinedFilter() {
         if (matchesSearch && matchesStatus) { $row.show(); visibleCount++; } else { $row.hide(); }
     });
 
-    const $messageContainer = $('#noResultsMessage');
-    const $tableElement = $('#eventsTable');
-    if (visibleCount === 0 && ($rows.length > 0)) { $tableElement.hide(); $messageContainer.text("No events found matching your filter criteria.").show(); }
-    else if (visibleCount > 0) { $tableElement.show(); $messageContainer.hide(); }
+
+    if (visibleCount === 0) {
+        $tableElement.hide();
+        $messageContainer.text("No events found matching your filter criteria.").show();
+    }
+    else {
+        $tableElement.show();
+        $messageContainer.hide();
+    }
 }
 
 function filterTableByName() { currentSearchTerm = $('#search').val().toLowerCase().trim(); applyCombinedFilter(); }
 function filterTableByStatus(value) { currentStatusFilter = value; applyCombinedFilter(); }
+
+
+// 🔄 REFRESH FUNCTIONALITY (Using the efficient pattern from the student dashboard)
+function loadEventsList() {
+    // 1. CRITICAL: Call the loading modal FIRST for immediate visual feedback
+    showLoadingModal('Refreshing Event List...');
+
+    // 2. Reset details panel
+    $('#event-details-content').hide().empty().removeData('current-event-id');
+    $('#initial-details-message').show();
+    $('.clickable-row').removeClass('selected');
+
+    // 3. AJAX call to the existing 'manage_event' URL which returns the fragment when is_ajax=true
+    $.ajax({
+        url: "{% url 'manage_event' %}?is_ajax=true",
+        method: 'GET',
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        success: function(data) {
+            // Find the content of the responsive div in the returned HTML (which is the entire fragment)
+            const $newContent = $(data).find('.events-table-responsive').html();
+
+            if ($newContent) {
+                $('.events-table-responsive').html($newContent);
+            } else {
+                 $('.events-table-responsive').html(data);
+            }
+
+            hideLoadingModal();
+            // 4. Re-apply filters to the newly loaded table
+            filterTableByName();
+            filterTableByStatus(currentStatusFilter);
+        },
+        error: function(xhr) {
+            hideLoadingModal();
+            alert(`Error refreshing list: ${xhr.status} ${xhr.statusText}`);
+        }
+    });
+}
+
 
 // --- DOCUMENT READY LOGIC ---
 $(document).ready(function() {
@@ -217,7 +304,21 @@ $(document).ready(function() {
         $('.clickable-row').removeClass('selected');
         $(this).addClass('selected');
         $('#initial-details-message').hide();
-        var detailsContent = $('#event-details-content').show().html(`<p class="text-center" style="color: var(--text-muted); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading details...</p>`);
+
+        // Use the same perfectly centered loading message as your student code
+        var detailsContent = $('#event-details-content').show().html(
+                `<div style="
+                    width: 100%; height: 100%;
+                    display: flex; flex-direction: column;
+                    justify-content: center; align-items: center;
+                    color: var(--text-muted);
+                    text-align: center;
+                ">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 1.2rem; margin-bottom: 5px; color: var(--text-muted);"></i>
+                    <p style="font-size: 0.9rem;">Loading details...</p>
+                </div>`
+            );
+
         $.ajax({
             url: getEventDetailsUrl(eventId),
             method: 'GET',
@@ -226,11 +327,25 @@ $(document).ready(function() {
                 detailsContent.html(data);
                 detailsContent.find('.full-edit-form-btn').off('click').on('click', function(e){ e.preventDefault(); e.stopPropagation(); loadEditForm($(this).data('event-id')); });
             },
-            error: function(xhr) { detailsContent.html(`<div style="color: var(--danger-color); padding: 20px;">${xhr.responseText || `Error ${xhr.status}: Failed to load event details.`}</div>`); }
+            error: function(xhr) {
+                // Use the same perfectly centered error message as your student code
+                detailsContent.html(
+                    `<div style="
+                        width: 100%; height: 100%;
+                        display: flex; flex-direction: column;
+                        justify-content: center; align-items: center;
+                        color: var(--danger-color); text-align: center;
+                    ">
+                        <i class="fas fa-exclamation-circle" style="font-size: 1.2rem; margin-bottom: 5px;"></i>
+                        <p style="font-size: 0.9rem;">Failed to load event details.</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">(Error ${xhr.status})</p>
+                    </div>`
+                );
+            }
         });
     });
 
-    // Delete button functionality (fixed)
+    // Delete button functionality
     $(document).on('click', '.delete-event-btn', function(e) {
         e.preventDefault();
         e.stopPropagation(); // Prevent row click
@@ -260,8 +375,18 @@ $(document).ready(function() {
         });
     });
 
+    // Click handler for the new Refresh button
+    $('#refreshEventsBtn').on('click', function(e) {
+        e.preventDefault();
+        loadEventsList();
+    });
+
+    // Existing functions exposed for global use
     window.filterTableByName = filterTableByName;
     window.filterTableByStatus = filterTableByStatus;
     window.loadEditForm = loadEditForm;
+    window.loadEventsList = loadEventsList; // Expose the new refresh function
+
     applyCombinedFilter();
 });
+</script>
