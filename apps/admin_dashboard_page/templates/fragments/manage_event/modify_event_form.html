@@ -14,6 +14,7 @@
         --text-light: #E0E0E0;
         --text-muted: #9E9E9E;
         --border-color: #333333;
+        --modal-bg: #282828; /* Slightly lighter than dark background for modals */
     }
 
     /* --- MODAL SPECIFIC STYLES (REQUIRED FOR SPINNER) --- */
@@ -40,6 +41,39 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
     /* ---------------------------------------------------- */
 
+    /* SweetAlert2 Overrides for Beautiful Error Pop-up */
+    .swal2-popup {
+        background: var(--modal-bg) !important;
+        border: 1px solid var(--danger-color);
+        box-shadow: 0 0 10px rgba(244, 67, 54, 0.5) !important;
+    }
+    .swal2-title, .swal2-html-container {
+        color: var(--text-light) !important;
+    }
+    .swal2-icon.swal2-error {
+        border-color: var(--danger-color) !important;
+        color: var(--danger-color) !important;
+    }
+
+    /* 🚀 CRITICAL FIX: Styling the "OK" button */
+    .swal2-confirm {
+        background-color: var(--primary-color) !important; /* Use Primary Theme Color */
+        color: white !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        padding: 10px 20px !important;
+        transition: background-color 0.2s;
+    }
+    .swal2-confirm:hover {
+        background-color: #008ccf !important; /* Slightly darker hover state */
+    }
+    .swal2-confirm:focus {
+        box-shadow: 0 0 0 3px rgba(0, 169, 255, 0.5) !important;
+    }
+    /* ------------------------------------------- */
+
+
+    /* Form Layout Styles */
     .modal-title-bar {
         padding: 20px 30px; border-bottom: 1px solid var(--border-color);
         display: flex; justify-content: space-between; align-items: center;
@@ -53,14 +87,14 @@
     .form-column { flex: 1; min-width: 280px; }
 
     /* General Input Styling */
-    .form-column input:not([type="checkbox"]), .form-column textarea {
+    .form-column input:not([type="checkbox"]), .form-column textarea, .form-column select {
         background: var(--background-light);
         color: var(--text-light); border: 1px solid var(--border-color);
         width: 100%; padding: 10px; border-radius: 6px; box-sizing: border-box;
     }
     .form-column label { display: block; margin-top: 15px; margin-bottom: 5px; color: var(--text-light); }
 
-    /* 🎯 CRITICAL FIX: Two-Column Grid for Time fields only */
+    /* CRITICAL FIX: Two-Column Grid for Time fields only */
     .time-group-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -87,13 +121,59 @@
         margin-top: 15px;
     }
 
+    /* New Registration Status Styling */
+    .registration-control-group {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-color);
+    }
+    .registration-control-group label {
+        font-weight: 600;
+        margin-top: 15px;
+    }
+
+    /* NEW: Grid for Manual Close Date and Time */
+    .manual-close-datetime-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 10px;
+    }
+
+    .schedule-time-field {
+        padding-left: 30px; /* Indent this field slightly */
+    }
+    .schedule-time-field label {
+        color: var(--text-muted);
+    }
+
+    /* --- NEW STYLES FOR DISABLED CONTROLS --- */
+    .control-disabled {
+        pointer-events: none; /* Disable mouse events */
+        opacity: 0.6; /* Gray out slightly */
+    }
+    .disabled-message {
+        background-color: var(--danger-color);
+        color: white;
+        padding: 8px;
+        border-radius: 6px;
+        margin-top: 10px;
+        font-size: 0.9em;
+        text-align: center;
+    }
+    /* ----------------------------------------- */
+
+
     /* Responsive adjustment for small modals/screens */
     @media (max-width: 600px) {
         .edit-form-layout {
              flex-direction: column;
         }
-        .time-group-row {
+        .time-group-row, .manual-close-datetime-group {
             grid-template-columns: 1fr;
+        }
+        .schedule-time-field {
+             padding-left: 0;
         }
     }
 
@@ -115,7 +195,7 @@
         padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none;
         transition: background-color 0.2s;
     }
-    .btn-save-event:hover { background-color: #388e3c; }
+    .btn-save-event:hover:not(:disabled) { background-color: #388e3c; }
 
     .modal-close-btn {
         background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.5rem;
@@ -175,7 +255,43 @@
                         <input type="time" id="event-end-time" name="end_time" value="{{ current_end_time }}">
                     </div>
                 </div>
-            </div>
+
+                <div class="registration-control-group">
+                    <label for="manual-status">Admin Registration Status Override</label>
+
+                    {% if is_completed %}
+                        <div class="disabled-message">
+                            <i class="fas fa-lock"></i> Event is **Completed**. Registration status cannot be changed.
+                        </div>
+                    {% endif %}
+
+                    <select id="manual-status" name="manual_status_override" onchange="toggleManualTimeLimit(this)"
+                            {% if is_completed %}disabled class="control-disabled"{% endif %}>
+                        <option value="OPEN_MANUAL" {% if event.manual_status_override == 'OPEN_MANUAL' %}selected{% endif %}>Registration Open (Manual Override)</option>
+                        <option value="CLOSED_MANUAL" {% if event.manual_status_override == 'CLOSED_MANUAL' %}selected{% endif %}>Registration Closed (Manual Override)</option>
+                        <option value="ONGOING" {% if event.manual_status_override == 'ONGOING' %}selected{% endif %}>Closed – Event Ongoing</option>
+                        <option value="AUTO" {% if not event.manual_status_override or event.manual_status_override == 'AUTO' %}selected{% endif %}>Auto (Use built-in logic)</option>
+                    </select>
+                </div>
+
+                <div id="manual-time-limit-container" class="schedule-time-field" style="display: {% if event.manual_status_override and event.manual_status_override != 'AUTO' and event.manual_status_override != 'ONGOING' %}block{% else %}none{% endif %};">
+                    <label>Override Limit Date & Time (Optional):</label>
+                    <small>The selected status will apply until this date and time.</small>
+
+                    <div class="manual-close-datetime-group">
+                         <div class="schedule-field">
+                            <label for="manual-close-date">Date</label>
+                            <input type="date" id="manual-close-date" name="manual_close_date" value="{{ current_manual_close_date|default:'' }}"
+                                   {% if is_completed %}disabled{% endif %}>
+                         </div>
+                         <div class="schedule-field">
+                            <label for="manual-close-time">Time</label>
+                            <input type="time" id="manual-close-time" name="manual_close_time" value="{{ current_manual_close_time|default:'' }}"
+                                   {% if is_completed %}disabled{% endif %}>
+                         </div>
+                    </div>
+                </div>
+                </div>
         </div>
 
         <div class="form-actions">
@@ -183,7 +299,7 @@
                 <i class="fas fa-arrow-left"></i> Cancel
             </button>
 
-            <button type="submit" id="save-event-btn" class="btn-save-event">
+            <button type="submit" id="save-event-btn" class="btn-save-event" {% if is_completed %}disabled{% endif %}>
                 <i class="fas fa-save"></i> Save Changes
             </button>
         </div>
@@ -194,7 +310,6 @@
 // --- MODAL UTILITY FUNCTIONS (Defined here to ensure scope) ---
 function showLoadingModal(message) {
     $('#custom-loading-modal').remove();
-    // This uses the custom CSS defined above
     const modalHtml = `<div id="custom-loading-modal" class="custom-modal-backdrop"><div class="custom-modal-content loading-modal-style"><h3>${message}</h3><i class="fas fa-sync-alt loading-spinner"></i></div></div>`;
     $('body').append(modalHtml);
 }
@@ -204,12 +319,43 @@ function hideLoadingModal() {
 }
 
 function showSuccessModal(message) {
-    // Re-defining this here for completeness, though it is often in the parent script
-    const modalHtml = `<div id="custom-success-modal" class="custom-modal-backdrop"><div class="custom-modal-content success-modal-style"><div class="modal-header"><i class="fas fa-check-circle success-icon"></i><h3>Success!</h3></div><p class="modal-body-text">${message}</p><div class="modal-actions"><button class="btn-modal-close">Close</button></div></div></div>`;
-    $('body').append(modalHtml);
-    $('#custom-success-modal').find('.btn-modal-close').on('click', function() {
-        $('#custom-success-modal').remove();
-    });
+    // Using SweetAlert for a consistent, beautiful UI across all alerts
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: "Success!",
+            text: message,
+            icon: "success",
+            background: "#282828",
+            color: "#fff",
+            confirmButtonColor: "#00A9FF",
+        });
+    } else {
+        alert("Success! " + message);
+    }
+}
+
+// Helper to show errors using SweetAlert or standard alert
+function showErrorAlert(title, text) {
+     hideLoadingModal(); // Always hide spinner on error
+
+     // UI Improvement: Using bold/list for better readability in the alert
+     const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+
+     if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: title,
+            html: formattedText, // Use html for rich text formatting
+            icon: "error",
+            background: "#282828", // Use the defined modal background
+            color: "#fff",
+            confirmButtonColor: "#00A9FF",
+            customClass: {
+                popup: 'swal2-popup' // Apply custom CSS for border/shadow
+            }
+        });
+    } else {
+        alert(title + ": \n\n" + text.replace(/\*\*/g, ''));
+    }
 }
 // ---------------------------------------------------------------
 
@@ -235,12 +381,123 @@ $(document).ready(function() {
     $('.modal-close-btn, .btn-cancel-event').on('click', function() {
         $('#custom-form-modal').remove();
     });
+
+    // Initial call to ensure visibility is correct on load
+    toggleManualTimeLimit(document.getElementById('manual-status'));
 });
+
+// REVISED JavaScript function to toggle the date and time limit fields visibility
+function toggleManualTimeLimit(selectElement) {
+    const container = document.getElementById('manual-time-limit-container');
+    const selectedValue = selectElement.value;
+
+    // Show the date/time inputs only if a Manual status is selected (OPEN_MANUAL or CLOSED_MANUAL)
+    if (selectedValue === 'OPEN_MANUAL' || selectedValue === 'CLOSED_MANUAL') {
+        container.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+        // Clear the date and time when reverting to AUTO or ONGOING
+        document.getElementById('manual-close-date').value = '';
+        document.getElementById('manual-close-time').value = '';
+    }
+}
+
+// --- NEW VALIDATION LOGIC ---
+
+// Helper function to get event schedule data from the form
+function getCurrentEventData() {
+    const date = $('#event-date').val();
+    const startTime = $('#event-start-time').val();
+    const endTime = $('#event-end-time').val();
+
+    // Create Date objects for easier comparison (using the event date)
+    const startDateTime = new Date(`${date}T${startTime}:00`);
+    const endDateTime = endTime ? new Date(`${date}T${endTime}:00`) : null;
+
+    return { date, startTime, endTime, startDateTime, endDateTime };
+}
+
+/**
+ * Client-side validation for the manual registration close date/time.
+ * Enforces the business rules for upcoming vs. starting events.
+ * @returns {boolean} True if validation passes, False otherwise.
+ */
+function validateManualOverrideTime() {
+    const status = $('#manual-status').val();
+    const limitDate = $('#manual-close-date').val();
+    const limitTime = $('#manual-close-time').val();
+
+    // Validation is only needed if a manual status is selected AND a limit date/time is set
+    if (status !== 'OPEN_MANUAL' && status !== 'CLOSED_MANUAL') {
+        return true;
+    }
+
+    // If status is Manual and *no* date or time is set, it's a permanent override. This is valid.
+    if (!limitDate && !limitTime) {
+        return true;
+    }
+
+    // Now, if we have a manual status and a limit time, we must validate it.
+    if (!limitDate || !limitTime) {
+        // IMPROVED MESSAGE: Must provide both date and time if setting a limit
+        showErrorAlert("Override Limit Missing", "To set a time limit, you must provide **both a Date and a Time**. Please fill in both fields or clear them both for a permanent override.");
+        return false;
+    }
+
+    const { startDateTime, endDateTime, date } = getCurrentEventData();
+    const limitDateTime = new Date(`${limitDate}T${limitTime}:00`);
+
+    // A. General Rule: Limit must be before the event ends (if end time exists)
+    if (endDateTime && limitDateTime > endDateTime) {
+        // IMPROVED MESSAGE: Limit must be on or before event end time
+        showErrorAlert("Invalid Time Limit", "The manual override limit time (**" + limitTime + " on " + limitDate + "**) must be **on or before** the event's end time. Please adjust the limit or the event end time.");
+        return false;
+    }
+
+    // B. Rule for Upcoming Events (CLOSED_MANUAL): Limit must be before the event starts.
+    if (status === 'CLOSED_MANUAL' && limitDateTime >= startDateTime) {
+         // IMPROVED MESSAGE: Closing limit before event starts
+         showErrorAlert("Invalid Closing Time", "When manually **Closing** registration for an upcoming event, the limit time (**" + limitTime + " on " + limitDate + "**) must be **STRICTLY BEFORE** the event starts. Registration cannot close *during* or *after* the event begins.");
+         return false;
+    }
+
+    // C. Rule for Starting/Ongoing Events (OPEN_MANUAL):
+    // 1. Limit Date must be the same as the Event Date.
+    if (status === 'OPEN_MANUAL' && limitDate !== date) {
+        // IMPROVED MESSAGE: Reopening limit date must match event date
+        showErrorAlert("Invalid Date Match", "When manually **Reopening** registration for an ongoing event, the limit **Date** must be the same as the event date (**" + date + "**). You cannot reopen registration across different days.");
+        return false;
+    }
+    // 2. Limit Time must be during the event duration (after start time and before end time).
+    if (status === 'OPEN_MANUAL' && (limitDateTime <= startDateTime || (endDateTime && limitDateTime >= endDateTime))) {
+         // IMPROVED MESSAGE: Reopening limit time during event duration
+         const startTime = $('#event-start-time').val();
+         const endTime = $('#event-end-time').val() || 'N/A';
+         showErrorAlert("Invalid Reopening Time",
+             "When manually **Reopening** registration for an active event, the limit time (**" + limitTime + "**) must be:\n\n" +
+             "1. **AFTER** the event start time (**" + startTime + "**)\n" +
+             "2. **BEFORE** the event end time (**" + endTime + "**)");
+         return false;
+    }
+
+    return true; // All client-side checks passed
+}
 
 
 // This function handles the POST submission for the update.
 function handleEditFormSubmit(e, form) {
     e.preventDefault();
+
+    // If the Save button is disabled (i.e., event is completed), prevent submission
+    if ($('#save-event-btn').is(':disabled')) {
+        showErrorAlert("Action Blocked", "Cannot modify event details or registration status for a completed event.");
+        return;
+    }
+
+    // Perform client-side validation first
+    if (!validateManualOverrideTime()) {
+        return; // Stop submission if validation fails
+    }
 
     const $form = $(form);
     const formData = $form.serialize();
@@ -276,7 +533,8 @@ function handleEditFormSubmit(e, form) {
                     $row.find('td[data-label="Registrations"]').text(updatedData.registrations);
 
                     const $statusCell = $row.find('td[data-label="Status"]');
-                    $statusCell.removeClass().addClass(`status-${updatedData.status.toLowerCase()}`);
+                    // The replace is to handle spaces and hyphens in the status string for CSS class names
+                    $statusCell.removeClass().addClass(`status-${updatedData.status.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
                     $statusCell.text(updatedData.status);
 
                     // Trigger a re-load of the details panel to show fresh data
@@ -284,38 +542,13 @@ function handleEditFormSubmit(e, form) {
                 }
             } else {
                  // Error handling for server-side validation failure
-                 if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: "Update Failed",
-                        text: response.error || "Please check form fields and try again.",
-                        icon: "error",
-                        background: "#1e1e1e",
-                        color: "#fff",
-                        confirmButtonColor: "#00A9FF",
-                    });
-                } else {
-                    alert("Update Failed: " + (response.error || "Please check form fields and try again."));
-                }
+                 showErrorAlert("Update Failed", response.error || "Please check form fields and try again.");
             }
         },
         error: function(xhr) {
-            // 🛑 HIDE LOADING SPINNER
-            hideLoadingModal();
-
             // Error handling for network or server issues (e.g., 500 status)
-            let errorMsg = xhr.responseText || `Server Error: Status ${xhr.status}`;
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: "Network Error",
-                    text: 'Failed to save changes. ' + errorMsg,
-                    icon: "error",
-                    background: "#1e1e1e",
-                    color: "#fff",
-                    confirmButtonColor: "#00A9FF",
-                });
-            } else {
-                alert('Network Error: Failed to save changes. ' + errorMsg);
-            }
+            let errorText = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : `Server Error: Status ${xhr.status}`;
+            showErrorAlert("Network Error", 'Failed to save changes. ' + errorText);
         }
     });
 }

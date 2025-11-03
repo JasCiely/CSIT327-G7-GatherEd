@@ -47,7 +47,7 @@ def create_event(request):
                 messages.error(request, "Event title, description, date, start time, end time, and location are required.")
                 return redirect('admin_dashboard')
 
-            # ✅ Check for exact duplicate event
+            # Check for exact duplicate event
             existing_event = supabase_admin.table('events') \
                 .select('*') \
                 .eq('admin_id', current_admin_id) \
@@ -58,12 +58,11 @@ def create_event(request):
                 .eq('location', location) \
                 .execute()
 
-            # Supabase returns a dict with 'data' key
             if existing_event.data and len(existing_event.data) > 0:
                 messages.error(request, "An event with the exact same title, date, time, and location already exists.")
                 return redirect('admin_dashboard')
 
-            # Insert new event
+            # Prepare new event data
             new_uuid = str(uuid.uuid4())
             insert_data = {
                 'id': new_uuid,
@@ -76,7 +75,8 @@ def create_event(request):
                 'end_time': end_time,
                 'max_attendees': int(max_attendees) if max_attendees and max_attendees.isdigit() else None,
                 'picture_url': None,
-                'created_at': datetime.datetime.now().isoformat(),
+                'created_at': datetime.datetime.utcnow().isoformat(),
+                'manual_status_override': 'AUTO',  # ⚡ Default registration status
             }
 
             insert_result = supabase_admin.table('events').insert(insert_data).execute()
