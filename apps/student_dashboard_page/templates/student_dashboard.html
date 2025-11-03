@@ -6,7 +6,6 @@
     <title>Student Dashboard - GatherEd</title>
     {% load static %}
 
-    <!-- Optimized CSS Loading -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" as="style" onload="this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"></noscript>
 
@@ -16,7 +15,6 @@
     <link rel="stylesheet" href="{% static 'css/student_dashboard_css.css' %}">
     <link rel="stylesheet" href="{% static 'css/student_dashboard_style.css' %}">
 
-    <!-- Deferred Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous" defer></script>
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 
@@ -78,15 +76,11 @@
     </div>
 
     <script defer>
-        // =========================================================
-        // 🧠 Smooth Navigation System (same as admin dashboard)
-        // =========================================================
         const pageCache = {};
-        const CACHE_TIMEOUT = 60000; // 1 minute
+        const CACHE_TIMEOUT = 60000;
         let currentController = null;
 
         document.addEventListener("DOMContentLoaded", function () {
-            // ✅ Display Django messages as toast alerts
             {% if messages %}
                 {% for message in messages %}
                     Swal.fire({
@@ -103,7 +97,6 @@
                 {% endfor %}
             {% endif %}
 
-            // ✅ Welcome popup (once per session)
             {% if user.is_authenticated %}
                 if (!sessionStorage.getItem("student_welcomed")) {
                     const fullName = "{{ user_display_name|escapejs }}";
@@ -127,9 +120,6 @@
             preloadCommonStudentPages();
         });
 
-        // =========================================================
-        // 🚀 Optimized Fast Navigation
-        // =========================================================
         window.handleNavClick = function (el) {
             const url = el.dataset.url;
             const cleanUrl = el.dataset.cleanUrl;
@@ -201,16 +191,10 @@
                 });
         }
 
-        // =========================================================
-        // 💨 Fade-In Transition
-        // =========================================================
         function fadeInContent(element) {
             element.style.opacity = 1;
         }
 
-        // =========================================================
-        // ⚙️ Preload Common Pages (student pages)
-        // =========================================================
         function preloadCommonStudentPages() {
             document.querySelectorAll(".sidebar-nav .nav-item").forEach(link => {
                 const url = link.dataset.url;
@@ -223,9 +207,7 @@
             });
         }
 
-        // =========================================================
-        // 🚪 Logout Confirmation
-        // =========================================================
+        // ✅ Logout Confirmation (Click)
         document.addEventListener("DOMContentLoaded", () => {
             const logoutBtn = document.getElementById("logout-btn");
             if (logoutBtn) {
@@ -259,17 +241,42 @@
                     });
                 });
             }
-        });
 
-        // =========================================================
-        // 🧠 Prevent Back Navigation Cache
-        // =========================================================
-        if (window.history && window.history.pushState) {
-            window.history.pushState(null, null, window.location.href);
-            window.onpopstate = function () {
-                window.history.pushState(null, null, window.location.href);
-            };
-        }
+            // ✅ Back Button Logout Confirmation
+            if (window.history && window.history.pushState) {
+                window.history.pushState({ page: "student_dashboard" }, "", window.location.href);
+
+                window.addEventListener("popstate", function () {
+                    Swal.fire({
+                        title: "Do you want to log out?",
+                        text: "You’ll need to log in again to access the student dashboard.",
+                        icon: "question",
+                        background: "#1e1e1e",
+                        color: "#fff",
+                        showCancelButton: true,
+                        confirmButtonColor: "#007bff",
+                        cancelButtonColor: "#6c757d",
+                        confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Log out',
+                        cancelButtonText: "Stay here",
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            Swal.fire({
+                                title: "Logging out...",
+                                background: "#1e1e1e",
+                                color: "#fff",
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                    setTimeout(() => (window.location.href = "{% url 'logout' %}"), 600);
+                                },
+                            });
+                        } else {
+                            window.history.pushState({ page: "student_dashboard" }, "", window.location.href);
+                        }
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>
