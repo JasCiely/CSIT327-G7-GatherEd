@@ -1,0 +1,109 @@
+/* UI Variables (Match Dark Theme) */
+:root {
+    --primary-color: #00A9FF;
+    --text-light: #E0E0E0;
+    --text-muted: #9E9E9E;
+    --border-color: #333333;
+    --panel-background: #191919;
+}
+
+/* 1. Filter/Action Bar Container */
+.filter-action-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* 2. Search Container and Icon */
+.search-container {
+    position: relative;
+    flex-grow: 1;
+    min-width: 250px;
+    height: 38px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.9em;
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    height: 100%;
+    padding: 8px 12px 8px 35px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--panel-background);
+    color: var(--text-light);
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus,
+.filter-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 169, 255, 0.3);
+    outline: none;
+}
+
+/* 3. Status Filter Select */
+.filter-select {
+    height: 38px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--panel-background);
+    color: var(--text-light);
+    font-size: 0.9rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23E0E0E0%22%20d%3D%22M287%20165.7c-4.4%204.4-11.4%204.4-15.8%200L146.2%2039.2%2021%20165.7c-4.4%204.4-11.4%204.4-15.8%200-4.4-4.4-4.4-11.4%200-15.8l133.2-133.2c4.4-4.4%2011.4-4.4%2015.8%200L287%20149.9c4.4%204.4%204.4%2011.4%200%2015.8z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 10px;
+    padding-right: 28px;
+    transition: border-color 0.2s ease;
+}
+
+/* 4. Refresh Button */
+.refresh-btn {
+    height: 38px;
+    padding: 0 15px;
+    border-radius: 5px;
+    background-color: var(--primary-color);
+    color: var(--background-dark);
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    border: none;
+}
+
+.refresh-btn:hover {
+    background-color: #008cd6;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 169, 255, 0.4);
+}
+
+.refresh-btn:active {
+    background-color: #006bb3;
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* 5. Fix Old Bootstrap Conflicts */
+.form-control {
+    border: none !important;
+    background: none !important;
+    padding: 0 !important;
+}

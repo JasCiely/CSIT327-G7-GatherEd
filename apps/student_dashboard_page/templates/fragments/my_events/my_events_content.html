@@ -1,35 +1,90 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/my_events_css.css' %}">
+<link rel="stylesheet" href="{% static 'css/manage_events_style.css' %}">
+<link rel="stylesheet" href="{% static 'css/manage_registered_events.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<div class="full-width-card my-registrations-container">
+<div class="full-width-card manage-events-container">
     <div class="card-header">
         <h2>My Registered Events</h2>
-        <p class="card-subtitle">Events you have signed up for, including attendance and feedback status.</p>
+        <p class="card-subtitle">View and manage the events you are currently registered for.</p>
     </div>
 
-    <div class="events-table-responsive">
-        {% if my_events_list %}
-        <table class="my-events-table">
-            <thead>
-                <tr>
-                    <th>Event Name</th>
-                    <th>Date</th>
-                    <th>Attendance Status</th>
-                    <th>Feedback Given</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {# Backend loop will go here #}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-calendar-times"></i>
-            <p>You haven't registered for any events yet.</p>
-            <p class="muted">Go to **View Events** to find something exciting!</p>
+    <div class="events-content-wrapper" style="display: flex; flex-direction: row; gap: 20px;">
+        <div class="events-table-area">
+
+            <div class="filter-action-bar">
+
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text"
+                           id="eventSearch"
+                           placeholder="Search events by name..."
+                           class="search-input">
+                </div>
+
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All Events</option>
+                    <option value="Upcoming">Upcoming</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Active">Active</option>
+                </select>
+
+                <button id="refreshEventsBtn" class="refresh-btn" title="Refresh Events List">
+                    <i class="fas fa-sync-alt"></i> Reload List
+                </button>
+            </div>
+            <div class="events-table-responsive">
+                {% if registered_events_list %}
+                <table id="eventsTable" class="events-table">
+                    <thead>
+                        <tr>
+                            <th>Event Name</th>
+                            <th>Date</th>
+                            <th>School/Host</th>
+                            <th>Event Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventsTableBody">
+                        {% for registration in registered_events_list %}
+                        <tr class="clickable-row" data-registration-id="{{ registration.id }}" data-event-id="{{ registration.event.id }}">
+                            <td data-label="Event Name">{{ registration.event.name }}</td>
+                            <td data-label="Date">{{ registration.event.date }}</td>
+                            <td data-label="School/Host">{{ registration.event.school.name }}</td>
+                            <td data-label="Event Status" class="status status-{{ registration.event.event_status|lower }}">{{ registration.event.event_status }}</td>
+                            <td data-label="Actions" class="action-buttons">
+                                <button class="btn-action cancel cancel-registration-btn"
+                                        title="Cancel Registration"
+                                        data-registration-id="{{ registration.id }}"
+                                        data-event-name="{{ registration.event.name }}">
+                                    <i class="fas fa-user-minus"></i> Cancel
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div id="noResultsMessage" class="no-results-message" style="display: none;"></div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-calendar-alt"></i>
+                    <p>You haven't registered for any events yet.</p>
+                    <p class="muted">Find an exciting event on the main events page!</p>
+                </div>
+                {% endif %}
+            </div>
         </div>
-        {% endif %}
+
+        <div class="event-details-panel">
+            <div id="initial-details-message" class="details-placeholder" style="display: block;">
+                <i class="fas fa-info-circle"></i>
+                <h3>Event Information</h3>
+                <p>Click any event row to see more details, including location and description.</p>
+            </div>
+
+            <div id="event-details-content" style="display: none;"></div>
+        </div>
     </div>
 </div>

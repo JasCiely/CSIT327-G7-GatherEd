@@ -1,17 +1,18 @@
 import datetime
 import traceback
+from uuid import UUID
 
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, redirect
-from django.conf import settings
+from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_http_methods
-from supabase import create_client
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
+from django.db import transaction
 
+from apps.admin_dashboard_page.models import Event
+from apps.student_dashboard_page.models import Registration
 
-# --- HELPER FUNCTIONS ---
 
 def format_to_readable_date(date_str):
     if not date_str:
@@ -61,36 +62,33 @@ def parse_time(ts):
 
 def get_detailed_event_timing(event_date_str, start_time_str, end_time_str, manual_close_date_str=None,
                               manual_close_time_str=None):
-    """
-    Returns a dictionary of critical datetime objects and the event's life status.
-    Event Life Status: Upcoming, Active, Completed
-    """
     try:
         if not all([event_date_str, start_time_str]):
             return {'status': 'Unknown'}
 
-        # 1. Core Event Times
-        event_date = datetime.datetime.strptime(event_date_str, '%Y-%m-%d').date()
+        if isinstance(event_date_str, datetime.date):
+            event_date = event_date_str
+        else:
+            event_date = datetime.datetime.strptime(event_date_str, '%Y-%m-%d').date()
+
         start_time = parse_time(start_time_str)
-        # Default end time to 2 hours after start if not provided
         default_end_dt = datetime.datetime.combine(event_date, start_time) + datetime.timedelta(hours=2)
         end_time = parse_time(end_time_str) if end_time_str else default_end_dt.time()
 
         start_dt = datetime.datetime.combine(event_date, start_time)
         end_dt = datetime.datetime.combine(event_date, end_time)
-
-        # Handle end_dt before start_dt (e.g., event spans midnight)
         if end_dt < start_dt:
             end_dt += datetime.timedelta(days=1)
 
-        # 2. Manual Limit Time
         manual_limit_dt = None
         if manual_close_date_str and manual_close_time_str:
-            limit_date = datetime.datetime.strptime(manual_close_date_str, '%Y-%m-%d').date()
+            if isinstance(manual_close_date_str, datetime.date):
+                limit_date = manual_close_date_str
+            else:
+                limit_date = datetime.datetime.strptime(manual_close_date_str, '%Y-%m-%d').date()
             limit_time = parse_time(manual_close_time_str)
             manual_limit_dt = datetime.datetime.combine(limit_date, limit_time)
 
-        # 3. Event Life Status
         now = datetime.datetime.now()
         status = 'Upcoming'
         if now >= end_dt:
@@ -103,7 +101,7 @@ def get_detailed_event_timing(event_date_str, start_time_str, end_time_str, manu
             'start_dt': start_dt,
             'end_dt': end_dt,
             'manual_limit_dt': manual_limit_dt,
-            'event_date_str': event_date_str,
+            'event_date_str': event_date.strftime('%Y-%m-%d'),
             'event_date': event_date,
         }
 
@@ -113,15 +111,10 @@ def get_detailed_event_timing(event_date_str, start_time_str, end_time_str, manu
 
 
 def get_event_status(event_date_str, start_time_str, end_time_str):
-    """Return Upcoming, Active, Completed (Simplified wrapper)"""
     return get_detailed_event_timing(event_date_str, start_time_str, end_time_str).get('status', 'Unknown')
 
 
 def determine_registration_status(event_data):
-    """
-    Determines the final, effective registration status based on event data,
-    timing, and manual overrides.
-    """
     manual = (event_data.get('manual_status_override') or 'AUTO').upper()
     max_attendees = event_data.get('max_attendees') or 0
     current_regs = event_data.get('current_registrations', 0)
@@ -136,76 +129,53 @@ def determine_registration_status(event_data):
     event_status = timing['status']
     now = datetime.datetime.now()
 
-    # --- 1. Manual Overrides (with time limits) ---
+    # Bisaya: check manual override validity
     if manual in ['OPEN_MANUAL', 'CLOSED_MANUAL']:
         limit_dt = timing.get('manual_limit_dt')
-
-        # Check if manual override has expired (Manual override ends AT the limit time)
         if limit_dt and now >= limit_dt:
-            # Revert to AUTO logic after limit expires
             manual = 'AUTO'
         else:
-            # Manual override is active
             if manual == 'OPEN_MANUAL':
                 return 'Available'
             if manual == 'CLOSED_MANUAL':
                 return 'Registration Closed'
 
-    # --- 2. Hard Overrides (FULL, ONGOING) ---
     if manual == 'FULL':
         return 'Full'
     if manual == 'ONGOING':
         return 'Closed – Event Ongoing'
 
-    # --- 3. AUTO Logic based on Event Life Status and Capacity ---
-
-    # 3.1 Completed Events (REGISTRATION CLOSED)
     if event_status == 'Completed':
         return 'Registration Closed'
 
-    # 3.2 Active Events (Running)
     if event_status == 'Active':
-        # AUTO logic for active event defaults to 'Closed – Event Ongoing' unless maxed
         if max_attendees and current_regs >= max_attendees:
             return 'Full'
         else:
             return 'Closed – Event Ongoing'
 
-            # 3.3 Upcoming Events (or Unknown fallback)
     if max_attendees and current_regs >= max_attendees:
         return 'Full'
 
     return 'Available'
 
 
-def fetch_single_event(event_id, admin_client):
-    """Return full event dict with formatted values"""
+def fetch_single_event(event_id):
     try:
-        res = admin_client.table('events') \
-            .select('*') \
-            .eq('id', event_id) \
-            .single() \
-            .execute()
-        data = getattr(res, 'data', None)
-        if not data:
-            return None
-
-        # Placeholder for current registrations
-        current_regs = data.get('current_registrations', 0)
-
+        event = Event.objects.select_related('admin').get(pk=event_id)
+        current_regs = Registration.objects.filter(event=event).exclude(status='CANCELLED').count()
         return {
-            'id': data['id'],
-            'title': data.get('title', ''),
-            'description': data.get('description', ''),
-            'location': data.get('location', ''),
-            'date': data.get('date', ''),
-            'start_time': data.get('start_time', ''),
-            'end_time': data.get('end_time', ''),
-            'max_attendees': data.get('max_attendees', 0) or 0,
-            'manual_status_override': data.get('manual_status_override', 'AUTO'),
-            # Include both date and time fields
-            'manual_close_date': data.get('manual_close_date', ''),
-            'manual_close_time': data.get('manual_close_time', ''),
+            'id': str(event.id),
+            'title': event.title,
+            'description': event.description or '',
+            'location': event.location or '',
+            'date': event.date,
+            'start_time': event.start_time,
+            'end_time': event.end_time,
+            'max_attendees': event.max_attendees or 0,
+            'manual_status_override': event.manual_status_override or 'AUTO',
+            'manual_close_date': event.manual_close_date,
+            'manual_close_time': event.manual_close_time,
             'current_registrations': current_regs,
         }
     except Exception:
@@ -213,98 +183,107 @@ def fetch_single_event(event_id, admin_client):
         return None
 
 
-def _fetch_single_event(event_id, admin_client):
-    """Fetches full details for one event and formats the data."""
+def _fetch_single_event(event_id):
     try:
-        fetch_result = admin_client.table('events') \
-            .select('*') \
-            .eq('id', event_id) \
-            .single() \
-            .execute()
-    except Exception as e:
-        print(f"Supabase fetch error for ID {event_id}: {e}")
+        event = Event.objects.get(pk=event_id)
+        current_registrations_count = Registration.objects.filter(event=event).exclude(status='CANCELLED').count()
+
+        data = {
+            'id': str(event.id),
+            'title': event.title,
+            'description': event.description or 'No description provided.',
+            'date': event.date.strftime('%Y-%m-%d') if event.date else '',
+            'location': event.location or 'N/A',
+            'start_time': event.start_time.isoformat() if event.start_time else '',
+            'end_time': event.end_time.isoformat() if event.end_time else '',
+            'max_attendees': event.max_attendees or 0,
+            'current_registrations': current_registrations_count,
+            'manual_status_override': event.manual_status_override or 'AUTO',
+            'manual_close_date': (event.manual_close_date.strftime('%Y-%m-%d') if event.manual_close_date else ''),
+            'manual_close_time': (event.manual_close_time.isoformat() if event.manual_close_time else ''),
+        }
+
+        registration_status = determine_registration_status(data)
+        event_status = get_event_status(data.get('date'), data.get('start_time'), data.get('end_time'))
+
+        return {
+            'id': str(event.id),
+            'name': event.title or 'N/A',
+            'description': event.description or 'No description provided.',
+            'date': format_to_readable_date(data.get('date')),
+            'location': data.get('location', 'N/A'),
+            'start_time': format_to_12hr(data.get('start_time')),
+            'end_time': format_to_12hr(data.get('end_time')),
+            'max_attendees': data.get('max_attendees', 0) or 0,
+            'registrations': current_registrations_count,
+            'status': registration_status,
+            'raw_date': data.get('date', ''),
+            'raw_start_time': data.get('start_time', ''),
+            'raw_end_time': data.get('end_time', ''),
+            'event_status': event_status,
+            'manual_close_date': data.get('manual_close_date', ''),
+            'manual_close_time': data.get('manual_close_time', ''),
+        }
+
+    except Exception:
+        traceback.print_exc()
         return None
-
-    data = getattr(fetch_result, 'data', None)
-    if not data:
-        return None
-
-    date_str = data.get('date', '')
-    start_time_str = data.get('start_time', '')
-    end_time_str = data.get('end_time', '')
-
-    current_registrations_count = data.get('current_registrations', 0)
-    registration_status = determine_registration_status(data)
-    event_status = get_event_status(date_str, start_time_str, end_time_str)  # Need this for HTML
-
-    return {
-        'id': data['id'],
-        'name': data.get('title', 'N/A'),
-        'description': data.get('description', 'No description provided.'),
-        'date': format_to_readable_date(date_str),
-        'location': data.get('location', 'N/A'),
-        'start_time': format_to_12hr(start_time_str),
-        'end_time': format_to_12hr(end_time_str),
-        'max_attendees': data.get('max_attendees', 0) or 0,
-        'registrations': current_registrations_count,
-        'status': registration_status,
-
-        # Return raw ISO strings for HTML input pre-population
-        'raw_date': date_str,
-        'raw_start_time': start_time_str,
-        'raw_end_time': end_time_str,
-        'event_status': event_status,  # Pass event status for HTML disabling
-    }
 
 
 def get_registration_status(event_data):
-    """Alias for consistency."""
     return determine_registration_status(event_data)
 
 
-# --- CORE VIEWS ---
-
 @login_required
 def manage_events(request):
-    """Handles Manage Events page with both Event and Registration Status."""
     is_ajax = request.GET.get('is_ajax') == 'true'
-    admin_id = str(request.user.adminprofile.id)
-    cache_key = f"events_{admin_id}"
-    events_list = []
+    admin_profile = getattr(request.user, 'adminprofile', None)
+    if not admin_profile:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Admin profile not found'}, status=403)
+        return redirect('/admin_dashboard/')
 
-    try:
-        client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
-        res = client.table('events').select('*').eq('admin_id', admin_id).order('date').execute()
-        data = getattr(res, 'data', []) or []
+    cache_key = f"events_{admin_profile.id}"
+    events_list = cache.get(cache_key)
 
-        for ev in data:
-            # Event Status
-            event_status = get_event_status(ev.get('date'), ev.get('start_time'), ev.get('end_time'))
+    if events_list is None:
+        events_list = []
+        try:
+            qs = Event.objects.filter(admin=admin_profile).order_by('date')
+            for ev in qs:
+                ev_raw = {
+                    'id': str(ev.id),
+                    'date': ev.date.strftime('%Y-%m-%d') if ev.date else '',
+                    'start_time': ev.start_time.isoformat() if ev.start_time else '',
+                    'end_time': ev.end_time.isoformat() if ev.end_time else '',
+                    'manual_close_date': ev.manual_close_date.strftime('%Y-%m-%d') if ev.manual_close_date else '',
+                    'manual_close_time': ev.manual_close_time.isoformat() if ev.manual_close_time else '',
+                    'manual_status_override': ev.manual_status_override or 'AUTO',
+                    'max_attendees': ev.max_attendees or 0,
+                    'current_registrations': Registration.objects.filter(event=ev).exclude(status='CANCELLED').count(),
+                }
 
-            # Registration Status Logic - using the comprehensive function
-            registration_status = determine_registration_status(ev)
+                event_status = get_event_status(ev_raw['date'], ev_raw['start_time'], ev_raw['end_time'])
+                registration_status = determine_registration_status(ev_raw)
 
-            max_attendees = ev.get('max_attendees', 0) or 0
-            current_registrations = ev.get('current_registrations', 0) or 0  # placeholder
+                events_list.append({
+                    'id': str(ev.id),
+                    'name': ev.title or 'N/A',
+                    'description': ev.description or 'N/A',
+                    'date': format_to_readable_date(ev.date),
+                    'location': ev.location or 'N/A',
+                    'start_time': format_to_12hr(ev.start_time),
+                    'end_time': format_to_12hr(ev.end_time),
+                    'event_status': event_status,
+                    'registration_status': registration_status,
+                    'registrations': ev_raw['current_registrations'],
+                    'max_attendees': ev_raw['max_attendees'],
+                })
 
-            events_list.append({
-                'id': ev['id'],
-                'name': ev.get('title', 'N/A'),
-                'description': ev.get('description', 'N/A'),
-                'date': format_to_readable_date(ev.get('date')),
-                'location': ev.get('location', 'N/A'),
-                'start_time': format_to_12hr(ev.get('start_time')),
-                'end_time': format_to_12hr(ev.get('end_time')),
-                'event_status': event_status,
-                'registration_status': registration_status,
-                'registrations': current_registrations,
-                'max_attendees': max_attendees,
-            })
+            cache.set(cache_key, events_list, timeout=60)
 
-        cache.set(cache_key, events_list, timeout=60)
-
-    except Exception as e:
-        print(f"[Supabase error] {e}")
+        except Exception as e:
+            traceback.print_exc()
 
     context = {'events_list': events_list, 'title': 'Manage Events'}
 
@@ -316,18 +295,11 @@ def manage_events(request):
 
 @login_required
 def get_event_details_html(request, event_id):
-    """AJAX endpoint to fetch and render the event details fragment."""
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return HttpResponse("Unauthorized", status=403)
 
     try:
-        admin_client = create_client(
-            settings.SUPABASE_URL,
-            settings.SUPABASE_SERVICE_ROLE_KEY
-        )
-
-        event_data = _fetch_single_event(event_id, admin_client)
-
+        event_data = _fetch_single_event(event_id)
         if not event_data:
             return HttpResponse(
                 '<div style="color: red; padding: 20px;">Error 404: Event not found.</div>',
@@ -335,9 +307,7 @@ def get_event_details_html(request, event_id):
 
         return render(request, 'fragments/manage_event/event_details_fragment.html', {'event': event_data})
 
-    except Exception as e:
-        error_trace = traceback.format_exc()
-        print(f"CRITICAL ERROR in get_event_details_html: {e}\n{error_trace}")
+    except Exception:
         return HttpResponse(
             '<div style="color: red; padding: 20px;">Error 500: Server failed to load details.</div>',
             status=500)
@@ -346,24 +316,19 @@ def get_event_details_html(request, event_id):
 @login_required
 @require_http_methods(["DELETE"])
 def delete_event(request, event_id):
-    """Deletes an event from Supabase."""
     if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return JsonResponse({'success': False, 'error': 'Unauthorized: Not an AJAX request'}, status=403)
 
-    admin_id = str(request.user.adminprofile.id)
+    admin_profile = getattr(request.user, 'adminprofile', None)
+    if not admin_profile:
+        return JsonResponse({'success': False, 'error': 'Admin profile not found'}, status=403)
 
     try:
-        client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
-
-        # Security check: Ensure the event belongs to the current admin
-        fetch_result = client.table('events').select('id').eq('id', event_id).eq('admin_id', admin_id).execute()
-
-        if not getattr(fetch_result, 'data', []):
+        deleted_count, _ = Event.objects.filter(id=event_id, admin=admin_profile).delete()
+        if deleted_count == 0:
             return JsonResponse({'success': False, 'error': 'Event not found or unauthorized to delete.'}, status=404)
 
-        client.table('events').delete().eq('id', event_id).execute()
-        cache.delete(f"events_{admin_id}")
-
+        cache.delete(f"events_{admin_profile.id}")
         return JsonResponse({'success': True})
 
     except Exception as e:
@@ -374,154 +339,209 @@ def delete_event(request, event_id):
 @login_required
 @require_http_methods(["GET", "POST"])
 def modify_event_root(request, event_id):
-    """
-    Handles GET to fetch edit form HTML and POST to save event updates via AJAX,
-    with server-side validation for manual registration overrides.
-    """
     if request.GET.get('is_ajax') != 'true':
         return JsonResponse({'error': 'Must be AJAX'}, status=400)
 
-    admin_id = str(request.user.adminprofile.id)
-    client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+    admin_profile = getattr(request.user, 'adminprofile', None)
+    if not admin_profile:
+        return JsonResponse({'success': False, 'error': 'Admin profile not found'}, status=403)
 
-    # Fetch the event and current registrations
-    event_data = fetch_single_event(event_id, client)
-
-    if not event_data:
+    try:
+        event = Event.objects.get(pk=event_id, admin=admin_profile)
+    except Event.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Event not found or unauthorized'}, status=404)
 
-    # Pre-calculate event life status (needed for both validation and GET context)
+    event_data = {
+        'date': event.date.strftime('%Y-%m-%d') if event.date else '',
+        'start_time': event.start_time.isoformat() if event.start_time else '',
+        'end_time': event.end_time.isoformat() if event.end_time else '',
+        'manual_close_date': event.manual_close_date.strftime('%Y-%m-%d') if event.manual_close_date else '',
+        'manual_close_time': event.manual_close_time.isoformat() if event.manual_close_time else '',
+        'manual_status_override': event.manual_status_override,
+        'current_registrations': Registration.objects.filter(event=event).exclude(status='CANCELLED').count(),
+        'max_attendees': event.max_attendees or 0,
+    }
+
     timing = get_detailed_event_timing(
         event_data.get('date'), event_data.get('start_time'), event_data.get('end_time'),
         event_data.get('manual_close_date'), event_data.get('manual_close_time')
     )
     event_life_status = timing['status']
 
-    # --- POST: SAVE EVENT UPDATES AND VALIDATE REGISTRATION LOGIC ---
     if request.method == 'POST':
-        # 1. Prepare Data
         manual_status = (request.POST.get('manual_status_override') or 'AUTO').upper()
         manual_close_date = request.POST.get('manual_close_date') or None
         manual_close_time = request.POST.get('manual_close_time') or None
 
-        # Ensure that if status is AUTO or ONGOING, we clear the manual limit fields
         if manual_status in ['AUTO', 'ONGOING']:
             manual_close_date = None
             manual_close_time = None
 
-        update_data = {
+        try:
+            max_attendees_val = int(request.POST.get('max_attendees') or 0)
+        except (ValueError, TypeError):
+            return JsonResponse({'success': False, 'error': 'max_attendees must be an integer'}, status=400)
+
+        update_fields = {
             'title': request.POST.get('title'),
             'description': request.POST.get('description'),
             'location': request.POST.get('location'),
             'date': request.POST.get('date'),
             'start_time': request.POST.get('start_time'),
             'end_time': request.POST.get('end_time') or None,
-            'max_attendees': int(request.POST.get('max_attendees') or 0),
+            'max_attendees': max_attendees_val,
             'manual_status_override': manual_status,
             'manual_close_date': manual_close_date,
             'manual_close_time': manual_close_time,
         }
 
-        # Re-run timing with post data, as date/time might have changed
         timing_post = get_detailed_event_timing(
-            update_data['date'], update_data['start_time'], update_data['end_time'],
+            update_fields['date'], update_fields['start_time'], update_fields['end_time'],
             manual_close_date, manual_close_time
         )
         event_life_status_post = timing_post['status']
         manual_limit_dt = timing_post.get('manual_limit_dt')
 
-        # 3. CRITICAL VALIDATION
-
-        # Rule 4: Prevent status change if the event is Completed
-        if event_life_status_post == 'Completed' and manual_status != event_data.get('manual_status_override'):
-            # Allow changing to AUTO if it was previously set manually, but block all manual sets.
+        if event_life_status_post == 'Completed' and manual_status != event.manual_status_override:
             if manual_status not in ['AUTO']:
                 return JsonResponse(
                     {'success': False, 'error': "Cannot manually override registration status for a completed event."},
                     status=400)
 
-        # Rule 5: Cannot set max attendees to less than current registrations
-        current_regs = event_data.get('current_registrations', 0)
-        if update_data['max_attendees'] != 0 and update_data['max_attendees'] < current_regs:
+        current_regs = Registration.objects.filter(event=event).exclude(status='CANCELLED').count()
+        if update_fields['max_attendees'] != 0 and update_fields['max_attendees'] < current_regs:
             return JsonResponse({'success': False,
-                                 'error': f"Max attendees ({update_data['max_attendees']}) cannot be less than current registrations ({current_regs})."},
+                                 'error': f"Max attendees ({update_fields['max_attendees']}) cannot be less than current registrations ({current_regs})."},
                                 status=400)
 
-        # Rules 2 & 3: Validate Manual Override Limit Time
         if manual_status in ['OPEN_MANUAL', 'CLOSED_MANUAL']:
             validation_error = None
-
             if manual_limit_dt:
-
-                # General validation: Limit cannot be after the event ends
                 if manual_limit_dt > timing_post['end_dt']:
                     validation_error = "The manual override limit cannot be set after the event has ended."
-
-                # Rule 2: Upcoming Event Validation (Manual Close)
                 elif event_life_status_post == 'Upcoming' and manual_status == 'CLOSED_MANUAL':
-                    # Closing date/time must be before the event starts.
                     if manual_limit_dt >= timing_post['start_dt']:
                         validation_error = "Closing limit must be before the event starts."
-
-                # Rule 3: Active Event Validation (Manual Open)
                 elif event_life_status_post == 'Active' and manual_status == 'OPEN_MANUAL':
-                    # Closing date must be the same as the event date
                     if manual_limit_dt.date() != timing_post['event_date']:
                         validation_error = "Reopening limit date must be the same as the event date."
-                    # Time must be during the event duration (after start time and on or before end time)
                     elif not (manual_limit_dt > timing_post['start_dt'] and manual_limit_dt <= timing_post['end_dt']):
                         validation_error = "Reopening limit time must be during the event duration (after start, on or before end)."
 
             if validation_error:
                 return JsonResponse({'success': False, 'error': f"Validation Error: {validation_error}"}, status=400)
 
-        # 4. Save to Supabase and Invalidate Cache
         try:
-            client.table('events').update(update_data).eq('id', event_id).execute()
-            cache.delete(f"events_{admin_id}")  # Invalidate cache on successful save
-            event_data.update(update_data)  # Use updated data for final status calculation
+            with transaction.atomic():
+                if update_fields['title'] is not None:
+                    event.title = update_fields['title']
+                event.description = update_fields['description']
+                event.location = update_fields['location']
+
+                if update_fields['date']:
+                    try:
+                        event.date = datetime.datetime.strptime(update_fields['date'], '%Y-%m-%d').date()
+                    except Exception:
+                        return JsonResponse({'success': False, 'error': 'Invalid date format (expected YYYY-MM-DD).'}, status=400)
+                if update_fields['start_time']:
+                    try:
+                        event.start_time = parse_time(update_fields['start_time'])
+                    except Exception:
+                        return JsonResponse({'success': False, 'error': 'Invalid start_time format.'}, status=400)
+                if update_fields['end_time']:
+                    try:
+                        event.end_time = parse_time(update_fields['end_time'])
+                    except Exception:
+                        return JsonResponse({'success': False, 'error': 'Invalid end_time format.'}, status=400)
+                else:
+                    event.end_time = None
+
+                event.max_attendees = update_fields['max_attendees']
+                event.manual_status_override = update_fields['manual_status_override'] or 'AUTO'
+
+                if manual_close_date:
+                    try:
+                        event.manual_close_date = datetime.datetime.strptime(manual_close_date, '%Y-%m-%d').date()
+                    except Exception:
+                        return JsonResponse({'success': False, 'error': 'Invalid manual_close_date format (YYYY-MM-DD).'}, status=400)
+                else:
+                    event.manual_close_date = None
+
+                if manual_close_time:
+                    try:
+                        event.manual_close_time = parse_time(manual_close_time)
+                    except Exception:
+                        return JsonResponse({'success': False, 'error': 'Invalid manual_close_time format.'}, status=400)
+                else:
+                    event.manual_close_time = None
+
+                event.save()
+                cache.delete(f"events_{admin_profile.id}")
 
         except Exception as e:
             traceback.print_exc()
             return JsonResponse({'success': False, 'error': f"Failed to save changes: {str(e)}"}, status=500)
 
-        # 5. Compute and Return Final Status
-        event_data['current_registrations'] = event_data.get('current_registrations', 0)
-        event_data['manual_close_date'] = manual_close_date
-        event_data['manual_close_time'] = manual_close_time
+        current_regs_after = Registration.objects.filter(event=event).exclude(status='CANCELLED').count()
 
-        final_registration_status = determine_registration_status(event_data)
-        final_event_status = get_event_status(update_data['date'], update_data['start_time'], update_data['end_time'])
+        event_data_for_status = {
+            'manual_status_override': event.manual_status_override,
+            'max_attendees': event.max_attendees or 0,
+            'current_registrations': current_regs_after,
+            'date': event.date.strftime('%Y-%m-%d') if event.date else '',
+            'start_time': event.start_time.isoformat() if event.start_time else '',
+            'end_time': event.end_time.isoformat() if event.end_time else '',
+            'manual_close_date': event.manual_close_date.strftime('%Y-%m-%d') if event.manual_close_date else '',
+            'manual_close_time': event.manual_close_time.isoformat() if event.manual_close_time else '',
+        }
+
+        final_registration_status = determine_registration_status(event_data_for_status)
+        final_event_status = get_event_status(event_data_for_status['date'], event_data_for_status['start_time'],
+                                              event_data_for_status['end_time'])
 
         return JsonResponse({
             'success': True,
             'updated_data': {
-                'id': event_id,
-                'name': update_data['title'],
-                'date': format_to_readable_date(update_data['date']),
+                'id': str(event.id),
+                'name': event.title,
+                'date': format_to_readable_date(event.date),
                 'status': final_registration_status,
                 'event_status': final_event_status,
-                'registrations': event_data.get('current_registrations', 0),
+                'registrations': current_regs_after,
             }
         })
 
-    # --- GET: RETURN EDIT FORM HTML ---
-    # Fetch event data again to ensure all fields are fresh for the form
-    event_data_context = fetch_single_event(event_id, client)
+    if request.method == 'GET':
+        event_data_context = fetch_single_event(event_id)
+        if not event_data_context:
+            return JsonResponse({'success': False, 'error': 'Event not found'}, status=404)
 
-    # Pass event status to the template to disable controls if completed
-    event_life_status_context = get_event_status(
-        event_data_context.get('date'), event_data_context.get('start_time'), event_data_context.get('end_time')
-    )
+        event_life_status_context = get_event_status(
+            event_data_context.get('date'), event_data_context.get('start_time'), event_data_context.get('end_time')
+        )
 
-    context = {
-        'event': event_data_context,
-        'current_date': event_data_context.get('date', ''),
-        'current_start_time': event_data_context.get('start_time', ''),
-        'current_end_time': event_data_context.get('end_time', ''),
-        'current_manual_close_date': event_data_context.get('manual_close_date', ''),
-        'current_manual_close_time': event_data_context.get('manual_close_time', ''),
-        'is_completed': event_life_status_context == 'Completed',  # CRITICAL: Flag for HTML
-    }
-    html_content = render_to_string('fragments/manage_event/modify_event_form.html', context, request=request)
-    return JsonResponse({'success': True, 'html': html_content})
+        date_str = event.date.strftime('%Y-%m-%d') if event.date else ''
+        start_time_str = event.start_time.strftime('%H:%M') if event.start_time else ''
+        end_time_str = event.end_time.strftime('%H:%M') if event.end_time else ''
+        manual_close_date_str = event.manual_close_date.strftime('%Y-%m-%d') if event.manual_close_date else ''
+        manual_close_time_str = event.manual_close_time.strftime('%H:%M') if event.manual_close_time else ''
+
+        context = {
+            'event': {
+                'id': event_data_context['id'],
+                'title': event.title,
+                'description': event.description,
+                'location': event.location,
+                'max_attendees': event.max_attendees,
+                'manual_status_override': event.manual_status_override,
+                'current_registrations': Registration.objects.filter(event=event).exclude(status='CANCELLED').count(),
+            },
+            'current_date': date_str,
+            'current_start_time': start_time_str,
+            'current_end_time': end_time_str,
+            'current_manual_close_date': manual_close_date_str,
+            'current_manual_close_time': manual_close_time_str,
+            'is_completed': event_life_status_context == 'Completed',
+        }
+        html_content = render_to_string('fragments/manage_event/modify_event_form.html', context, request=request)
+        return JsonResponse({'success': True, 'html': html_content})

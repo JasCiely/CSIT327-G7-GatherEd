@@ -42,10 +42,6 @@
                 <a href="javascript:void(0);" data-url="{% url 'submit_feedback' %}?is_ajax=true" data-clean-url="{% url 'submit_feedback' %}" class="nav-item" onclick="handleNavClick(this)">
                     <i class="fas fa-comment-dots"></i> Submit Feedback
                 </a>
-                <a href="javascript:void(0);" data-url="{% url 'get_notifications' %}?is_ajax=true" data-clean-url="{% url 'get_notifications' %}" class="nav-item" onclick="handleNavClick(this)">
-                    <i class="fas fa-bell"></i> Notifications
-                    <span class="notification-count" id="notification-count">0</span>
-                </a>
             </nav>
             <div class="sidebar-footer">
                 <a href="{% url 'logout' %}" id="logout-btn" class="nav-item logout">
