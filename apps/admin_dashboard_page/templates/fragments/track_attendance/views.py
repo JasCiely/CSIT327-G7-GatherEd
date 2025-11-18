@@ -4,7 +4,6 @@ from apps.admin_dashboard_page.models import Event
 
 @login_required
 def track_attendance(request):
-
     is_ajax = request.GET.get('is_ajax') == 'true'
 
     try:

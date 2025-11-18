@@ -1,28 +1,9 @@
 from django.shortcuts import render, redirect
-from django.conf import settings
-from supabase import create_client, Client
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
+from apps.register_page.models import AdminProfile, StudentProfile
 
 USER_ROLE_SESSION_KEY = 'user_role'
-_supabase_client = None
-
-
-def get_supabase_client() -> Client:
-    global _supabase_client
-    if _supabase_client:
-        return _supabase_client
-    _supabase_client = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
-    return _supabase_client
-
-
-def _check_user_role_fast(supabase_client: Client, user_pk: str) -> str | None:
-    if supabase_client.table('admins').select('user_id').eq('user_id', user_pk).limit(1).execute().data:
-        return 'admin'
-    if supabase_client.table('students').select('user_id').eq('user_id', user_pk).limit(1).execute().data:
-        return 'student'
-    return None
-
 
 def login_view(request):
     if request.method != 'POST':
@@ -46,20 +27,22 @@ def login_view(request):
     if cached_role:
         return redirect(f'{cached_role}_dashboard')
 
-    supabase_client = get_supabase_client()
-    user_role = _check_user_role_fast(supabase_client, str(user.pk))
+    user_role = None
+    if AdminProfile.objects.filter(user=user).exists():
+        user_role = 'admin'
+    elif StudentProfile.objects.filter(user=user).exists():
+        user_role = 'student'
+
     if user_role:
         request.session[USER_ROLE_SESSION_KEY] = user_role
         return redirect(f'{user_role}_dashboard')
 
     logout(request)
+    messages.error(request, "No role assigned to this user. Contact support.")
     return redirect('login')
 
 
 def logout_view(request):
-    """
-    Logs out the user and prevents back-button from showing previous pages.
-    """
     request.session.pop(USER_ROLE_SESSION_KEY, None)
     logout(request)
 
