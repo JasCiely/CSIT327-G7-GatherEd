@@ -1,30 +1,30 @@
 /* --- Root Variables: Enhanced Colors and Depth --- */
 :root {
     --primary-color: #00A9FF;       /* Bright Blue (Action/Focus) */
-    --secondary-color: #2F93FF;      /* Slightly Darker Blue (Hover) */
+    --secondary-color: #2F93FF;       /* Slightly Darker Blue (Hover) */
 
     /* --- Base Colors --- */
-    --background-dark: #0A0A0A;      /* Deep Black/Dark Gray (Main Background) */
-    --background-medium: #181818;    /* Dark Gray (Sidebar/Cards) */
-    --background-light: #252525;    /* NEW: Lighter Dark Gray for Table/Row background */
+    --background-dark: #0A0A0A;       /* Deep Black/Dark Gray (Main Background) */
+    --background-medium: #181818;       /* Dark Gray (Sidebar/Cards) */
+    --background-light: #252525;     /* NEW: Lighter Dark Gray for Table/Row background */
 
     /* --- Text Colors --- */
-    --text-light: #F0F0F0;          /* Near-White (Headings/Data) */
+    --text-light: #F0F0F0;             /* Near-White (Headings/Data) */
     --text-color-dark: #FFFFFF;     /* NEW: White for primary table data */
-    --text-muted: #9E9E9E;          /* Muted Gray (Labels/Secondary Text) */
-    --text-color-medium: #CCCCCC;   /* NEW: Muted for mobile labels */
+    --text-muted: #9E9E9E;             /* Muted Gray (Labels/Secondary Text) */
+    --text-color-medium: #CCCCCC;  /* NEW: Muted for mobile labels */
 
     /* --- Border & Shadow --- */
-    --border-color: #333333;        /* Dark Border */
+    --border-color: #333333;         /* Dark Border */
     --border-color-light: #444444;  /* NEW: Lighter border for table dividers */
     --card-shadow-color: rgba(0, 0, 0, 0.8); /* Deeper Shadow */
     --card-hover-shadow: 0 10px 20px rgba(0, 169, 255, 0.25); /* Focused Blue Hover Shadow */
 
     /* --- Accent Colors --- */
-    --warning-color: #FFC107;      /* Notification Badge Yellow/Orange */
-    --success-color: #6BFF8E;      /* Event Green */
-    --attention-color: #FF6B6B;     /* Feedback Red */
-    --info-color: #FFD26B;          /* Attendance Yellow */
+    --warning-color: #FFC107;         /* Notification Badge Yellow/Orange */
+    --success-color: #6BFF8E;         /* Event Green */
+    --attention-color: #FF6B6B;      /* Feedback Red */
+    --info-color: #FFD26B;             /* Attendance Yellow */
     --primary-color-light: #004D73; /* NEW: Darker shade of primary for row hover */
 }
 
@@ -40,6 +40,8 @@ body {
     line-height: 1.6;
     color: var(--text-light);
     background-color: var(--background-dark);
+    /* ADJUSTED: Set base font to 16px for consistent 'rem' scaling */
+    font-size: 16px;
 }
 
 html {
@@ -74,7 +76,8 @@ html {
 }
 
 .logo {
-    font-size: 30px;
+    /* ADJUSTED: Converted from 30px to 2rem (32px equivalent) */
+    font-size: 2rem;
     font-weight: 800;
     color: var(--primary-color);
     margin-bottom: 50px;
@@ -92,7 +95,8 @@ html {
     padding: 14px 18px;
     color: var(--text-muted);
     text-decoration: none;
-    font-size: 16px;
+    /* ADJUSTED: Converted from 16px to 1rem (16px equivalent) */
+    font-size: 1rem;
     border-radius: 8px;
     margin-bottom: 8px;
     transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s;
@@ -118,7 +122,8 @@ html {
 
 .nav-item i {
     margin-right: 18px;
-    font-size: 18px;
+    /* ADJUSTED: Converted from 18px to 1.125rem */
+    font-size: 1.125rem;
 }
 
 .sidebar-footer {
@@ -149,7 +154,8 @@ html {
 }
 
 .page-title {
-    font-size: 32px;
+    /* ADJUSTED: Converted from 32px to 2.25rem (36px equivalent) */
+    font-size: 2.25rem;
     font-weight: 700;
     color: var(--text-light);
     letter-spacing: -0.5px;
@@ -174,7 +180,8 @@ html {
 .notification-icon {
     position: relative;
     cursor: pointer;
-    font-size: 24px;
+    /* ADJUSTED: Converted from 24px to 1.5rem */
+    font-size: 1.5rem;
     color: var(--text-light);
 }
 
@@ -186,7 +193,8 @@ html {
     color: var(--background-dark);
     border-radius: 50%;
     padding: 3px 6px;
-    font-size: 12px;
+    /* ADJUSTED: Converted from 12px to 0.75rem */
+    font-size: 0.75rem;
     font-weight: 700;
     line-height: 1;
     min-width: 20px;
@@ -203,12 +211,14 @@ html {
 
 .profile-name {
     margin-right: 15px;
-    font-size: 16px;
+    /* ADJUSTED: Converted from 16px to 1rem */
+    font-size: 1rem;
     font-weight: 500;
 }
 
 .user-profile i {
-    font-size: 26px;
+    /* ADJUSTED: Converted from 26px to 1.625rem */
+    font-size: 1.625rem;
     color: var(--primary-color);
 }
 
@@ -240,7 +250,8 @@ html {
 }
 
 .card-icon {
-    font-size: 50px;
+    /* ADJUSTED: Converted from 50px to 3.125rem (50px equivalent) */
+    font-size: 3.125rem;
     margin-right: 25px;
     opacity: 0.85;
 }
@@ -256,14 +267,16 @@ html {
 }
 
 .card-label {
-    font-size: 15px;
+    /* ADJUSTED: Converted from 15px to 0.9375rem */
+    font-size: 0.9375rem;
     color: var(--text-muted);
     letter-spacing: 0.5px;
     margin-bottom: 5px;
 }
 
 .card-value {
-    font-size: 38px;
+    /* ADJUSTED: Converted from 38px to 2.375rem */
+    font-size: 2.375rem;
     font-weight: 800;
     color: var(--text-light);
     line-height: 1;
@@ -291,6 +304,7 @@ html {
 
 .card-header h2 {
     color: var(--text-light);
+    /* NO CHANGE: Kept 1.8rem (28.8px equivalent) */
     font-size: 1.8rem;
     font-weight: 700;
     margin-bottom: 0;
@@ -322,7 +336,8 @@ html {
     transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
     border: none;
     cursor: pointer;
-    font-size: 15px;
+    /* ADJUSTED: Converted from 15px to 0.9375rem */
+    font-size: 0.9375rem;
     letter-spacing: 0.2px;
 }
 
@@ -347,7 +362,8 @@ html {
     background-color: #007bff;
     color: white;
     padding: 6px 10px;
-    font-size: 0.85em;
+    /* ADJUSTED: Converted from 0.85em to 0.875rem (14px equivalent) */
+    font-size: 0.875rem;
     border-radius: 5px;
 }
 .btn-info:hover {
@@ -379,6 +395,7 @@ html {
 
 .notification-drawer h3 {
     color: var(--text-light);
+    /* NO CHANGE: Kept 1.5rem (24px equivalent) */
     font-size: 1.5rem;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 15px;
@@ -388,7 +405,8 @@ html {
 
 .notification-drawer p {
     color: var(--text-muted);
-    font-size: 0.95rem;
+    /* ADJUSTED: Converted from 0.95rem to 0.9375rem (15px equivalent) */
+    font-size: 0.9375rem;
 }
 
 /* ======================================= */
@@ -418,7 +436,8 @@ html {
     text-align: left;
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.9em;
+    /* ADJUSTED: Converted from 0.9em to 0.875rem (14px equivalent) */
+    font-size: 0.875rem;
     border-bottom: 2px solid var(--border-color);
 }
 
@@ -426,7 +445,8 @@ html {
     padding: 12px 20px;
     border-bottom: 1px solid var(--border-color-light);
     color: var(--text-light);
-    font-size: 0.95em;
+    /* ADJUSTED: Converted from 0.95em to 0.9375rem (15px equivalent) */
+    font-size: 0.9375rem;
     vertical-align: middle;
 }
 
@@ -489,6 +509,7 @@ html {
     padding: 12px 18px;
     border-radius: 8px;
     margin-bottom: 12px;
+    /* NO CHANGE: Font weight property */
     font-weight: 500;
 }
 .alert-success {
@@ -513,5 +534,6 @@ html {
 }
 .fast-loader .loading-text {
     margin-top: 10px;
+    /* NO CHANGE: Font weight property */
     font-weight: 500;
 }
