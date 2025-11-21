@@ -13,7 +13,7 @@
     </div>
 
     <div class="events-controls">
-        <input id="search" type="text" placeholder="Search events by name..." class="control-input" onkeyup="filterEventCards()">
+        <input id="search" type="text" placeholder="Search the name of the event..." class="control-input" onkeyup="filterEventCards()" autocomplete="off" name="search-ignore">
         <select id="statusFilter" class="control-select" onchange="filterEventCards()">
             <option value="all">All Events</option>
             <option value="available">Available</option>
@@ -40,10 +40,11 @@
                      data-time="{{ event.time }}"
                      data-location="{{ event.location }}"
                      data-organization="{{ event.organization_name }}"
-                     data-capacity="{{ event.attendee_count|default:'?' }}/{{ event.capacity|default:'Max' }}">
-
-                    <div class="card-image-wrapper">
-                        <img src="{% if event.image_url %}{{ event.image_url }}{% else %}https://placehold.co/700x200/121212/00A9FF?text=Event+Image{% endif %}" alt="{{ event.name }}" id="event-img-{{ event.id }}">
+                     data-capacity="{{ event.attendee_count|default:'?' }}/{{ event.capacity|default:'Max' }}"
+                     data-full-description="{{ event.full_description|escape }}"
+                     data-picture-url="{{ event.picture_url }}">
+                     <div class="card-image-wrapper">
+                        <img src="{% if event.picture_url %}{{ event.picture_url }}{% else %}https://placehold.co/700x200/121212/00A9FF?text=Event+Image{% endif %}" alt="{{ event.name }}" id="event-img-{{ event.id }}">
 
                         <div class="card-badges">
                             <span class="card-badge badge-{{ status_lower }}">{{ event.status }}</span>
@@ -84,10 +85,21 @@
                             <button class="btn-details-toggle">
                                 <i class="fas fa-info-circle"></i> See Details
                             </button>
-                            <button class="btn btn-primary btn-sm"
-                                    onclick="registerForEvent({{ event.id }}); event.stopPropagation();">
-                                <i class="fas fa-user-plus"></i> Register
+                            {% if status_lower == 'available' %}
+                            <button class="btn btn-primary btn-sm register-card-btn"
+                                    data-event-id="{{ event.id }}"
+                                    data-event-name="{{ event.name|escapejs }}">
+                                <i class="fas fa-calendar-plus"></i> Sign Up
                             </button>
+                            {% elif status_lower == 'registered' %}
+                            <button class="btn btn-success btn-sm" disabled>
+                                <i class="fas fa-check"></i> Registered
+                            </button>
+                            {% elif status_lower == 'full' %}
+                             <button class="btn btn-secondary btn-sm" disabled>
+                                <i class="fas fa-times-circle"></i> Full
+                            </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -131,54 +143,120 @@
         </div>
 
         <div class="modal-footer">
-            <button class="btn btn-primary" id="modal-register-btn" onclick="registerForEventFromModal();">
-                <i class="fas fa-user-plus"></i> Register for Event
+            <button class="btn btn-primary" id="modal-action-btn">
+                <i class="fas fa-spinner fa-pulse"></i> Loading...
             </button>
         </div>
     </div>
 </div>
 
+<div id="confirmationModal" class="event-modal-backdrop" style="display: none;">
+    <div class="event-modal-content confirmation-modal-style">
+        <div class="modal-header">
+            <h3><i class="fas fa-calendar-check"></i> Finalize Registration</h3>
+        </div>
+        <div class="modal-body">
+            <p>You are about to register for the event:</p>
+            <p class="event-name-emphasis"><span id="confirm-event-name"></span></p>
+
+            <p class="muted">
+                By clicking **Confirm Registration**, you will proceed to the final verification step.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="hideConfirmationModal()">
+                <i class="fas fa-arrow-left"></i> Go Back
+            </button>
+            <button class="btn btn-success" id="confirm-register-btn" onclick="executeRegistration()">
+                <i class="fas fa-chevron-right"></i> Next: Verify Identity
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="passwordModal" class="event-modal-backdrop" style="display: none;">
+    <div class="event-modal-content confirmation-modal-style">
+        <div class="modal-header">
+            <h3><i class="fas fa-lock"></i> Verify Your Identity</h3>
+        </div>
+
+        <div class="modal-body">
+            <div id="passwordErrorMessage" class="error-message-box" style="display:none; color: #dc3545; border: 1px solid #dc3545; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="passwordErrorText"></span>
+            </div>
+            <p>Please enter your **password** to confirm your registration for:</p>
+            <p class="event-name-emphasis"><span id="password-confirm-event-name"></span></p>
+
+            <form onsubmit="executeRegistrationWithPassword(); return false;">
+                <div class="form-group" style="margin-top: 20px;">
+                    <input type="password"
+                           id="registrationPassword"
+                           class="control-input"
+                           placeholder="Enter your password"
+                           required
+                           autocomplete="current-password"
+                           name="password">
+                </div>
+            </form>
+            <p class="muted">This step ensures only you can register for events.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="hidePasswordModal()">
+                <i class="fas fa-arrow-left"></i> Cancel
+            </button>
+            <button class="btn btn-success" id="confirm-password-btn" onclick="executeRegistrationWithPassword()">
+                <i class="fas fa-key"></i> Verify & Register
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="registrationFeedbackModal" class="event-modal-backdrop" style="display: none;">
+    <div class="event-modal-content confirmation-modal-style feedback-modal-style">
+        <div class="modal-header">
+            <h3 id="feedback-modal-title"></h3>
+        </div>
+        <div class="modal-body">
+            <p id="feedback-modal-icon-container" class="feedback-icon-lg"></p>
+            <p id="feedback-modal-message" class="feedback-message"></p>
+            <p id="feedback-modal-subtext" class="muted"></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="hideRegistrationFeedbackModal()">
+                <i class="fas fa-thumbs-up"></i> Got It
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
     let currentModalEventId = null;
+    let eventIdToRegister = null;
 
+    // --- Loading, Refresh, Filter Functions ---
     function showLoadingModal(message) {
         $('#custom-loading-modal').remove();
-        const modalHtml = `
-            <div id="custom-loading-modal" class="custom-modal-backdrop" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10000; color:white;">
-                <div class="custom-modal-content loading-modal-style">
-                    <h3>${message}</h3>
-                    <i class="fas fa-sync-alt fa-spin loading-spinner"></i>
-                </div>
-            </div>`;
+        const modalHtml = `<div id="custom-loading-modal" class="custom-modal-backdrop" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10000; color:white;"><div class="custom-modal-content loading-modal-style"><h3>${message}</h3><i class="fas fa-sync-alt fa-spin loading-spinner"></i></div></div>`;
         $('body').append(modalHtml);
     }
-    function hideLoadingModal() {
-        $('#custom-loading-modal').remove();
-    }
+    function hideLoadingModal() { $('#custom-loading-modal').remove(); }
 
     function refreshEventList() {
         showLoadingModal('Refreshing Event List...');
+        // Clear the current modal state before refresh
+        currentModalEventId = null;
 
         $.ajax({
-            url: "{% url 'event_list' %}?is_ajax=true", // Use query param for AJAX flag
+            url: "{% url 'event_list' %}?is_ajax=true",
             method: 'GET',
             headers: {'X-Requested-With': 'XMLHttpRequest'},
             success: function(data) {
-                // Assuming data is the full HTML fragment for the content area
                 const $newContent = $(data);
-
-                // If the AJAX view returns the fragment directly
-                if ($newContent.hasClass('events-list-area') || $newContent.find('.events-list-area').length === 0) {
-                     $('.events-list-area').html(data);
-                } else {
-                    // If the view returned the full dashboard, extract the needed part
-                    const $extractedContent = $newContent.find('.events-list-area').html();
-                    if ($extractedContent) {
-                         $('.events-list-area').html($extractedContent);
-                    }
+                const $extractedContent = $newContent.find('.events-list-area').html();
+                if ($extractedContent) {
+                     $('.events-list-area').html($extractedContent);
                 }
-
                 hideLoadingModal();
                 filterEventCards();
             },
@@ -193,22 +271,15 @@
     let currentStatusFilter = 'all';
 
     function filterEventCards() {
-        // FIX: Defensive coding for toLowerCase on search term
         currentSearchTerm = ($('#search').val() || '').toLowerCase().trim();
         currentStatusFilter = $('#statusFilter').val();
 
         const $grid = $('#eventsCardGrid');
-        if ($grid.length === 0 && $('.event-card').length === 0) {
-            $('#noResultsMessage').hide(); // If truly empty state, let empty-state block show
-            return;
-        }
-
         const $cards = $grid.find('.event-expand-card');
         let visibleCount = 0;
 
         $cards.each(function() {
             const $card = $(this);
-            // FIX: Guard against undefined data attributes (resolves console error)
             const nameText = String($card.data('name') || '').toLowerCase();
             const status = String($card.data('status') || '');
 
@@ -222,17 +293,17 @@
                 $card.hide();
             }
         });
-
-        const $messageContainer = $('#noResultsMessage');
-
-        if (visibleCount === 0 && ($cards.length > 0)) {
-            $grid.hide();
-            $messageContainer.text("No events found matching your current filters.").show();
-        } else if (visibleCount > 0) {
-            $grid.show();
-            $messageContainer.hide();
+        // Logic for no results message...
+        const $noResults = $('#noResultsMessage');
+        if (visibleCount === 0) {
+            $noResults.html('<i class="fas fa-search-minus"></i> No events found matching your filter criteria.').show();
+        } else {
+            $noResults.hide();
         }
     }
+
+
+    // --- Core Modal Logic ---
 
     function showEventModal(eventId) {
         const $card = $(`[data-event-id="${eventId}"]`);
@@ -244,50 +315,46 @@
 
         currentModalEventId = eventId;
 
-        // 1. Populate static details from the card
         const eventName = $card.find('.card-title').text();
-        const status = $card.data('status');
-        const cardImageUrl = $card.find('.card-image-wrapper img').attr('src');
+        const status = $card.data('status'); // 'available', 'registered', or 'full'
 
+        const pictureUrl = $card.data('picture-url');
+        const defaultImageUrl = 'https://placehold.co/700x200/121212/00A9FF?text=Event+Image';
+        const fullDescription = $card.data('full-description');
+
+        // Populate details
         $('#modal-event-title').text(eventName);
         $('#modal-event-datetime').text(`${$card.data('date')} ${$card.data('time')}`);
         $('#modal-event-location').text($card.data('location') || 'Not specified');
         $('#modal-event-organization').text($card.data('organization') || 'N/A');
         $('#modal-event-capacity').text($card.data('capacity'));
-        $('#modal-event-image').attr('src', cardImageUrl);
+        $('#modal-event-image').attr('src', pictureUrl || defaultImageUrl);
+        $('#modal-event-description').text(fullDescription || 'No detailed description available.');
 
-        // Initial loading state for description
-        $('#modal-event-description').html('<i class="fas fa-spinner fa-spin"></i> Loading full description...');
 
-        // 2. Fetch the full description via AJAX
-        $.ajax({
-            url: `{% url 'event_details' 0 %}`.replace('0', eventId),
-            method: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                $('#modal-event-description').text(data.full_description || 'No detailed description available.');
+        // Handle the Modal Footer Button based on Status
+        const $actionBtn = $('#modal-action-btn');
+        $actionBtn.off('click'); // Remove any previous handlers
+        $actionBtn.removeClass('btn-primary btn-success btn-secondary');
 
-                // Update Register button based on initial card status
-                const $registerBtn = $('#modal-register-btn');
-                $registerBtn.off('click').on('click', registerForEventFromModal);
+        if (status === 'available') {
+            // Show Register button
+            $actionBtn.html('<i class="fas fa-calendar-plus"></i> Sign Up for Event');
+            $actionBtn.addClass('btn-primary');
+            // Attach handler to open the confirmation modal
+            $actionBtn.on('click', registerForEventFromModalConfirmation);
+            $actionBtn.prop('disabled', false);
 
-                // Use the status from the card (which is fresh from Django view)
-                if (status === 'full') {
-                    $registerBtn.text('Event Full').prop('disabled', true).removeClass('btn-primary').addClass('btn-secondary');
-                } else if (status === 'registered') {
-                    $registerBtn.text('Already Registered').prop('disabled', true).removeClass('btn-primary').addClass('btn-secondary');
-                } else {
-                    $registerBtn.text('Register for Event').prop('disabled', false).removeClass('btn-secondary').addClass('btn-primary');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error("Error fetching event details:", error);
-                $('#modal-event-description').html('Error loading detailed description.');
-                $('#modal-register-btn').text('Cannot Register (Error)').prop('disabled', true).removeClass('btn-primary').addClass('btn-danger');
-            }
-        });
+        } else {
+            // Show Close button for 'registered' or 'full'
+            $actionBtn.html('<i class="fas fa-times-circle"></i> Close');
+            $actionBtn.addClass('btn-secondary');
+            // Attach handler to close the main modal
+            $actionBtn.on('click', hideEventModal);
+            $actionBtn.prop('disabled', false);
+        }
 
-        // 3. Show the modal
+        // Show the modal
         const $modal = $('#eventDetailsModal');
         $modal.css('display', 'flex').hide().fadeIn(200);
         $('body').addClass('modal-open');
@@ -296,76 +363,311 @@
     function hideEventModal() {
         $('#eventDetailsModal').fadeOut(200, function() {
             $(this).css('display', 'none');
+            // Ensure modal-open class is removed if no other modal is visible
+            if (!$('#confirmationModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible')) {
+                $('body').removeClass('modal-open');
+            }
         });
-        $('body').removeClass('modal-open');
         currentModalEventId = null;
     }
 
-    function registerForEvent(eventId) {
+
+    // --- Confirmation Modal Functions ---
+
+    function showConfirmationModal(eventId, eventName) {
+        eventIdToRegister = eventId;
+
+        if ($('#eventDetailsModal').is(':visible')) {
+            // Hide details modal if confirmation is triggered from it
+            hideEventModal();
+        }
+
+        // Clean the event name
+        const cleanedEventName = typeof eventName === 'string' ? eventName.replace(/\\u002D/g, '-') : String(eventName || 'Unknown Event');
+
+        $('#confirm-event-name').text(cleanedEventName);
+
+        const $modal = $('#confirmationModal');
+        $modal.css('display', 'flex').hide().fadeIn(200);
+        $('body').addClass('modal-open');
+    }
+
+    function hideConfirmationModal() {
+        $('#confirmationModal').fadeOut(200, function() {
+            $(this).css('display', 'none');
+            // IMPORTANT: Do NOT reset eventIdToRegister here, as it's needed for the next step (password modal)
+            if (!$('#eventDetailsModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible')) {
+                 $('body').removeClass('modal-open');
+            }
+        });
+    }
+
+    // --- Password Error Display Functions ---
+
+    function showPasswordError(message) {
+        $('#passwordErrorText').text(message);
+        $('#passwordErrorMessage').fadeIn(300);
+        // Clear the password input for re-entry
+        $('#registrationPassword').val('');
+    }
+
+    function clearPasswordError() {
+        $('#passwordErrorMessage').hide();
+        $('#passwordErrorText').text('');
+    }
+
+
+    // --- Password Modal Functions ---
+
+    function showPasswordModal(eventName) {
+        // Hide previous confirmation modal
+        hideConfirmationModal();
+
+        // Clear previous password input
+        $('#registrationPassword').val('');
+        // Clear any previous error message before showing
+        clearPasswordError();
+
+        $('#password-confirm-event-name').text(eventName);
+
+        const $modal = $('#passwordModal');
+        $modal.css('display', 'flex').hide().fadeIn(200);
+        $('body').addClass('modal-open');
+    }
+
+    function hidePasswordModal() {
+        $('#passwordModal').fadeOut(200, function() {
+            $(this).css('display', 'none');
+            // Reset only when cancelling the entire flow, or if no other modal is visible
+            if (!$('#eventDetailsModal').is(':visible') && !$('#confirmationModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible')) {
+                 eventIdToRegister = null; // Reset only when cancelling the entire flow
+                 $('body').removeClass('modal-open');
+            }
+        });
+    }
+
+    // --- Registration Feedback Modal Functions (NEW) ---
+
+    function showRegistrationFeedbackModal(isSuccess, title, message, subtext) {
+        const $modal = $('#registrationFeedbackModal');
+        const $title = $('#feedback-modal-title');
+        const $iconContainer = $('#feedback-modal-icon-container');
+        const $message = $('#feedback-modal-message');
+        const $subtext = $('#feedback-modal-subtext');
+
+        // Set content
+        $title.text(title);
+        $message.text(message);
+        $subtext.text(subtext || '');
+
+        // Set icon and color
+        $iconContainer.html(''); // Clear previous icon
+        if (isSuccess) {
+            $iconContainer.append('<i class="fas fa-check-circle success-icon"></i>');
+        } else {
+            $iconContainer.append('<i class="fas fa-times-circle error-icon"></i>');
+        }
+
+        // Show the modal
+        $modal.css('display', 'flex').hide().fadeIn(200);
+        $('body').addClass('modal-open');
+    }
+
+    function hideRegistrationFeedbackModal() {
+        $('#registrationFeedbackModal').fadeOut(200, function() {
+            $(this).css('display', 'none');
+             // Ensure modal-open class is removed if no other modal is visible
+            if (!$('#eventDetailsModal').is(':visible') && !$('#confirmationModal').is(':visible') && !$('#passwordModal').is(':visible')) {
+                 $('body').removeClass('modal-open');
+            }
+        });
+    }
+
+
+    // --- Flow Executors ---
+
+    // Step 1: User clicks Confirm Registration (Now leads to Password Modal)
+    function executeRegistration() {
+        if (eventIdToRegister) {
+            // Get the event name for display in the password modal
+            const eventName = $('#confirm-event-name').text();
+            // Move to the password step
+            showPasswordModal(eventName);
+        } else {
+             alert("Error: No event selected for registration.");
+             hideConfirmationModal();
+        }
+    }
+
+    function registerForEventFromModalConfirmation() {
+        // Use the event ID stored when the details modal was opened
+        if (currentModalEventId) {
+            const $card = $(`[data-event-id="${currentModalEventId}"]`);
+            // Get the name from the card title text
+            const eventName = $card.find('.card-title').text();
+
+            // Call the main handler which performs the cleanup
+            showConfirmationModal(currentModalEventId, eventName);
+        }
+    }
+
+    // Step 2: User clicks Verify & Register (UPDATED LOGIC to remove refresh on success)
+    function executeRegistrationWithPassword() {
+        // Hide any previous errors before starting the request
+        clearPasswordError();
+
+        const password = $('#registrationPassword').val();
+
+        if (!password) {
+            showPasswordError("Please enter your password to confirm registration.");
+            return false;
+        }
+
+        if (eventIdToRegister) {
+            registerForEvent(eventIdToRegister, password)
+                .then(response => {
+                    // Success: Hide the password modal and show success modal
+                    hidePasswordModal();
+
+                    showRegistrationFeedbackModal(
+                        true, // isSuccess
+                        'Registration Successful! 🎉',
+                        response.message || 'You have been successfully registered for the event!',
+                        'Check the "Registered" filter to see your upcoming events. The list will update on your next filter change or manual refresh.'
+                    );
+
+                    // REMOVED: refreshEventList(); // Event list will be refreshed upon next user interaction (filter change, manual refresh)
+                    eventIdToRegister = null; // Clear on success
+
+                    // Manually update the card status for immediate visual feedback (optional)
+                    const $card = $(`[data-event-id="${currentModalEventId || eventIdToRegister}"]`);
+                    $card.data('status', 'registered');
+                    $card.find('.card-badge.badge-available').text('Registered').removeClass('badge-available').addClass('badge-registered');
+                    // Replace Sign Up button with Registered button
+                    $card.find('.card-actions').find('.register-card-btn').replaceWith('<button class="btn btn-success btn-sm" disabled><i class="fas fa-check"></i> Registered</button>');
+                })
+                .catch(error => {
+                    // Password verification failed (401/403)
+                    if (error.status === 401 || error.status === 403) {
+                        // Show error inside the password modal, keep the modal open
+                        showPasswordError(error.message);
+                    } else {
+                        // For other errors (e.g., event full, server error)
+                        // Hide password modal and show an alert for the non-password-related issue
+                        hidePasswordModal();
+
+                         showRegistrationFeedbackModal(
+                            false, // isSuccess
+                            'Registration Failed ❌',
+                            error.message,
+                            'Please check event status and try refreshing the list. (List refreshed to update status)'
+                        );
+
+                        // KEEP: refreshEventList() here to update the card status if the event became full or disappeared
+                        refreshEventList();
+                        eventIdToRegister = null; // Clear on non-recoverable error
+                    }
+                });
+        } else {
+             alert("Error: Event context lost.");
+             hidePasswordModal();
+        }
+        return false;
+    }
+
+
+    // --- Registration AJAX Executor (UPDATED to return a Promise) ---
+
+    function registerForEvent(eventId, password) {
         showLoadingModal('Registering...');
 
         const csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
         if (!csrfToken) {
             hideLoadingModal();
-            alert('Security Error: CSRF token missing. Please refresh the page.');
-            return;
+            return Promise.reject({ status: 500, message: 'Security Error: CSRF token missing.' });
         }
 
-        $.ajax({
-            url: `{% url 'register_event' 0 %}`.replace('0', eventId),
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrfToken
-            },
-            dataType: 'json',
-            success: function(response) {
-                hideLoadingModal();
-                alert(`Success: ${response.message}`);
-                // Refresh list to update status badge on card
-                refreshEventList();
-                if (currentModalEventId === eventId) {
-                    showEventModal(eventId); // Re-open to update button state
-                }
-            },
-            error: function(xhr) {
-                hideLoadingModal();
-                let errorMessage = "Registration failed. Please try again.";
+        // Use Django template tag with UUID placeholder
+        const registerUrl = `{% url 'register_event' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', eventId);
 
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                } else if (xhr.status === 401) {
-                    errorMessage = "You must be logged in to register for events.";
-                } else if (xhr.status === 403) {
-                    errorMessage = "Forbidden: Session expired or invalid security token. Please refresh the page.";
-                } else if (xhr.status === 400) {
-                    errorMessage = "Bad Request: Unable to register. Event might be full or you're already registered.";
-                }
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: registerUrl,
+                method: 'POST',
+                data: JSON.stringify({
+                    'password': password
+                }),
+                contentType: 'application/json',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                dataType: 'json',
+                success: function(response) {
+                    hideLoadingModal();
+                    resolve(response); // Registration successful
+                },
+                error: function(xhr) {
+                    hideLoadingModal();
+                    let errorMessage = "Registration failed. Please try again.";
 
-                alert(`Error: ${errorMessage}`);
-            }
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.status === 401 || xhr.status === 403) {
+                        // CRUCIAL: Specific error message for password failure
+                        errorMessage = "Verification Failed. The password you entered is incorrect.";
+                    } else if (xhr.status === 400) {
+                        errorMessage = "Bad Request: Unable to register. Event might be full or you're already registered.";
+                    } else if (xhr.status === 404) {
+                        errorMessage = "Event not found (404).";
+                    } else if (xhr.status === 500) {
+                        errorMessage = "Server Error (500).";
+                    }
+
+                    console.error('Registration error:', xhr);
+                    reject({ status: xhr.status, message: errorMessage });
+                }
+            });
         });
-    }
-
-    function registerForEventFromModal() {
-        if (currentModalEventId) {
-            // Register function handles showing loading and errors
-            registerForEvent(currentModalEventId);
-        }
     }
 
 
     $(document).ready(function() {
+        // Expose functions to the window object
+        window.showConfirmationModal = showConfirmationModal;
+        window.hideConfirmationModal = hideConfirmationModal;
+        window.showPasswordModal = showPasswordModal;
+        window.hidePasswordModal = hidePasswordModal;
+        window.executeRegistration = executeRegistration;
+        window.executeRegistrationWithPassword = executeRegistrationWithPassword;
+        window.registerForEventFromModalConfirmation = registerForEventFromModalConfirmation;
+        window.showEventModal = showEventModal;
+        window.hideEventModal = hideEventModal;
         window.refreshEventList = refreshEventList;
         window.filterEventCards = filterEventCards;
         window.registerForEvent = registerForEvent;
-        window.showEventModal = showEventModal;
-        window.hideEventModal = hideEventModal;
-        window.registerForEventFromModal = registerForEventFromModal;
+        window.showPasswordError = showPasswordError;
+        window.clearPasswordError = clearPasswordError;
+        window.showRegistrationFeedbackModal = showRegistrationFeedbackModal;
+        window.hideRegistrationFeedbackModal = hideRegistrationFeedbackModal;
+
 
         filterEventCards();
 
-        // 1. Event Delegation for 'See Details' button
+        // Event Delegation for Register button in the Card
+        $(document).on('click', '.register-card-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const eventId = $(this).data('event-id');
+            const eventName = $(this).data('event-name');
+
+            if (eventId && eventName) {
+                showConfirmationModal(eventId, eventName);
+            }
+        });
+
+        // Event Delegation for 'See Details' button
         $(document).on('click', '.btn-details-toggle', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -376,10 +678,10 @@
             }
         });
 
-        // 2. Event Delegation for clicking the entire event card
+        // Event Delegation for clicking the entire event card (to open details modal)
         $(document).on('click', '.event-card', function(e) {
-            // Ensure click did not originate from one of the action buttons
-            if ($(e.target).closest('.btn-primary, .btn-secondary, .btn-details-toggle').length) {
+            // Check if the click target is any button inside the card
+            if ($(e.target).closest('.card-actions button').length || $(e.target).is('button')) {
                 return;
             }
 
@@ -390,9 +692,18 @@
         });
 
         // Close modal when clicking the backdrop
-        $('#eventDetailsModal').on('click', function(e) {
+        $('#eventDetailsModal, #confirmationModal, #passwordModal, #registrationFeedbackModal').on('click', function(e) {
             if (e.target === this) {
-                hideEventModal();
+                const modalId = $(e.target).attr('id');
+                if (modalId === 'eventDetailsModal') {
+                    hideEventModal();
+                } else if (modalId === 'confirmationModal') {
+                    hideConfirmationModal();
+                } else if (modalId === 'passwordModal') {
+                    hidePasswordModal();
+                } else if (modalId === 'registrationFeedbackModal') {
+                    hideRegistrationFeedbackModal();
+                }
             }
         });
     });

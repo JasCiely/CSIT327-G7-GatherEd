@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create New Event - GatherEd</title>
     {% load static %}
-    <!-- ✅ Fonts & Icons -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
     <link rel="stylesheet" href="{% static 'css/create_event_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-    <!-- ✅ SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -36,7 +34,7 @@
             <p class="card-subtitle">Fill in all fields to schedule a new event.</p>
         </div>
 
-        <form id="create-event-form" method="POST" action="{% url 'create_event' %}" class="event-form" autocomplete="off">
+        <form id="create-event-form" method="POST" action="{% url 'create_event' %}" class="event-form" autocomplete="off" enctype="multipart/form-data">
             {% csrf_token %}
 
             <div class="form-column column-left">
@@ -64,7 +62,10 @@
                 <h3>Logistics & Media</h3>
 
                 <label for="event-location">Location/Venue</label>
-                <input type="text" id="event-location" name="location" placeholder="e.g., School Auditorium or Online Link">
+                <input type="text" id="event-location" name="location" placeholder="e.g., School Auditorium or Online Link" required>
+
+                <label for="event-image">Event Picture (Optional)</label>
+                <input type="file" id="event-image" name="event_image" accept="image/*">
 
                 <label for="max-attendees">Max Attendees (Optional)</label>
                 <input type="number" id="max-attendees" name="max_attendees" placeholder="0 for unlimited" min="0">
@@ -125,45 +126,45 @@ document.addEventListener("DOMContentLoaded", () => {
                     Swal.showLoading();
 
                     const formData = new FormData(form);
+
+                    // Add CSRF token manually for FormData
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                    formData.append('csrfmiddlewaretoken', csrfToken);
+
                     fetch(form.action, {
                         method: "POST",
                         body: formData,
-                        headers: { "X-Requested-With": "XMLHttpRequest" },
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
                     })
-                    .then((response) => {
-                        if (response.redirected) {
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
                             Swal.fire({
                                 title: "Event Scheduled!",
-                                text: "Your event has been successfully added.",
+                                text: data.message,
                                 icon: "success",
                                 background: "#1e1e1e",
                                 color: "#fff",
                                 confirmButtonColor: "#007bff",
                             }).then(() => {
-                                window.location.href = response.url;
+                                window.location.href = data.redirect_url || '/admin_dashboard/';
                             });
                         } else {
-                            return response.json().then(data => {
-                                Swal.fire({
-                                    title: "Submission Error",
-                                    text: data.message || "Please check your inputs and try again.",
-                                    icon: "warning",
-                                    background: "#1e1e1e",
-                                    color: "#fff",
-                                });
-                                isSubmitting = false;
-                                submitBtn.disabled = false;
-                            });
+                            throw new Error(data.message);
                         }
                     })
-                    .catch(() => {
+                    .catch(error => {
                         Swal.fire({
                             title: "Error",
-                            text: "Something went wrong. Please try again.",
+                            text: error.message || "Something went wrong. Please try again.",
                             icon: "error",
                             background: "#1e1e1e",
                             color: "#fff",
                         });
+                    })
+                    .finally(() => {
                         isSubmitting = false;
                         submitBtn.disabled = false;
                     });
