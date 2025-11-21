@@ -1,9 +1,11 @@
 from django.db import models
+from django.contrib.auth.models import User
 import uuid
 from apps.register_page.models import AdminProfile
 
+
 class Event(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
 
     admin = models.ForeignKey(
         AdminProfile,
@@ -18,23 +20,17 @@ class Event(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField(null=True, blank=True)
     max_attendees = models.IntegerField(null=True, blank=True)
-
-    # Picture field with proper configuration
-    picture = models.ImageField(
-        upload_to='event_pictures/',
-        null=True,
-        blank=True,
-        verbose_name='Event Picture'
-    )
-
+    picture_url = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # 🟩 These fields support the manual registration override logic
 
     manual_status_override = models.CharField(
         max_length=50,
         choices=[
             ('AUTO', 'Auto'),
-            ('OPEN_MANUAL', 'Registration Open (Manual Override)'),
-            ('CLOSED_MANUAL', 'Registration Closed (Manual Override)'),
+            ('OPEN_MANUAL', 'Registration Open (Manual Override)'),  # Updated choice for clarity
+            ('CLOSED_MANUAL', 'Registration Closed (Manual Override)'), # Updated choice for clarity
             ('ONGOING', 'Closed – Event Ongoing'),
         ],
         default='AUTO',
@@ -42,6 +38,7 @@ class Event(models.Model):
         blank=False
     )
 
+    # ⭐ CRITICAL ADDITION: The date field that caused the error
     manual_close_date = models.DateField(
         null=True,
         blank=True,
@@ -56,12 +53,6 @@ class Event(models.Model):
 
     class Meta:
         db_table = 'events'
-
-    @property
-    def picture_url(self):
-        if self.picture and hasattr(self.picture, 'url'):
-            return self.picture.url
-        return None
 
     def __str__(self):
         return self.title
