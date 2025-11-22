@@ -56,22 +56,29 @@ html {
 /* --- 1. Sidebar & Navigation Enhancement --- */
 /* ------------------------------------------- */
 
+/* --- Sidebar: Adjusted width to be thinner --- */
 .sidebar {
-    width: 280px;
+    width: 220px; /* ADJUSTED: thinner sidebar */
     background-color: var(--background-medium);
     box-shadow: 6px 0 15px var(--card-shadow-color);
     padding: 30px 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    /* Use position: fixed and padding-left on main-content for robust sidebar */
     position: sticky;
     top: 0;
     left: 0;
     border-right: 1px solid var(--border-color);
-    /* For 'sticky' to work in flex container, sidebar height must be explicit */
     height: 100vh;
 }
+
+/* Make sure the main content shifts correctly */
+.main-content {
+    flex-grow: 1;
+    padding: 50px;
+    margin-left: 220px; /* ADJUSTED: matches new sidebar width */
+}
+
 
 .logo {
     font-size: 30px;
