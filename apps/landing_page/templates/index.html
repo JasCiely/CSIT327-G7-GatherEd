@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", function() {
         {% for message in messages %}
             var bgColor = "linear-gradient(to right, #6c757d, #5a6268)";
             {% if message.tags == 'success' %} bgColor = "linear-gradient(to right, #28a745, #218838)"; {% endif %}
-            {% if message.tags == 'error' %} bgColor = "linear-gradient(to right, #dc3545, #c82333)"; {% endif %}
+            {% if message.tags == 'error' %} bgColor = "linear-gradient(to right, #D63129, #C22C25git"; {% endif %}
             Toastify({
                 text: "{{ message|escapejs }}",
                 duration: 4000,

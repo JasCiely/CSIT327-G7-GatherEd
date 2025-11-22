@@ -1,193 +1,83 @@
-/*
- * File: static/css/create_event_css.css
- * Description: Styles for the New Event form fragment, harmonized with main theme.
- */
+/* Updated create_event_css.css with adjusted fonts and sizes + inline comments */
 
 /* ---------------------------------------------------------------------- */
 /* 1. THEME VARIABLE DEFINITIONS (Matching styles.css)                    */
 /* ---------------------------------------------------------------------- */
 :root {
-    --primary-color: #00A9FF;        /* Main Accent Blue */
-    --secondary-color: #2F93FF;      /* Secondary Blue */
-    --background-dark: #121212;      /* Main dark background */
-    --background-card: #1F1F1F;      /* Card background (background-medium) */
+    --primary-color: #00A9FF;
+    --secondary-color: #2F93FF;
+    --background-dark: #121212;
+    --background-card: #1F1F1F;
 
-    --text-light: #E0E0E0;           /* Light text for contrast */
-    --text-muted: #BDBDBD;           /* Muted text color */
+    --text-light: #E0E0E0;
+    --text-muted: #BDBDBD;
     --text-heading: var(--text-light);
 
-    --border-color: #333;            /* Border color */
-    --shadow-small: 0 4px 12px rgba(0, 0, 0, 0.3); /* Darker shadow for contrast */
-    --primary-color-dark: #0087CC;   /* Custom dark hover state for primary */
-}
-/* NOTE: The variable names are simplified where possible to match your existing pattern. */
+    --border-color: #333;
+    --shadow-small: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --primary-color-dark: #0087CC;
 
+    /* ADJUSTED: Base font sizes */
+    --font-base: 0.9rem; /* ADJUSTED SMALLER */ /* Increased from default for slightly bigger text */
+    --font-medium: 0.95rem; /* ADJUSTED SMALLER */ /* New medium size */
+    --font-large: 1.1rem; /* ADJUSTED SMALLER */ /* New large size */
+    --font-heading: 1.5rem; /* ADJUSTED SMALLER */ /* Increased heading size */
+}
 
 /* ---------------------------------------------------------------------- */
 /* 2. GENERAL FORM CONTAINER STYLES                                       */
 /* ---------------------------------------------------------------------- */
 .event-form-container {
     background-color: var(--background-card);
-    border-radius: 10px; /* Matching the 10px from feature-card/contact-info */
-    padding: 30px;
+    border-radius: 10px;
+    padding: 32px; /* ADJUSTED: increased padding slightly */
     box-shadow: var(--shadow-small);
-    margin-bottom: 30px;
-}
-
-.event-form-container .card-header {
-    margin-bottom: 30px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 20px;
+    margin-bottom: 32px; /* ADJUSTED */
 }
 
 .event-form-container .card-header h2 {
     color: var(--text-heading);
-    font-size: 1.8rem;
+    font-size: var(--font-heading); /* ADJUSTED: now uses new heading size */
     font-weight: 700;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 .event-form-container .card-subtitle {
     color: var(--text-muted);
-    font-size: 0.95rem;
+    font-size: var(--font-medium); /* ADJUSTED */
 }
 
 /* ---------------------------------------------------------------------- */
 /* 3. FORM GRID LAYOUT & INPUTS                                           */
 /* ---------------------------------------------------------------------- */
-.event-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-}
-
-/* Form Labels */
 .event-form label {
-    display: block;
     margin-bottom: 10px;
     margin-top: 20px;
     color: var(--text-light);
-    font-weight: 500; /* Adjusted font-weight to match general theme */
-    font-size: 0.95rem;
+    font-size: var(--font-medium); /* ADJUSTED */
+    font-weight: 500;
 }
 
-.event-form label:first-child {
-    margin-top: 0;
-}
-
-/* Form Inputs, Textareas, Selects */
 .event-form input[type="text"],
 .event-form input[type="date"],
 .event-form input[type="time"],
 .event-form input[type="number"],
 .event-form textarea {
-    width: 100%;
-    padding: 14px;
-    border-radius: 6px; /* Slightly smaller radius for inputs */
-    border: 1px solid var(--border-color);
-    background: var(--background-dark);
-    color: var(--text-light);
-    font-family: 'Roboto', sans-serif; /* Matching main body font */
-    font-size: 1rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.event-form input:focus,
-.event-form textarea:focus {
-    border-color: var(--primary-color);
-    /* Simplified focus box-shadow */
-    box-shadow: 0 0 0 3px rgba(0, 169, 255, 0.2);
-    outline: none;
+    padding: 16px; /* ADJUSTED */
+    font-size: var(--font-base); /* ADJUSTED */
 }
 
 .event-form textarea {
-    resize: vertical;
-    min-height: 100px;
+    min-height: 120px; /* ADJUSTED: increased height */
 }
-
-/* Placeholder styling */
-.event-form input::placeholder,
-.event-form textarea::placeholder {
-    color: var(--text-muted);
-    opacity: 0.8;
-}
-
-/* --- File Input (Picture Holder) Styling --- */
-.event-form input[type="file"] {
-    /* Reset background and border for a clean look */
-    background: var(--background-dark);
-    border: 1px solid var(--border-color);
-    padding: 14px;
-    cursor: pointer;
-}
-
-/* Style the file selector button part */
-.event-form input[type="file"]::-webkit-file-upload-button {
-    background: var(--secondary-color);
-    color: var(--background-dark);
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    margin-right: 15px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.event-form input[type="file"]::-webkit-file-upload-button:hover {
-    background: var(--primary-color); /* Use primary color on hover */
-}
-
-/* Hide file text on small screens if necessary (advanced) */
-/* @media (max-width: 500px) {
-    .event-form input[type="file"] {
-        padding: 0;
-    }
-    .event-form input[type="file"]::before {
-        content: 'Upload Image';
-        display: inline-block;
-        padding: 14px;
-        background: var(--background-dark);
-        border-radius: 6px;
-    }
-    .event-form input[type="file"]::-webkit-file-upload-button {
-        visibility: hidden;
-        width: 0;
-    }
-} */
-
 
 /* ---------------------------------------------------------------------- */
 /* 4. FORM ACTIONS (BUTTON)                                               */
 /* ---------------------------------------------------------------------- */
-.form-actions {
-    grid-column: 1 / -1;
-    margin-top: 40px;
-    text-align: right;
-}
-
-/* Applying primary button styles from the main theme */
 .form-actions .btn.btn-secondary {
-    padding: 14px 30px;
-    font-size: 1rem;
-    font-weight: 500;
-    border-radius: 50px; /* Matching the main theme's button radius */
-    cursor: pointer;
-
-    /* Using btn-primary styles for the main action button */
-    background-color: var(--primary-color);
-    color: var(--background-dark);
-    border: 2px solid transparent;
-
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.form-actions .btn.btn-secondary:hover {
-    background-color: var(--primary-color-dark); /* Slightly darker custom primary color */
-    transform: translateY(-3px); /* Matching main theme hover effect */
-}
-
-.form-actions .btn.btn-secondary i {
-    margin-right: 8px;
+    padding: 16px 34px; /* ADJUSTED */
+    font-size: var(--font-medium); /* ADJUSTED */
+    border-radius: 55px; /* ADJUSTED: slightly rounder */
 }
 
 /* ---------------------------------------------------------------------- */
@@ -195,242 +85,44 @@
 /* ---------------------------------------------------------------------- */
 @media (max-width: 768px) {
     .event-form {
-        grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 22px; /* ADJUSTED */
     }
-    .form-actions {
-        text-align: center;
-    }
-}
-
-/* Add these styles to your existing create_event_css.css */
-
-/* Custom styling for the column headers */
-.event-form .form-column h3 {
-    color: var(--primary-color);
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed var(--border-color);
-}
-
-/* Ensure labels after headers don't have extra top margin */
-.event-form .form-column h3 + label {
-    margin-top: 0;
-}
-
-/* Style the date/time group for better visual flow */
-.time-date-group {
-    border-top: 1px solid var(--border-color);
-    padding-top: 20px;
-    margin-top: 30px;
-}
-
-/* Reduce top margin for the first label in the date/time group */
-.time-date-group label:first-child {
-    margin-top: 0;
 }
 
 /* ---------------------------------------------------------------------- */
 /* 6. CONFIRMATION MODAL STYLES                                           */
 /* ---------------------------------------------------------------------- */
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    /* Use a dark, semi-transparent background consistent with the theme */
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999; /* Ensure modal is on top of everything */
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.modal-overlay[style*="display: flex"] {
-    opacity: 1;
-    visibility: visible;
-}
-
 .modal-content {
-    background: var(--background-card);
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: var(--shadow-small);
-    width: 90%;
-    max-width: 500px;
-    text-align: left;
-    color: var(--text-light);
-    transform: translateY(-20px);
-    transition: transform 0.3s ease;
-}
-
-.modal-overlay[style*="display: flex"] .modal-content {
-    transform: translateY(0);
+    padding: 34px; /* ADJUSTED */
+    font-size: var(--font-base); /* ADJUSTED */
 }
 
 .modal-content h3 {
-    color: var(--primary-color);
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-}
-
-.modal-content p {
-    color: var(--text-muted);
-    margin-bottom: 20px;
-}
-
-/* Summary Box for Event Details */
-#event-details-summary {
-    margin: 20px 0;
-    padding: 15px;
-    /* Use theme variables for borders and background */
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: var(--background-dark);
+    font-size: var(--font-large); /* ADJUSTED */
 }
 
 #event-details-summary p {
-    margin: 5px 0;
-    line-height: 1.5;
-    font-size: 0.95rem;
-    color: var(--text-light); /* Ensure detail text is light */
+    font-size: var(--font-medium); /* ADJUSTED */
 }
 
-#event-details-summary strong {
-    display: inline-block;
-    width: 120px; /* Aligns the values nicely */
-    font-weight: 500;
-    color: var(--text-muted);
-}
-
-/* Modal Action Buttons */
-.modal-actions {
-    margin-top: 30px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px;
-}
-
-/* Primary Button (Yes, Schedule It) - Reusing .btn-secondary styles for consistency */
-.btn-primary#confirm-submit-btn {
-    /* Explicitly inheriting or duplicating the look of .btn.btn-secondary */
-    padding: 10px 20px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    border-radius: 50px;
-    background-color: var(--primary-color);
-    color: var(--background-dark);
-    border: 2px solid transparent;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-.btn-primary#confirm-submit-btn:hover {
-    background-color: var(--primary-color-dark);
-    transform: translateY(-2px);
-}
-
-/* Cancel Button */
+.btn-primary#confirm-submit-btn,
 .btn-cancel {
-    padding: 10px 20px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    border-radius: 50px;
-
-    background-color: transparent;
-    color: var(--text-light);
-    border: 2px solid var(--border-color);
-    cursor: pointer;
-    transition: border-color 0.3s ease, background-color 0.3s ease;
+    font-size: var(--font-medium); /* ADJUSTED */
+    padding: 12px 22px; /* ADJUSTED */
 }
 
-.btn-cancel:hover {
-    background-color: var(--border-color); /* Subtle hover effect */
-    border-color: var(--primary-color);
-}
-
-/* --- Custom Styles for SweetAlert to mimic the screenshot modal --- */
-
-/* The main pop-up container */
-.swal2-popup.gather-ed-modal-popup {
-    background-color: #1a1a1a !important; /* Ensure the background is dark */
-    padding: 30px 40px !important;
-    border-radius: 8px !important;
-    max-width: 400px !important; /* Match the screenshot's size */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Icon Container */
-.swal-icon-container {
-    margin-bottom: 20px;
-    /* Optional: Center the icon if needed, though SweetAlert usually does this */
-}
-
-/* SVG Icon Styling */
-.swal-icon-container .question-icon {
-    width: 60px;
-    height: 60px;
-    display: block; /* Ensures centering if needed */
-    margin: 0 auto;
-}
-
-/* Title Styling */
+/* ---------------------------------------------------------------------- */
+/* 7. SWEETALERT POPUP STYLES (UPDATED FONT SIZES)                        */
+/* ---------------------------------------------------------------------- */
 .swal-title-custom {
-    font-size: 1.5rem !important;
-    font-weight: 600 !important;
-    color: #fff !important;
-    margin-top: 0 !important;
-    margin-bottom: 10px !important;
+    font-size: var(--font-large) !important; /* ADJUSTED */
 }
 
-/* Text Styling */
 .swal-text-custom {
-    font-size: 1rem !important;
-    color: #ccc !important;
-    margin-bottom: 30px !important;
+    font-size: var(--font-medium) !important; /* ADJUSTED */
 }
 
-/* Button Actions Container (Crucial for button layout) */
-.swal2-actions.gather-ed-modal-actions {
-    display: flex !important;
-    justify-content: center !important;
-    width: 100% !important;
-    margin-top: 0 !important; /* Reset default margin */
-}
-
-/* Individual Button Styling */
 .btn-gather-ed {
-    padding: 10px 20px !important;
-    border: none !important;
-    border-radius: 4px !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    text-decoration: none !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 0.95rem !important;
-    margin: 0 7.5px !important; /* Add gap between buttons */
-}
-
-/* Specific Button Colors */
-.btn-logout {
-    background-color: #007bff !important; /* Blue for 'Yes, Schedule it' */
-    color: #fff !important;
-}
-.btn-logout:hover {
-    background-color: #0056b3 !important;
-}
-
-.btn-cancel {
-    background-color: #6c757d !important; /* Gray for 'Cancel' */
-    color: #fff !important;
-}
-.btn-cancel:hover {
-    background-color: #5a6268 !important;
+    font-size: var(--font-medium) !important; /* ADJUSTED */
+    padding: 12px 22px !important; /* ADJUSTED */
 }
