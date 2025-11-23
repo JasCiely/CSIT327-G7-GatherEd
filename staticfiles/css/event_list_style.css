@@ -224,13 +224,13 @@
 .card-badge {
     padding: 3px 8px;
     border-radius: 12px;
-    font-size: 0.75rem;
+    font-size: 0.50rem;
     font-weight: 600;
-    color: #ffffff; /* Default white text */
+    color: #ffffff;
     display: inline-flex;
     align-items: center;
     line-height: 1;
-    white-space: nowrap; /* Prevent text wrapping inside the badge */
+    white-space: nowrap;
 }
 
 /* Card Badge Status Colors */
