@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.db.models import Count, Case, When, Q, Value, BooleanField, IntegerField
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from django.contrib.auth.decorators import login_required
 import json
 import traceback
@@ -18,9 +18,9 @@ def get_registration_status_from_event(event, registered_count, is_registered_by
     """
     manual = (event.manual_status_override or 'AUTO').upper()
     max_attendees = event.max_attendees or 0
-
-    # 1. Manual Status Override Check
     now = datetime.now()
+
+    # 1. Manual Status Override Check (Temporary Closure/Opening)
     manual_limit_dt = None
 
     if manual in ['OPEN_MANUAL', 'CLOSED_MANUAL'] and event.manual_close_date:
@@ -33,9 +33,30 @@ def get_registration_status_from_event(event, registered_count, is_registered_by
             # If expired, revert to AUTO logic
             manual = 'AUTO'
         elif manual == 'OPEN_MANUAL':
-            return 'Available'
+            # Registration is manually opened until manual_limit_dt
+            close_time_str = manual_limit_dt.strftime('%I:%M %p') if event.manual_close_time else None
+            close_date_str = manual_limit_dt.strftime('%b %d')
+
+            # Use capacity check even in manual open state
+            is_full = (max_attendees > 0 and registered_count >= max_attendees)
+
+            if is_registered_by_student:
+                return 'Registered'
+            elif is_full:
+                # If full, display 'Full' but mention the temporary nature
+                if close_time_str:
+                    return f'Full (Manual Open Until {close_time_str} {close_date_str})'
+                else:
+                    return f'Full (Manual Open Until {close_date_str})'
+            else:
+                # Available and display the temporary nature
+                if close_time_str:
+                    return f'Available (Until {close_time_str} {close_date_str})'
+                else:
+                    return f'Available (Until {close_date_str})'
+
         elif manual == 'CLOSED_MANUAL':
-            # 💡 NEW INDICATION: Specific message for temporary closure
+            # Registration is manually closed until manual_limit_dt
             close_time_str = manual_limit_dt.strftime('%I:%M %p') if event.manual_close_time else None
             close_date_str = manual_limit_dt.strftime('%b %d')
 
@@ -45,6 +66,7 @@ def get_registration_status_from_event(event, registered_count, is_registered_by
                 return f'Temporarily Closed (Until {close_date_str})'
 
     # 2. Event Life Status and Hard Closure Checks
+    # (The logic here is only executed if manual is 'AUTO' or expired)
 
     # Combine date and time for comparison
     event_start_dt = datetime.combine(event.date, event.start_time)
