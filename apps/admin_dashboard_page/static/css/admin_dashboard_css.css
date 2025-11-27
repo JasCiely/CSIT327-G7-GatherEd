@@ -1,34 +1,47 @@
-/* -------------------------------------------------------------- */
-/*  ROOT VARIABLES — Compact Theme                                */
-/* -------------------------------------------------------------- */
+/* ------------------------------------------- */
+/* --- Root Variables: Enhanced Colors and Depth --- */
+/* ------------------------------------------- */
 :root {
-    --primary-color: #00A9FF;
-    --secondary-color: #2F93FF;
-    --background-dark: #0A0A0A;
-    --background-medium: #181818;
-    --background-light: #252525;
-    --text-light: #F0F0F0;
-    --text-color-dark: #FFFFFF;
-    --text-muted: #9E9E9E;
-    --text-color-medium: #CCCCCC;
+    --primary-color: #00A9FF;               /* Bright Blue (Action/Focus) */
+    --secondary-color: #2F93FF;             /* Slightly Darker Blue (Hover) */
+
+    /* Base Colors */
+    --background-dark: #0A0A0A;             /* Main Background */
+    --background-medium: #181818;           /* Sidebar/Cards */
+    --background-light: #252525;            /* Table/Row Background */
+
+    /* Text Colors */
+    --text-light: #F0F0F0;                  /* Headings/Data */
+    --text-color-dark: #FFFFFF;             /* Primary Table Data */
+    --text-muted: #9E9E9E;                  /* Labels/Secondary Text */
+    --text-color-medium: #CCCCCC;           /* Mobile Labels */
+
+    /* Borders & Shadows */
     --border-color: #333333;
     --border-color-light: #444444;
     --card-shadow-color: rgba(0, 0, 0, 0.8);
-    --card-hover-shadow: 0 8px 16px rgba(0, 169, 255, 0.2);
+    --card-hover-shadow: 0 10px 20px rgba(0, 169, 255, 0.25);
+
+    /* Accent Colors */
     --warning-color: #FFC107;
     --success-color: #6BFF8E;
     --attention-color: #FF6B6B;
     --info-color: #FFD26B;
-
     --primary-color-light: #004D73;
 }
 
-/* -------------------------------------------------------------- */
-/*  BASE ELEMENTS                                                  */
-/* -------------------------------------------------------------- */
+/* ------------------------------------------- */
+/* --- General Styles --- */
+/* ------------------------------------------- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: 'Inter', 'Roboto', sans-serif;
-    line-height: 1.5;
+    line-height: 1.6;
     color: var(--text-light);
     background-color: var(--background-dark);
 }
@@ -37,22 +50,19 @@ html {
     scroll-behavior: smooth;
 }
 
-/* -------------------------------------------------------------- */
-/*  DASHBOARD LAYOUT                                               */
-/* -------------------------------------------------------------- */
 .dashboard-container {
     display: flex;
     min-height: 100vh;
 }
 
-/* -------------------------------------------------------------- */
-/*  SIDEBAR                                                        */
-/* -------------------------------------------------------------- */
+/* ------------------------------------------- */
+/* --- 1. Sidebar & Navigation --- */
+/* ------------------------------------------- */
 .sidebar {
-    width: 220px;
+    width: 280px;
     background-color: var(--background-medium);
-    box-shadow: 4px 0 10px var(--card-shadow-color);
-    padding: 20px 15px;
+    box-shadow: 6px 0 15px var(--card-shadow-color);
+    padding: 30px 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -64,46 +74,41 @@ html {
 }
 
 .logo {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 30px;
+    font-weight: 800;
     color: var(--primary-color);
-    margin-bottom: 30px;
+    margin-bottom: 50px;
     text-align: center;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.5px;
 }
 
-/* Sidebar Navigation Items */
+.sidebar-nav {
+    flex-grow: 1;
+}
+
 .nav-item {
     display: flex;
     align-items: center;
-    padding: 10px 14px;
-    margin-bottom: 6px;
+    padding: 14px 18px;
     color: var(--text-muted);
-    font-size: 14px;
-    border-radius: 6px;
-
-    transition: background-color 0.2s ease,
-                color 0.2s ease,
-                transform 0.1s ease;
-}
-
-.nav-item i {
-    margin-right: 12px;
+    text-decoration: none;
     font-size: 16px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s;
 }
 
-/* Hover & Active */
 .nav-item:hover {
     background-color: rgba(0, 169, 255, 0.15);
     color: var(--text-light);
-    transform: translateX(3px);
+    transform: translateX(4px);
 }
 
 .nav-item.active {
     background-color: rgba(0, 169, 255, 0.2);
     color: var(--primary-color);
-    border-left: 4px solid var(--primary-color);
-    padding-left: 10px;
+    border-left: 5px solid var(--primary-color);
+    padding-left: 13px;
     font-weight: 600;
 }
 
@@ -111,68 +116,139 @@ html {
     color: var(--primary-color);
 }
 
-/* -------------------------------------------------------------- */
-/*  MAIN CONTENT AREA                                              */
-/* -------------------------------------------------------------- */
-.main-content {
-    flex-grow: 1;
-    padding: 30px;
+.nav-item i {
+    margin-right: 18px;
+    font-size: 18px;
 }
 
-/* -------------------------------------------------------------- */
-/*  HEADER NAV BAR                                                 */
-/* -------------------------------------------------------------- */
+.sidebar-footer {
+    padding-top: 30px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ------------------------------------------- */
+/* --- 2. Main Content & Header --- */
+/* ------------------------------------------- */
+.main-content {
+    flex-grow: 1;
+    padding: 50px;
+}
+
 .top-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 35px;
-    padding: 14px 20px;
+    margin-bottom: 50px;
     background-color: var(--background-medium);
-    border-radius: 10px;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px var(--card-shadow-color);
     border: 1px solid var(--border-color);
-    box-shadow: 0 3px 15px var(--card-shadow-color);
 }
+
 .page-title {
-    font-size: 24px;
+    font-size: 32px;
     font-weight: 700;
-    color: var(--text-light);
+    letter-spacing: -0.5px;
 }
+
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 30px;
 }
-/* -------------------------------------------------------------- */
-/*  DASHBOARD CARDS                                                */
-/* -------------------------------------------------------------- */
+
+/* Notifications */
+.notification-icon,
+.user-profile {
+    transition: all 0.2s ease;
+}
+
+.notification-icon:hover,
+.user-profile:hover {
+    opacity: 0.85;
+    transform: translateY(-2px);
+}
+
+.notification-icon {
+    position: relative;
+    cursor: pointer;
+    font-size: 24px;
+}
+
+.badge {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background-color: var(--warning-color);
+    color: var(--background-dark);
+    border-radius: 50%;
+    padding: 3px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 20px;
+    text-align: center;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.profile-name {
+    margin-right: 15px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.user-profile i {
+    font-size: 26px;
+    color: var(--primary-color);
+}
+
+/* ------------------------------------------- */
+/* --- 3. Dashboard Grid & Cards --- */
+/* ------------------------------------------- */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
 }
 
 .card {
     background-color: var(--background-medium);
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 30px;
     display: flex;
     align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                box-shadow 0.25s ease;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                box-shadow 0.3s ease;
 }
 
 .card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-8px);
     box-shadow: var(--card-hover-shadow);
 }
 
 .card-icon {
-    font-size: 38px;
-    margin-right: 18px;
+    font-size: 50px;
+    margin-right: 25px;
     opacity: 0.85;
+}
+
+.card.events .card-icon {
+    color: var(--success-color);
+}
+
+.card.attendance .card-icon {
+    color: var(--info-color);
+}
+
+.card.feedback .card-icon {
+    color: var(--attention-color);
 }
 
 .card-content {
@@ -181,127 +257,256 @@ html {
 }
 
 .card-label {
-    font-size: 13px;
-    margin-bottom: 4px;
+    font-size: 15px;
     color: var(--text-muted);
+    margin-bottom: 5px;
 }
 
 .card-value {
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 38px;
+    font-weight: 800;
 }
 
-/* Full-Width Cards */
+/* ------------------------------------------- */
+/* --- 4. Full Width Cards --- */
+/* ------------------------------------------- */
 .full-width-card {
     grid-column: 1 / -1;
-
-    padding: 20px;
-    border-radius: 10px;
-
     background-color: var(--background-medium);
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
     border: 1px solid var(--border-color);
-
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
 .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
-    margin-bottom: 18px;
+    margin-bottom: 25px;
 }
 
 .card-header h2 {
-    color: var(--text-light);
-    font-size: 1.4rem;
+    font-size: 1.8rem;
     font-weight: 700;
-
+    padding-bottom: 10px;
     position: relative;
-    padding-bottom: 8px;
 }
 
 .card-header h2::after {
     content: '';
-    width: 50px;
-    height: 3px;
-
+    width: 60px;
+    height: 4px;
     background-color: var(--primary-color);
-
     position: absolute;
     bottom: 0;
     left: 0;
-
-    border-radius: 2px;
 }
 
-/* -------------------------------------------------------------- */
-/*  BUTTONS                                                        */
-/* -------------------------------------------------------------- */
+/* ------------------------------------------- */
+/* --- 5. Buttons --- */
+/* ------------------------------------------- */
 .btn {
     display: inline-block;
-    padding: 9px 18px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
+    padding: 12px 25px;
+    border-radius: 8px;
     font-weight: 600;
-    text-decoration: none;
+    letter-spacing: 0.2px;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
     transition: transform 0.3s ease,
-                background-color 0.3s ease;
+                background-color 0.3s ease,
+                box-shadow 0.3s ease;
 }
+
 .btn-primary {
     background-color: var(--primary-color);
     color: var(--background-dark);
+    box-shadow: 0 4px 8px rgba(0, 169, 255, 0.3);
 }
+
 .btn-primary:hover {
     background-color: var(--secondary-color);
     transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 169, 255, 0.4);
 }
-/* -------------------------------------------------------------- */
-/*  TABLE STYLES                                                   */
-/* -------------------------------------------------------------- */
+
+.btn-primary i {
+    margin-right: 10px;
+}
+
+.btn-info {
+    background-color: #007bff;
+    color: white;
+    padding: 6px 10px;
+    font-size: 0.85em;
+    border-radius: 5px;
+}
+
+.btn-info:hover {
+    background-color: #0056b3;
+}
+
+/* ------------------------------------------- */
+/* --- 6. Notification Drawer --- */
+/* ------------------------------------------- */
+.notification-drawer {
+    position: fixed;
+    top: 0;
+    right: -350px;
+    width: 320px;
+    height: 100vh;
+    background-color: var(--background-medium);
+    padding: 30px;
+    border-left: 2px solid var(--primary-color);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    transition: right 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.notification-drawer.open {
+    right: 0;
+}
+
+.notification-drawer h3 {
+    font-size: 1.5rem;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.notification-drawer p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+/* ------------------------------------------- */
+/* --- 7. Events Table --- */
+/* ------------------------------------------- */
 .events-table-responsive {
     overflow-x: auto;
-    margin-top: 12px;
+    margin-top: 15px;
 }
+
 .events-table {
     width: 100%;
     border-collapse: collapse;
+    background-color: var(--background-medium);
     border-radius: 8px;
     overflow: hidden;
-    font-size: 0.85rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
+
 .events-table thead th {
     background-color: var(--primary-color);
     color: var(--background-dark);
-    padding: 10px 15px;
-    font-weight: 600;
+    padding: 15px 20px;
     text-transform: uppercase;
+    font-size: 0.9em;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
 }
+
 .events-table tbody td {
-    padding: 10px 15px;
-    color: var(--text-light);
+    padding: 12px 20px;
+    font-size: 0.95em;
     border-bottom: 1px solid var(--border-color-light);
 }
+
+.events-table tbody tr:nth-child(even) {
+    background-color: var(--background-medium);
+}
+
+.events-table tbody tr:nth-child(odd) {
+    background-color: var(--background-light);
+}
+
 .events-table tbody tr:hover {
     background-color: var(--primary-color-light);
     cursor: pointer;
 }
-/* -------------------------------------------------------------- */
-/*  MOBILE RESPONSIVE                                              */
-/* -------------------------------------------------------------- */
+
+.events-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Mobile Responsive Table */
 @media (max-width: 768px) {
-    .main-content {
-        padding: 20px;
+    .events-table thead {
+        display: none;
     }
-    .sidebar {
-        width: 200px;
+
+    .events-table,
+    .events-table tbody,
+    .events-table tr,
+    .events-table td {
+        display: block;
+        width: 100%;
     }
-    .page-title {
-        font-size: 20px;
+
+    .events-table tr {
+        margin-bottom: 15px;
+        border: 1px solid var(--border-color-light);
+        border-radius: 8px;
     }
-    .card-value {
-        font-size: 24px;
+
+    .events-table td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
     }
+
+    .events-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 50%;
+        padding-left: 20px;
+        font-weight: 600;
+        text-align: left;
+        color: var(--text-muted);
+    }
+}
+
+/* ------------------------------------------- */
+/* --- 8. Alerts & Loaders --- */
+/* ------------------------------------------- */
+.message-container {
+    width: 90%;
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+.alert {
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background-color: #e6ffed;
+    color: #046c4e;
+    border: 1px solid #a7f3d0;
+}
+
+.alert-error {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.fast-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 80px 0;
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+.fast-loader .loading-text {
+    margin-top: 10px;
+    font-weight: 500;
 }
