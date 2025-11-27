@@ -181,7 +181,7 @@ def event_list(request):
             'short_description': event.description[:100] + '...' if event.description and len(
                 event.description) > 100 else event.description or 'No description available',
             'full_description': event.description or 'No description available',
-            'picture_url': event.picture_url,
+            'picture_url': event.picture_url.rstrip('?') if event.picture_url else None,
             'attendee_count': registered_count,
             'capacity': event.max_attendees,
         })
