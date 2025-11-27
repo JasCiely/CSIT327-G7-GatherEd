@@ -44,7 +44,7 @@
                      data-full-description="{{ event.full_description|escape }}"
                      data-picture-url="{{ event.picture_url }}">
                      <div class="card-image-wrapper">
-                        <img src="{% if event.picture_url %}{{ event.picture_url }}{% else %}https://placehold.co/700x200/121212/00A9FF?text=Event+Image{% endif %}" alt="{{ event.name }}" id="event-img-{{ event.id }}">
+                        <img src="{% if event.picture_url %}{{ event.picture_url }}{% else %}https://placehold.co/700x200/121212/00A9FF?text=Event+Image{% endif %}" alt="{{ event.name }}" id="event-img-{{ event.id }}" onerror="this.onerror=null;this.src='https://placehold.co/700x200/121212/00A9FF?text=Event+Image';">
 
                         <div class="card-badges">
                             <span class="card-badge badge-{{ status_lower }}">{{ event.status }}</span>
