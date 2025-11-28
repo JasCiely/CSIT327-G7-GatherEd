@@ -1,84 +1,239 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/track_attendance_css.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% csrf_token %}
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 
 <div class="full-width-card attendance-container">
     <div class="card-header">
-        <h2>Live Attendance Tracker</h2>
-        <p class="card-subtitle">Select an event to start recording or view historical attendance data.</p>
+        <h2>Event Attendance Recorder 📋</h2>
+        <p class="card-subtitle">Select an event to mark attendance. **Unrecorded** students are prioritized at the top.</p>
     </div>
 
     <div class="attendance-controls">
         <label for="event-select" class="control-label">Select Event:</label>
 
-        {# 2. The Select Element: Select2 will transform this #}
         <select id="event-select" class="control-select">
             <option value="">-- Choose an Event --</option>
+            {# Assuming 'events_list' is available from Django context #}
             {% for event in events_list %}
             <option value="{{ event.id }}" data-status="{{ event.status|default:'SCHEDULED' }}">
                 {{ event.title }}
             </option>
             {% endfor %}
         </select>
-
-        <button id="start-live-mode" class="btn btn-secondary start-button" disabled>
-            <i class="fas fa-play-circle"></i> Start Live Mode
-        </button>
     </div>
 
-    <div class="placeholder-attendance-table">
-        <p class="text-center">
-            <i class="fas fa-qrcode"></i>
-            Attendance Log: QR code scanner view or manual check-in form will load here based on event status.
-        </p>
+    {# --- Attendance List Area --- #}
+    <div id="attendance-list-area">
+
+        {# --- UNRECORDED STUDENTS SECTION --- #}
+        <h3 id="unrecorded-header" class="attendance-section-header hidden">Unrecorded Students (Unmarked)</h3>
+        <table id="unrecorded-table" class="attendance-table hidden">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Email</th>
+                    <th class="status-col">Current Status</th>
+                    <th class="action-col">Mark</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-student-id="101" data-recorded="false">
+                    <td>Alice Johnson</td>
+                    <td>S00101</td>
+                    <td class="status-col current-status Unmarked">Unmarked</td>
+                    <td class="action-col">
+                        <button class="btn-mark-status" data-status="Unmarked" data-student-id="101">
+                            <i class="fas fa-check"></i> Present
+                        </button>
+                    </td>
+                </tr>
+                <tr data-student-id="103" data-recorded="false">
+                    <td>Charlie Brown</td>
+                    <td>S00103</td>
+                    <td class="status-col current-status Unmarked">Unmarked</td>
+                    <td class="action-col">
+                        <button class="btn-mark-status" data-status="Unmarked" data-student-id="103">
+                            <i class="fas fa-check"></i> Present
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        {# --- RECORDED STUDENTS SECTION --- #}
+        <h3 id="recorded-header" class="attendance-section-header hidden">Recorded Students (Present/Absent)</h3>
+        <table id="recorded-table" class="attendance-table hidden">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>ID / Email</th>
+                    <th class="status-col">Current Status</th>
+                    <th class="action-col">Mark</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-student-id="102" data-recorded="true">
+                    <td>Bob Williams</td>
+                    <td>S00102</td>
+                    <td class="status-col current-status Present">Present</td>
+                    <td class="action-col">
+                        <button class="btn-mark-status present" data-status="Present" data-student-id="102">
+                            <i class="fas fa-times"></i> Absent
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
-
 <script>
-$(document).ready(function() {
-    var startButton = $('#start-live-mode');
-    var eventSelect = $('#event-select');
+    $(document).ready(function() {
+        var eventSelect = $('#event-select');
 
-    // **CRUCIAL LINE:** This initializes Select2, making your dropdown searchable.
-    eventSelect.select2({
-        placeholder: "-- Choose an Event --",
-        allowClear: true
-    });
+        // Select the two tables and headers
+        var unrecordedTable = $('#unrecorded-table');
+        var recordedTable = $('#recorded-table');
+        var unrecordedHeader = $('#unrecorded-header');
+        var recordedHeader = $('#recorded-header');
 
-    // Function to check if an event is selected
-    function checkSelection() {
-        if (eventSelect.val() && eventSelect.val() !== "") {
-            startButton.prop('disabled', false);
-        } else {
-            startButton.prop('disabled', true);
+        // Function to get the CSRF token (for Django)
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = $.trim(cookies[i]);
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
         }
-    }
+        var csrftoken = getCookie('csrftoken');
 
-    // Attach change event listener to the Select2 instance
-    eventSelect.on('change', function() {
-        checkSelection();
-    });
+        // Function to update the visibility of headers/tables based on their content
+        function updateSectionVisibility(showTables) {
+            if (!showTables) {
+                unrecordedTable.addClass('hidden');
+                recordedTable.addClass('hidden');
+                unrecordedHeader.addClass('hidden');
+                recordedHeader.addClass('hidden');
+                return;
+            }
 
-    // Initial check
-    checkSelection();
+            // Check for actual rows in the tbody
+            var unrecordedCount = unrecordedTable.find('tbody tr').length;
+            var recordedCount = recordedTable.find('tbody tr').length;
 
-    // Handle the "Start Live Mode" click (Placeholder)
-    startButton.on('click', function(e) {
-        e.preventDefault();
-        var eventId = eventSelect.val();
-        var eventTitle = eventSelect.find('option:selected').text();
+            // Toggle visibility for Unrecorded Section
+            if (unrecordedCount > 0) {
+                unrecordedTable.removeClass('hidden');
+                unrecordedHeader.removeClass('hidden');
+            } else {
+                unrecordedTable.addClass('hidden');
+                unrecordedHeader.addClass('hidden');
+            }
 
-        if (eventId) {
-            console.log('Starting Live Mode for Event:', eventTitle, 'ID:', eventId);
-            alert('Live Mode Ready for Event: ' + eventTitle);
-            // TODO: Add your actual redirect or AJAX call here
+            // Toggle visibility for Recorded Section
+            if (recordedCount > 0) {
+                recordedTable.removeClass('hidden');
+                recordedHeader.removeClass('hidden');
+            } else {
+                recordedTable.addClass('hidden');
+                recordedHeader.addClass('hidden');
+            }
         }
+
+        // Function to update the display based on event selection
+        function updateAttendanceDisplay(eventId) {
+            if (eventId && eventId !== "") {
+                // In a real app, this is where you'd fetch data and populate the tables
+                updateSectionVisibility(true); // Show tables based on currently loaded content
+            } else {
+                // No event selected
+                updateSectionVisibility(false); // Hide everything
+            }
+        }
+
+        // 1. Handle Event Selection Change
+        eventSelect.on('change', function() {
+            var eventId = $(this).val();
+            updateAttendanceDisplay(eventId);
+        });
+
+        // Initial State Check on page load
+        updateAttendanceDisplay(eventSelect.val());
+
+        // 2. Handle Attendance Status Button Click
+        $('#attendance-list-area').on('click', '.btn-mark-status', function() {
+            var button = $(this);
+            var row = button.closest('tr');
+            var eventId = eventSelect.val();
+
+            if (!eventId) {
+                alert("Please select an event first.");
+                return;
+            }
+
+            var studentId = row.data('student-id');
+            var currentStatus = button.data('status');
+            var isCurrentlyRecorded = row.data('recorded');
+
+            var newStatus;
+            if (currentStatus === 'Present') {
+                newStatus = 'Absent';
+            } else {
+                newStatus = 'Present';
+            }
+
+            // --- AJAX Call to save status ---
+            $.ajax({
+                url: '/api/record-attendance/',
+                method: 'POST',
+                data: {
+                    student_id: studentId,
+                    event_id: eventId,
+                    is_present: (newStatus === 'Present'),
+                },
+                headers: {
+                     'X-CSRFToken': csrftoken
+                },
+                success: function(response) {
+                    // --- Frontend Update (On Success) ---
+                    var statusCell = row.find('.current-status');
+
+                    // 1. Update row status text and color
+                    statusCell.removeClass('Present Absent Unmarked').addClass(newStatus).text(newStatus);
+                    button.data('status', newStatus);
+
+                    // 2. Update button text and style for the *next* action
+                    if (newStatus === 'Present') {
+                        button.addClass('present').html('<i class="fas fa-times"></i> Absent');
+                    } else {
+                        button.removeClass('present').html('<i class="fas fa-check"></i> Present');
+                    }
+
+                    console.log('Attendance Saved:', response.message);
+
+                    // 3. LOGIC TO MOVE ROW: If the student was unrecorded, move the row.
+                    if (isCurrentlyRecorded === false || isCurrentlyRecorded === 'false') {
+                        row.data('recorded', true);
+                        row.appendTo(recordedTable.find('tbody'));
+                        updateSectionVisibility(true);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error saving attendance:', error);
+                    alert('Failed to save attendance. Please try again.');
+                }
+            });
+        });
     });
-});
 </script>

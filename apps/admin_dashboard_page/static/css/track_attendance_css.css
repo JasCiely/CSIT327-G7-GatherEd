@@ -1,9 +1,10 @@
-/* General Variables (Assuming these are defined globally or in your main admin_css.css) */
+/* General Variables */
 :root {
     --primary-color: #00A9FF;         /* Light Blue */
     --secondary-color: #7B68EE;       /* Medium Purple */
     --success-color: #4CAF50;         /* Green */
-    --attention-color: #FFC107;       /* Yellow/Orange */
+    --danger-color: #D32F2F;          /* Red for Absent */
+    --unmarked-color: #7B68EE;        /* Medium Purple for Unmarked status */
     --background-light: #1E1E1E;      /* Light Dark Background */
     --background-dark: #121212;       /* Darkest Background */
     --text-light: #E0E0E0;            /* Light Text */
@@ -11,31 +12,44 @@
     --border-color: #333333;          /* Border/Divider Color */
 }
 
-/* Base Card Styling (Inherited from admin_css.css, but customized here) */
+/* Base Card Styling (Assuming .full-width-card exists elsewhere) */
+.full-width-card {
+    width: 100%;
+}
+
 .attendance-container {
     background-color: var(--background-light);
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.card-header {
+    margin-bottom: 20px;
 }
 
 .card-header h2 {
     color: var(--text-light);
-    margin-bottom: 0;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .card-subtitle {
     color: var(--text-muted);
     font-size: 1rem;
-    margin-top: 5px;
+    margin-top: 0;
 }
 
 /* Attendance Controls */
 .attendance-controls {
     display: flex;
+    flex-wrap: wrap;
     gap: 20px;
     margin-bottom: 30px;
     align-items: center;
-    /* Use a dedicated padding/margin if this isn't handled by the card container */
     padding: 20px 0 0;
     border-top: 1px solid var(--border-color);
 }
@@ -44,6 +58,7 @@
     color: var(--text-light);
     font-weight: 600;
     min-width: 100px;
+    flex-shrink: 0;
 }
 
 .control-select {
@@ -55,53 +70,125 @@
     flex-grow: 1;
     font-size: 1rem;
     cursor: pointer;
-    appearance: none; /* Removes default dropdown arrow */
+    appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%239E9E9E' d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 0.8em;
 }
 
-.btn-secondary.start-button {
-    background-color: var(--primary-color); /* Use primary color for action button */
-    color: var(--background-dark);
-    font-weight: 700;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+/* --- New Section Header Style --- */
+.attendance-section-header {
+    color: var(--text-light);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 5px;
+    margin: 40px 0 15px 0; /* Extra space above and below tables */
+    font-size: 1.3rem;
+    font-weight: 600;
 }
 
-.btn-secondary.start-button:hover:not(:disabled) {
-    background-color: #007bb5; /* Darker shade on hover */
-}
-
-.btn-secondary.start-button:disabled {
-    background-color: var(--border-color);
-    color: var(--text-muted);
-    cursor: not-allowed;
-}
-
-/* Placeholder Area */
-.placeholder-attendance-table {
-    min-height: 400px;
+/* --- Attendance Table Styles --- */
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0;
     background-color: var(--background-dark);
     border-radius: 8px;
-    padding: 25px;
-    border: 1px dashed var(--text-muted);
+    overflow: hidden;
+}
+
+.attendance-table th, .attendance-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.attendance-table th {
+    background-color: #2a2a2a;
+    color: var(--text-light);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+.attendance-table td {
+    color: var(--text-light);
+    background-color: var(--background-dark);
+}
+
+.attendance-table tbody tr:hover {
+    background-color: #1a1a1a;
+}
+
+.attendance-table .status-col {
+    width: 150px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.attendance-table .action-col {
+    width: 120px;
     text-align: center;
 }
 
-.placeholder-attendance-table .text-center {
-    color: var(--text-muted);
-    padding-top: 100px; /* Reduced padding for better center alignment */
-    line-height: 1.5;
+/* Status Colors */
+.current-status.Present {
+    color: var(--success-color);
 }
 
-.placeholder-attendance-table .fas {
-    font-size: 32px;
-    margin-bottom: 15px;
-    display: block;
+.current-status.Absent {
+    color: var(--danger-color);
+}
+
+.current-status.Unmarked {
+    color: var(--unmarked-color);
+}
+
+/* Attendance Button Toggle */
+.btn-mark-status {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s, color 0.2s;
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* Style for when the button is used to mark PRESENT (default state, or after marking Absent) */
+.btn-mark-status:not(.present) {
+    background-color: var(--success-color);
+    color: var(--background-dark);
+}
+
+/* Style for when the button is used to mark ABSENT (currently Present) */
+.btn-mark-status.present {
+    background-color: var(--danger-color);
+    color: var(--text-light);
+}
+
+/* Utility to hide elements */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .attendance-controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .control-label, .control-select {
+        width: 100%;
+    }
+
+    .attendance-table th:nth-child(2),
+    .attendance-table td:nth-child(2) {
+        display: none; /* Hide ID/Email on small screens */
+    }
 }
