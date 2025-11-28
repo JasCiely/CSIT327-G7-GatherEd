@@ -5,6 +5,50 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<style>
+    /* Status Message Styling */
+    .alert-message {
+        padding: 12px;
+        margin-top: 15px;
+        border-radius: 4px;
+        font-weight: bold;
+        text-align: center;
+        border: 1px solid transparent;
+    }
+    .alert-message.error-notice {
+        background-color: #fce4e4;
+        color: #c70000;
+        border-color: #fcc;
+    }
+    .alert-message.success-notice {
+        background-color: #e6f7e9;
+        color: #1a6435;
+        border-color: #cfd;
+    }
+    .alert-message.warning-notice {
+        background-color: #fff8e1;
+        color: #b37300;
+        border-color: #ffe;
+    }
+
+    .btn-mark-status:hover:not(:disabled) {
+        background-color: #0056b3;
+    }
+    .btn-mark-status.present:hover:not(:disabled) {
+        background-color: #bd2130;
+    }
+    .btn-mark-status:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+
+    #loading-message, #no-event-message {
+        text-align: center;
+        padding: 15px;
+        font-style: italic;
+        color: #777;
+    }
+</style>
 
 <div class="full-width-card attendance-container">
     <div class="card-header">
@@ -14,57 +58,33 @@
 
     <div class="attendance-controls">
         <label for="event-select" class="control-label">Select Event:</label>
-
         <select id="event-select" class="control-select">
             <option value="">-- Choose an Event --</option>
-            {# Assuming 'events_list' is available from Django context #}
             {% for event in events_list %}
-            <option value="{{ event.id }}" data-status="{{ event.status|default:'SCHEDULED' }}">
-                {{ event.title }}
-            </option>
+            <option value="{{ event.id }}" data-status="{{ event.status|default:'SCHEDULED' }}">{{ event.title }}</option>
             {% endfor %}
         </select>
     </div>
 
-    {# --- Attendance List Area --- #}
-    <div id="attendance-list-area">
+    <div id="status-control-message" class="alert-message hidden"></div>
 
-        {# --- UNRECORDED STUDENTS SECTION --- #}
+    <div id="attendance-list-area">
+        <p id="loading-message" class="hidden">Loading student list...</p>
+        <p id="no-event-message">Please select an event to load the registration list.</p>
+
         <h3 id="unrecorded-header" class="attendance-section-header hidden">Unrecorded Students (Unmarked)</h3>
         <table id="unrecorded-table" class="attendance-table hidden">
             <thead>
                 <tr>
                     <th>Student Name</th>
-                    <th>Email</th>
+                    <th>ID / Email</th>
                     <th class="status-col">Current Status</th>
                     <th class="action-col">Mark</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr data-student-id="101" data-recorded="false">
-                    <td>Alice Johnson</td>
-                    <td>S00101</td>
-                    <td class="status-col current-status Unmarked">Unmarked</td>
-                    <td class="action-col">
-                        <button class="btn-mark-status" data-status="Unmarked" data-student-id="101">
-                            <i class="fas fa-check"></i> Present
-                        </button>
-                    </td>
-                </tr>
-                <tr data-student-id="103" data-recorded="false">
-                    <td>Charlie Brown</td>
-                    <td>S00103</td>
-                    <td class="status-col current-status Unmarked">Unmarked</td>
-                    <td class="action-col">
-                        <button class="btn-mark-status" data-status="Unmarked" data-student-id="103">
-                            <i class="fas fa-check"></i> Present
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
+            <tbody></tbody>
         </table>
 
-        {# --- RECORDED STUDENTS SECTION --- #}
         <h3 id="recorded-header" class="attendance-section-header hidden">Recorded Students (Present/Absent)</h3>
         <table id="recorded-table" class="attendance-table hidden">
             <thead>
@@ -75,165 +95,174 @@
                     <th class="action-col">Mark</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr data-student-id="102" data-recorded="true">
-                    <td>Bob Williams</td>
-                    <td>S00102</td>
-                    <td class="status-col current-status Present">Present</td>
-                    <td class="action-col">
-                        <button class="btn-mark-status present" data-status="Present" data-student-id="102">
-                            <i class="fas fa-times"></i> Absent
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    $(document).ready(function() {
-        var eventSelect = $('#event-select');
+$(document).ready(function() {
+    const eventSelect = $('#event-select');
+    const unrecordedTable = $('#unrecorded-table');
+    const recordedTable = $('#recorded-table');
+    const unrecordedHeader = $('#unrecorded-header');
+    const recordedHeader = $('#recorded-header');
+    const loadingMessage = $('#loading-message');
+    const noEventMessage = $('#no-event-message');
+    const statusControlMessage = $('#status-control-message');
 
-        // Select the two tables and headers
-        var unrecordedTable = $('#unrecorded-table');
-        var recordedTable = $('#recorded-table');
-        var unrecordedHeader = $('#unrecorded-header');
-        var recordedHeader = $('#recorded-header');
+    let isAttendanceEnabled = false;
 
-        // Function to get the CSRF token (for Django)
-        function getCookie(name) {
-            var cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                var cookies = document.cookie.split(';');
-                for (var i = 0; i < cookies.length; i++) {
-                    var cookie = $.trim(cookies[i]);
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
-            return cookieValue;
         }
-        var csrftoken = getCookie('csrftoken');
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
 
-        // Function to update the visibility of headers/tables based on their content
-        function updateSectionVisibility(showTables) {
-            if (!showTables) {
-                unrecordedTable.addClass('hidden');
-                recordedTable.addClass('hidden');
-                unrecordedHeader.addClass('hidden');
-                recordedHeader.addClass('hidden');
-                return;
-            }
+    function updateSectionVisibility() {
+        const unCount = unrecordedTable.find('tbody tr').length;
+        const recCount = recordedTable.find('tbody tr').length;
+        unrecordedHeader.toggleClass('hidden', unCount === 0);
+        unrecordedTable.toggleClass('hidden', unCount === 0);
+        recordedHeader.toggleClass('hidden', recCount === 0);
+        recordedTable.toggleClass('hidden', recCount === 0);
+    }
 
-            // Check for actual rows in the tbody
-            var unrecordedCount = unrecordedTable.find('tbody tr').length;
-            var recordedCount = recordedTable.find('tbody tr').length;
+    function generateRowHtml(student) {
+        const isPresent = student.status === 'Present';
+        const icon = isPresent ? 'fa-times' : 'fa-check';
+        const btnClass = isPresent ? 'present' : '';
+        const btnText = isPresent ? ' Absent' : ' Present';
+        return `
+            <tr data-student-id="${student.student_id}" data-recorded="${student.is_recorded}">
+                <td>${student.name}</td>
+                <td>${student.identifier}</td>
+                <td class="status-col current-status ${student.status}">${student.status}</td>
+                <td class="action-col">
+                    <button class="btn-mark-status ${btnClass}" data-status="${student.status}" data-student-id="${student.student_id}" ${isAttendanceEnabled ? '' : 'disabled'}>
+                        <i class="fas ${icon}"></i>${btnText}
+                    </button>
+                </td>
+            </tr>`;
+    }
 
-            // Toggle visibility for Unrecorded Section
-            if (unrecordedCount > 0) {
-                unrecordedTable.removeClass('hidden');
-                unrecordedHeader.removeClass('hidden');
-            } else {
-                unrecordedTable.addClass('hidden');
-                unrecordedHeader.addClass('hidden');
-            }
+    function updateAttendanceDisplay(eventId) {
+        unrecordedTable.find('tbody').empty();
+        recordedTable.find('tbody').empty();
+        isAttendanceEnabled = false;
 
-            // Toggle visibility for Recorded Section
-            if (recordedCount > 0) {
-                recordedTable.removeClass('hidden');
-                recordedHeader.removeClass('hidden');
-            } else {
-                recordedTable.addClass('hidden');
-                recordedHeader.addClass('hidden');
-            }
+        noEventMessage.addClass('hidden');
+        loadingMessage.removeClass('hidden');
+        statusControlMessage.addClass('hidden').removeClass('warning-notice error-notice success-notice').text('');
+        updateSectionVisibility();
+
+        if (!eventId) {
+            loadingMessage.addClass('hidden');
+            noEventMessage.text('Please select an event to load the registration list.').removeClass('hidden');
+            return;
         }
 
-        // Function to update the display based on event selection
-        function updateAttendanceDisplay(eventId) {
-            if (eventId && eventId !== "") {
-                // In a real app, this is where you'd fetch data and populate the tables
-                updateSectionVisibility(true); // Show tables based on currently loaded content
-            } else {
-                // No event selected
-                updateSectionVisibility(false); // Hide everything
-            }
-        }
+        $.ajax({
+            url: `api/get-students/${eventId}/`,
+            method: 'GET',
+            success: function(response) {
+                loadingMessage.addClass('hidden');
+                const students = response.students;
+                isAttendanceEnabled = response.attendance_enabled;
 
-        // 1. Handle Event Selection Change
-        eventSelect.on('change', function() {
-            var eventId = $(this).val();
-            updateAttendanceDisplay(eventId);
+                if (!isAttendanceEnabled) {
+                    statusControlMessage.html('⚠️ ' + response.status_message).removeClass('hidden').addClass('warning-notice');
+                }
+
+                if (students.length === 0) {
+                    noEventMessage.text('NOTICE: There are no students registered for this event.').removeClass('hidden');
+                    updateSectionVisibility();
+                    return;
+                }
+
+                const unFragment = document.createDocumentFragment();
+                const recFragment = document.createDocumentFragment();
+
+                students.forEach(student => {
+                    const row = $(generateRowHtml(student))[0];
+                    if (student.is_recorded) recFragment.appendChild(row);
+                    else unFragment.appendChild(row);
+                });
+
+                unrecordedTable.find('tbody').append(unFragment);
+                recordedTable.find('tbody').append(recFragment);
+
+                if (!isAttendanceEnabled) $('.btn-mark-status').prop('disabled', true);
+                updateSectionVisibility();
+            },
+            error: function(xhr) {
+                loadingMessage.addClass('hidden');
+                const err = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to load student list.';
+                noEventMessage.text('Error: ' + err).removeClass('hidden').addClass('error-notice');
+                updateSectionVisibility();
+            }
         });
+    }
 
-        // Initial State Check on page load
-        updateAttendanceDisplay(eventSelect.val());
+    eventSelect.on('change', function() {
+        const selectedEventId = $(this).val();
+        updateAttendanceDisplay(selectedEventId);
+    });
 
-        // 2. Handle Attendance Status Button Click
-        $('#attendance-list-area').on('click', '.btn-mark-status', function() {
-            var button = $(this);
-            var row = button.closest('tr');
-            var eventId = eventSelect.val();
+    $('#attendance-list-area').on('click', '.btn-mark-status', function() {
+        const button = $(this);
+        if (!isAttendanceEnabled) {
+            alert('Attendance cannot be recorded at this time. ' + statusControlMessage.text().replace('⚠️ ', ''));
+            return;
+        }
 
-            if (!eventId) {
-                alert("Please select an event first.");
-                return;
-            }
+        const row = button.closest('tr');
+        const eventId = eventSelect.val();
+        if (!eventId) return alert("Please select an event first.");
 
-            var studentId = row.data('student-id');
-            var currentStatus = button.data('status');
-            var isCurrentlyRecorded = row.data('recorded');
+        const studentId = row.data('student-id');
+        const currentStatus = button.data('status');
+        const wasUnmarked = currentStatus === 'Unmarked';
+        const newStatus = currentStatus === 'Present' ? 'Absent' : 'Present';
 
-            var newStatus;
-            if (currentStatus === 'Present') {
-                newStatus = 'Absent';
-            } else {
-                newStatus = 'Present';
-            }
+        button.prop('disabled', true).addClass('loading');
 
-            // --- AJAX Call to save status ---
-            $.ajax({
-                url: '/api/record-attendance/',
-                method: 'POST',
-                data: {
-                    student_id: studentId,
-                    event_id: eventId,
-                    is_present: (newStatus === 'Present'),
-                },
-                headers: {
-                     'X-CSRFToken': csrftoken
-                },
-                success: function(response) {
-                    // --- Frontend Update (On Success) ---
-                    var statusCell = row.find('.current-status');
+        $.ajax({
+            url: 'api/record-attendance/',
+            method: 'POST',
+            data: { student_id: studentId, event_id: eventId, is_present: newStatus === 'Present' },
+            headers: { 'X-CSRFToken': csrftoken },
+            success: function(resp) {
+                button.prop('disabled', false).removeClass('loading');
+                const statusCell = row.find('.current-status');
+                statusCell.removeClass('Present Absent Unmarked').addClass(resp.new_status).text(resp.new_status);
+                button.data('status', resp.new_status);
 
-                    // 1. Update row status text and color
-                    statusCell.removeClass('Present Absent Unmarked').addClass(newStatus).text(newStatus);
-                    button.data('status', newStatus);
+                if (resp.new_status === 'Present') button.addClass('present').html('<i class="fas fa-times"></i> Absent');
+                else button.removeClass('present').html('<i class="fas fa-check"></i> Present');
 
-                    // 2. Update button text and style for the *next* action
-                    if (newStatus === 'Present') {
-                        button.addClass('present').html('<i class="fas fa-times"></i> Absent');
-                    } else {
-                        button.removeClass('present').html('<i class="fas fa-check"></i> Present');
-                    }
-
-                    console.log('Attendance Saved:', response.message);
-
-                    // 3. LOGIC TO MOVE ROW: If the student was unrecorded, move the row.
-                    if (isCurrentlyRecorded === false || isCurrentlyRecorded === 'false') {
-                        row.data('recorded', true);
-                        row.appendTo(recordedTable.find('tbody'));
-                        updateSectionVisibility(true);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error saving attendance:', error);
-                    alert('Failed to save attendance. Please try again.');
+                if (wasUnmarked) {
+                    row.data('recorded', true);
+                    row.appendTo(recordedTable.find('tbody'));
+                    updateSectionVisibility();
                 }
-            });
+            },
+            error: function(xhr) {
+                button.prop('disabled', false).removeClass('loading');
+                const err = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save attendance.';
+                alert('Error saving attendance: ' + err);
+            }
         });
     });
+});
 </script>

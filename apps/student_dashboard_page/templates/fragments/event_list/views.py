@@ -271,7 +271,7 @@ def register_event(request, event_id):
                 is_manual_override_expired = True
                 print("Manual override has expired.")
 
-
+        # Allow registration for OPEN_MANUAL status (even if it shows as "Available (Until ...)")
         if event.manual_status_override == 'CLOSED_MANUAL' and not is_manual_override_expired:
             print("ERROR: Registration is manually closed.")
             return JsonResponse({
@@ -328,7 +328,6 @@ def register_event(request, event_id):
         })
 
     except Exception as e:
-        # ... (error handling remains the same)
         print(f"FATAL ERROR: {str(e)}")
         print(f"Error type: {type(e)}")
         print(f"Traceback: {traceback.format_exc()}")
