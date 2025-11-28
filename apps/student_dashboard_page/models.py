@@ -35,6 +35,7 @@ class Registration(models.Model):
 
     registered_at = models.DateTimeField(auto_now_add=True)
     attended_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
 
     @property
     def student_name(self):
