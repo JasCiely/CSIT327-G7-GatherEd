@@ -5,10 +5,44 @@
     --text-muted: #9E9E9E;
     --border-color: #333333;
     --panel-background: #191919;
+    --background-dark: #121212;
 }
 
-/* 1. Filter/Action Bar Container */
-.filter-action-bar {
+/* 1. Full Width Card Container */
+.full-width-card {
+    background-color: var(--background-dark);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    color: var(--text-light);
+}
+
+/* FIX: Ensures the container uses 100% of its parent's available width */
+.manage-events-container {
+    max-width: 100%;
+    margin: 30px auto;
+    /* You might adjust the padding if the default 30px in .full-width-card causes issues */
+}
+
+/* Header and Subtitle */
+.card-header {
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+}
+
+.card-header h2 {
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.card-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+/* 2. Controls Area */
+.events-controls {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
@@ -16,28 +50,12 @@
     flex-wrap: wrap;
 }
 
-/* 2. Search Container and Icon */
-.search-container {
-    position: relative;
+/* Control Input (Search) */
+.control-input {
     flex-grow: 1;
-    min-width: 250px;
+    min-width: 200px;
     height: 38px;
-}
-
-.search-icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 0.9em;
-    pointer-events: none;
-}
-
-.search-input {
-    width: 100%;
-    height: 100%;
-    padding: 8px 12px 8px 35px;
+    padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
     background-color: var(--panel-background);
@@ -46,34 +64,14 @@
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.search-input:focus,
-.filter-select:focus {
+.control-input:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(0, 169, 255, 0.3);
     outline: none;
 }
 
-/* 3. Status Filter Select */
-.filter-select {
-    height: 38px;
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    background-color: var(--panel-background);
-    color: var(--text-light);
-    font-size: 0.9rem;
-    cursor: pointer;
-    appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23E0E0E0%22%20d%3D%22M287%20165.7c-4.4%204.4-11.4%204.4-15.8%200L146.2%2039.2%2021%20165.7c-4.4%204.4-11.4%204.4-15.8%200-4.4-4.4-4.4-11.4%200-15.8l133.2-133.2c4.4-4.4%2011.4-4.4%2015.8%200L287%20149.9c4.4%204.4%204.4%2011.4%200%2015.8z%22%2F%3E%3C%2Fsvg%3E');
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 10px;
-    padding-right: 28px;
-    transition: border-color 0.2s ease;
-}
-
-/* 4. Refresh Button */
-.refresh-btn {
+/* Refresh Button */
+.btn-refresh {
     height: 38px;
     padding: 0 15px;
     border-radius: 5px;
@@ -89,21 +87,390 @@
     border: none;
 }
 
-.refresh-btn:hover {
+.btn-refresh:hover {
     background-color: #008cd6;
     transform: translateY(-1px);
     box-shadow: 0 2px 5px rgba(0, 169, 255, 0.4);
 }
 
-.refresh-btn:active {
+.btn-refresh:active {
     background-color: #006bb3;
     transform: translateY(0);
     box-shadow: none;
 }
 
-/* 5. Fix Old Bootstrap Conflicts */
-.form-control {
-    border: none !important;
-    background: none !important;
-    padding: 0 !important;
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.empty-state .fas {
+    font-size: 3em;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.empty-state p {
+    margin: 5px 0;
+}
+
+.empty-state .muted {
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+/* No Results Message (For Filter) */
+.no-results-message {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-muted);
+    font-size: 1.1em;
+}
+
+/* --- EVENT CARD STYLES --- */
+
+.events-card-grid {
+    display: grid;
+    /* This ensures optimal space usage by fitting as many 250px cards as possible */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 10px 0;
+}
+
+.event-card {
+    background-color: var(--panel-background);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border-color);
+}
+
+.event-card.clickable-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+.card-image-wrapper {
+    height: 120px;
+    overflow: hidden;
+}
+
+.card-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-content {
+    padding: 15px;
+}
+
+.card-datetime, .card-location, .card-organization {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.card-datetime .fas, .card-location .fas, .card-organization .fas {
+    margin-right: 5px;
+    color: var(--primary-color);
+}
+
+.card-title {
+    font-size: 1.2em;
+    color: var(--text-light);
+    margin: 10px 0;
+    line-height: 1.3;
+}
+
+.card-description {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    /* Ensures height is controlled for grid symmetry */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 3.6em; /* ~3 lines * 1.2 line-height */
+    max-height: 4em;
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.card-actions {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* --- DANGER BUTTON STYLES (Fixed Specificity for Red Button) --- */
+
+.event-card .card-actions .cancel-registration-btn.btn-danger {
+    --danger-red: #dc3545;
+    /* Use !important to enforce red color */
+    background-color: var(--danger-red) !important;
+    border-color: var(--danger-red) !important;
+    color: var(--text-light) !important;
+
+    padding: 8px 15px;
+    font-weight: 600;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
+}
+
+.event-card .card-actions .cancel-registration-btn.btn-danger:hover {
+    background-color: #c82333 !important;
+    border-color: #c82333 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(220, 53, 69, 0.4);
+}
+
+.event-card .card-actions .cancel-registration-btn.btn-danger:active {
+    background-color: #bd2130 !important;
+    border-color: #bd2130 !important;
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.event-card .card-actions .cancel-registration-btn .fas {
+    margin-right: 8px;
+}
+
+/* Style for Status Buttons (Fixed Specificity for Disabled Secondary Style) */
+.card-actions .btn-secondary[disabled] {
+    /* Use !important to enforce muted gray color */
+    background-color: #6c757d !important;
+    color: var(--text-light) !important;
+    border: 1px solid #6c757d !important;
+
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: default;
+    opacity: 0.6; /* Make them clearly look disabled */
+    width: 100%;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- MODAL STYLES --- */
+
+.custom-modal-backdrop, .event-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.custom-modal-content, .event-modal-content {
+    background-color: var(--background-dark);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    max-width: 500px;
+    width: 90%;
+    color: var(--text-light);
+    position: relative;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Loading Modal Specifics */
+.custom-modal-content {
+    text-align: center;
+    padding: 30px;
+}
+
+.loading-spinner {
+    font-size: 2em;
+    color: var(--primary-color);
+    animation: spin 1.5s linear infinite;
+    display: block;
+    margin-top: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Event Details Modal Specifics */
+.event-modal-content {
+    max-width: 700px;
+    padding: 0;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.2em;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.modal-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.modal-body {
+    padding: 20px 30px;
+}
+
+.modal-header h3 {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.modal-details {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.modal-detail-row {
+    margin: 5px 0;
+    color: var(--text-light);
+}
+
+.modal-detail-row .fas {
+    color: var(--primary-color);
+    width: 20px;
+}
+
+.modal-full-description h4 {
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+.modal-full-description p {
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.modal-footer {
+    padding: 15px 30px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Confirmation and Password Modal Styles */
+.confirmation-modal-style .modal-body {
+    text-align: center;
+}
+
+.event-name-emphasis {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 10px 0;
+    display: block;
+}
+
+.error-message-box {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Modal Button Consistency (Ensuring Danger Red on Modals) */
+.modal-footer .btn {
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    border: none;
+}
+
+.modal-footer .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.modal-footer .btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Danger Button Style in Modals */
+.modal-footer .btn-danger {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+.modal-footer .btn-danger:hover {
+    background-color: #c82333 !important;
+}
+
+.modal-footer .btn-primary {
+    background-color: var(--primary-color);
+    color: var(--background-dark);
+}
+
+.modal-footer .btn-primary:hover {
+    background-color: #008cd6;
+}
+
+/* Feedback Modal Styling */
+.feedback-modal-style .modal-body {
+    padding: 30px;
+}
+
+.feedback-icon-lg {
+    font-size: 3.5em;
+    margin-bottom: 20px;
+}
+
+.feedback-icon-lg .success-icon {
+    color: #28a745; /* Green */
+}
+
+.feedback-icon-lg .error-icon {
+    color: #dc3545; /* Red */
+}
+
+.feedback-message {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+/* Global Body Style for preventing scroll when modal is open */
+body.modal-open {
+    overflow: hidden;
 }
