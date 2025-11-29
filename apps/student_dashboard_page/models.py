@@ -8,7 +8,6 @@ class Registration(models.Model):
     STATUS_CHOICES = [
         ('REGISTERED', 'Registered'),
         ('ATTENDED', 'Attended'),
-        ('ABSENT', 'Absent'),
         ('CANCELLED', 'Cancelled'),
     ]
 
@@ -37,7 +36,6 @@ class Registration(models.Model):
     registered_at = models.DateTimeField(auto_now_add=True)
     attended_at = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
-    absent_marked_at = models.DateTimeField(null=True, blank=True)
 
     @property
     def student_name(self):
