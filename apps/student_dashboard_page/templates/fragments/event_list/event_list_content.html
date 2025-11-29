@@ -40,8 +40,8 @@
                      data-time="{{ event.time }}"
                      data-location="{{ event.location }}"
                      data-organization="{{ event.organization_name }}"
-                     data-capacity="{{ event.attendee_count|default:'?' }}/{{ event.capacity|default:'Max' }}"
-                     data-full-description="{{ event.full_description|escape }}"
+                     data-capacity="Registrations: {{ event.attendee_count|default:'0' }} / {{ event.capacity }}"
+                     data-full-description="{{ event.full_description }}"
                      data-picture-url="{{ event.picture_url }}">
                      <div class="card-image-wrapper">
                         <img src="{% if event.picture_url %}{{ event.picture_url }}{% else %}https://placehold.co/700x200/121212/00A9FF?text=Event+Image{% endif %}" alt="{{ event.name }}" id="event-img-{{ event.id }}" onerror="this.onerror=null;this.src='https://placehold.co/700x200/121212/00A9FF?text=Event+Image';">
@@ -53,7 +53,7 @@
                                 <span class="card-badge badge-{{ status_lower }}">{{ event.status }}</span>
                                 <span class="card-badge badge-capacity">
                                     <i class="fas fa-users" style="margin-right: 4px;"></i>
-                                    {{ event.attendee_count|default:"?" }}/{{ event.capacity|default:"Max" }}
+                                    {{ event.attendee_count|default:"0" }}/{{ event.capacity }}
                                 </span>
                             {% endif %}
                         </div>
@@ -96,7 +96,7 @@
                             {% elif 'available' in status_lower %}
                             <button class="btn btn-primary btn-sm register-card-btn"
                                     data-event-id="{{ event.id }}"
-                                    data-event-name="{{ event.name|escapejs }}">
+                                    data-event-name="{{ event.name }}">
                                 <i class="fas fa-calendar-plus"></i> Sign Up
                             </button>
                             {% elif 'full' in status_lower %}
@@ -126,7 +126,16 @@
     </div>
 </div>
 
-<div id="eventDetailsModal" class="event-modal-backdrop">
+{# --- LOADING MODAL --- #}
+<div id="custom-loading-modal" class="custom-modal-backdrop" style="display: none;">
+    <div class="custom-modal-content">
+        <h3>Processing...</h3>
+        <i class="fas fa-sync-alt loading-spinner"></i>
+    </div>
+</div>
+
+{# --- EVENT DETAILS MODAL --- #}
+<div id="eventDetailsModal" class="event-modal-backdrop" style="display: none;">
     <div class="event-modal-content">
         <button class="modal-close-btn" onclick="hideEventModal()"><i class="fas fa-times"></i></button>
 
@@ -134,19 +143,19 @@
 
         <div class="modal-body">
             <div class="modal-header">
-                <h3 id="modal-event-title"></h3>
+                <h3 id="modal-event-title">Event Title</h3>
             </div>
 
             <div class="modal-details">
-                <p class="modal-detail-row"><i class="fas fa-clock"></i> <span id="modal-event-datetime"></span></p>
-                <p class="modal-detail-row"><i class="fas fa-map-marker-alt"></i> <span id="modal-event-location"></span></p>
-                <p class="modal-detail-row"><i class="fas fa-school"></i> <span id="modal-event-organization"></span></p>
-                <p class="modal-detail-row"><i class="fas fa-users"></i> <span id="modal-event-capacity"></span></p>
+                <p class="modal-detail-row"><i class="fas fa-clock"></i> <span id="modal-event-datetime">Date and Time</span></p>
+                <p class="modal-detail-row"><i class="fas fa-map-marker-alt"></i> <span id="modal-event-location">Location</span></p>
+                <p class="modal-detail-row"><i class="fas fa-school"></i> <span id="modal-event-organization">Organization</span></p>
+                <p class="modal-detail-row"><i class="fas fa-users"></i> <span id="modal-event-capacity">Registrations: 0 / 0</span></p>
             </div>
 
             <div class="modal-full-description">
                 <h4>Event Description</h4>
-                <p id="modal-event-description"></p>
+                <p id="modal-event-description">Full description will appear here...</p>
             </div>
         </div>
 
@@ -158,18 +167,23 @@
     </div>
 </div>
 
+{# --- IMPROVED CONFIRMATION MODAL --- #}
 <div id="confirmationModal" class="event-modal-backdrop" style="display: none;">
     <div class="event-modal-content confirmation-modal-style">
         <div class="modal-header">
-            <h3><i class="fas fa-calendar-check"></i> Finalize Registration</h3>
+            <h3><i class="fas fa-calendar-check success-icon"></i> Confirm Registration</h3>
         </div>
         <div class="modal-body">
-            <p>You are about to register for the event:</p>
-            <p class="event-name-emphasis"><span id="confirm-event-name"></span></p>
-
-            <p class="muted">
-                By clicking **Confirm Registration**, you will proceed to the final verification step.
-            </p>
+            <div class="confirmation-content">
+                <p class="confirmation-text">You are about to register for the event:</p>
+                <div class="event-name-container">
+                    <p class="event-name-emphasis" id="confirm-event-name">Event Name</p>
+                </div>
+                <div class="info-note">
+                    <i class="fas fa-info-circle info-icon"></i>
+                    <span>By proceeding, you will be taken to the final verification step to secure your spot.</span>
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="hideConfirmationModal()">
@@ -182,32 +196,39 @@
     </div>
 </div>
 
+{# --- IMPROVED PASSWORD MODAL --- #}
 <div id="passwordModal" class="event-modal-backdrop" style="display: none;">
     <div class="event-modal-content confirmation-modal-style">
         <div class="modal-header">
-            <h3><i class="fas fa-lock"></i> Verify Your Identity</h3>
+            <h3><i class="fas fa-lock security-icon"></i> Verify Your Identity</h3>
         </div>
-
         <div class="modal-body">
-            <div id="passwordErrorMessage" class="error-message-box" style="display:none; color: #dc3545; border: 1px solid #dc3545; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+            <div id="passwordErrorMessage" class="error-message-box" style="display:none;">
                 <i class="fas fa-exclamation-triangle"></i>
                 <span id="passwordErrorText"></span>
             </div>
-            <p>Please enter your **password** to confirm your registration for:</p>
-            <p class="event-name-emphasis"><span id="password-confirm-event-name"></span></p>
-
-            <form onsubmit="executeRegistrationWithPassword(); return false;">
-                <div class="form-group" style="margin-top: 20px;">
-                    <input type="password"
-                           id="registrationPassword"
-                           class="control-input"
-                           placeholder="Enter your password"
-                           required
-                           autocomplete="current-password"
-                           name="password">
+            <div class="password-content">
+                <p class="password-text">Please enter your password to confirm registration for:</p>
+                <div class="event-name-container">
+                    <p class="event-name-emphasis" id="password-confirm-event-name">Event Name</p>
                 </div>
-            </form>
-            <p class="muted">This step ensures only you can register for events.</p>
+                <form onsubmit="executeRegistrationWithPassword(); return false;">
+                    <div class="form-group">
+                        <label for="registrationPassword" class="password-label">Your Password</label>
+                        <input type="password"
+                               id="registrationPassword"
+                               class="control-input password-input"
+                               placeholder="Enter your password"
+                               required
+                               autocomplete="current-password"
+                               name="password">
+                    </div>
+                </form>
+                <div class="security-note">
+                    <i class="fas fa-shield-alt security-icon-small"></i>
+                    <span>This step ensures only you can register for events.</span>
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="hidePasswordModal()">
@@ -220,6 +241,7 @@
     </div>
 </div>
 
+{# --- FEEDBACK MODAL --- #}
 <div id="registrationFeedbackModal" class="event-modal-backdrop" style="display: none;">
     <div class="event-modal-content confirmation-modal-style feedback-modal-style">
         <div class="modal-header">
@@ -238,21 +260,300 @@
     </div>
 </div>
 
+<style>
+    /* Improved Modal Styles */
+    .confirmation-modal-style {
+        max-width: 500px;
+        background: var(--panel-background);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+        padding: 24px 24px 16px;
+        border-bottom: 1px solid var(--border-color);
+        text-align: left;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: var(--text-light);
+        font-size: 1.3rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .success-icon {
+        color: #28a745;
+    }
+
+    .security-icon {
+        color: var(--primary-color);
+    }
+
+    .security-icon-small {
+        color: var(--primary-color);
+        font-size: 0.9em;
+    }
+
+    .modal-body {
+        padding: 20px 24px;
+        text-align: left;
+    }
+
+    .confirmation-content,
+    .password-content {
+        text-align: left;
+    }
+
+    .confirmation-text,
+    .password-text {
+        color: var(--text-light);
+        margin-bottom: 16px;
+        line-height: 1.5;
+        font-size: 0.95rem;
+    }
+
+    .event-name-container {
+        background: rgba(40, 167, 69, 0.1);
+        border: 1px solid rgba(40, 167, 69, 0.3);
+        border-radius: 8px;
+        padding: 16px;
+        margin: 16px 0;
+        text-align: center;
+    }
+
+    .event-name-emphasis {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #28a745;
+        margin: 0;
+        word-break: break-word;
+    }
+
+    .info-note,
+    .security-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+        background: rgba(40, 167, 69, 0.1);
+        border: 1px solid rgba(40, 167, 69, 0.3);
+        border-radius: 6px;
+        margin-top: 16px;
+    }
+
+    .security-note {
+        background: rgba(0, 169, 255, 0.1);
+        border: 1px solid rgba(0, 169, 255, 0.3);
+    }
+
+    .info-note span,
+    .security-note span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.4;
+        flex: 1;
+    }
+
+    .info-icon {
+        color: #28a745;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+
+    .form-group {
+        margin: 20px 0;
+    }
+
+    .password-label {
+        display: block;
+        color: var(--text-light);
+        margin-bottom: 8px;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .password-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-light);
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .password-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(0, 169, 255, 0.2);
+        outline: none;
+    }
+
+    .modal-footer {
+        padding: 20px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: var(--text-muted);
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+        border: 1px solid #28a745;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+        border-color: #1e7e34;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+        border: 1px solid var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background: #008cd6;
+        border-color: #008cd6;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 169, 255, 0.4);
+    }
+
+    .error-message-box {
+        background: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #dc3545;
+        font-size: 0.9rem;
+    }
+
+    .feedback-icon-lg {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .success-icon {
+        color: #28a745;
+    }
+
+    .error-icon {
+        color: #dc3545;
+    }
+
+    .feedback-message {
+        text-align: center;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        color: var(--text-light);
+    }
+
+    /* Loading Modal */
+    .custom-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        color: white;
+    }
+
+    .custom-modal-content {
+        text-align: center;
+        padding: 30px;
+    }
+
+    .loading-spinner {
+        font-size: 2rem;
+        margin-top: 15px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+        .confirmation-modal-style {
+            margin: 20px;
+            max-width: calc(100vw - 40px);
+        }
+
+        .modal-footer {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
 <script>
     let currentModalEventId = null;
     let eventIdToRegister = null;
 
     // --- Loading, Refresh, Filter Functions ---
     function showLoadingModal(message) {
-        $('#custom-loading-modal').remove();
-        const modalHtml = `<div id="custom-loading-modal" class="custom-modal-backdrop" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10000; color:white;"><div class="custom-modal-content loading-modal-style"><h3>${message}</h3><i class="fas fa-sync-alt fa-spin loading-spinner"></i></div></div>`;
-        $('body').append(modalHtml);
+        $('#custom-loading-modal').css('display', 'flex').hide().fadeIn(200);
+        $('body').addClass('modal-open');
     }
-    function hideLoadingModal() { $('#custom-loading-modal').remove(); }
+
+    function hideLoadingModal() {
+        $('#custom-loading-modal').fadeOut(200, function() {
+            $(this).css('display', 'none');
+            if (!$('#eventDetailsModal').is(':visible') && !$('#confirmationModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible')) {
+                $('body').removeClass('modal-open');
+            }
+        });
+    }
 
     function refreshEventList() {
         showLoadingModal('Refreshing Event List...');
-        // Clear the current modal state before refresh
         currentModalEventId = null;
 
         $.ajax({
@@ -304,7 +605,7 @@
                 $card.hide();
             }
         });
-        // Logic for no results message...
+
         const $noResults = $('#noResultsMessage');
         if (visibleCount === 0) {
             $noResults.html('<i class="fas fa-search-minus"></i> No events found matching your filter criteria.').show();
@@ -313,9 +614,7 @@
         }
     }
 
-
     // --- Core Modal Logic ---
-
     function showEventModal(eventId) {
         const $card = $(`[data-event-id="${eventId}"]`);
 
@@ -327,47 +626,38 @@
         currentModalEventId = eventId;
 
         const eventName = $card.find('.card-title').text();
-        const status = $card.data('status'); // 'available', 'registered', 'full', or 'available (until ...)'
-
+        const status = $card.data('status');
         const pictureUrl = $card.data('picture-url');
         const defaultImageUrl = 'https://placehold.co/700x200/121212/00A9FF?text=Event+Image';
         const fullDescription = $card.data('full-description');
+        const capacityText = $card.data('capacity');
 
         // Populate details
         $('#modal-event-title').text(eventName);
         $('#modal-event-datetime').text(`${$card.data('date')} ${$card.data('time')}`);
         $('#modal-event-location').text($card.data('location') || 'Not specified');
         $('#modal-event-organization').text($card.data('organization') || 'N/A');
-        $('#modal-event-capacity').text($card.data('capacity'));
+        $('#modal-event-capacity').text(capacityText || 'Registrations: 0 / 0');
         $('#modal-event-image').attr('src', pictureUrl || defaultImageUrl);
         $('#modal-event-description').text(fullDescription || 'No detailed description available.');
 
-
         // Handle the Modal Footer Button based on Status
         const $actionBtn = $('#modal-action-btn');
-        $actionBtn.off('click'); // Remove any previous handlers
+        $actionBtn.off('click');
         $actionBtn.removeClass('btn-primary btn-success btn-secondary');
 
-        // Check if status contains 'available' (including "Available (Until ...)" cases)
-        // If registered, the status data attribute will contain 'registered' (per Django logic).
         if (status.includes('available')) {
-            // Show Register button
             $actionBtn.html('<i class="fas fa-calendar-plus"></i> Sign Up for Event');
             $actionBtn.addClass('btn-primary');
-            // Attach handler to open the confirmation modal
             $actionBtn.on('click', registerForEventFromModalConfirmation);
             $actionBtn.prop('disabled', false);
-
         } else {
-            // Show Close button for 'registered' or 'full' or other statuses
             $actionBtn.html('<i class="fas fa-times-circle"></i> Close');
             $actionBtn.addClass('btn-secondary');
-            // Attach handler to close the main modal
             $actionBtn.on('click', hideEventModal);
             $actionBtn.prop('disabled', false);
         }
 
-        // Show the modal
         const $modal = $('#eventDetailsModal');
         $modal.css('display', 'flex').hide().fadeIn(200);
         $('body').addClass('modal-open');
@@ -376,7 +666,6 @@
     function hideEventModal() {
         $('#eventDetailsModal').fadeOut(200, function() {
             $(this).css('display', 'none');
-            // Ensure modal-open class is removed if no other modal is visible
             if (!$('#confirmationModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible')) {
                 $('body').removeClass('modal-open');
             }
@@ -384,21 +673,15 @@
         currentModalEventId = null;
     }
 
-
     // --- Confirmation Modal Functions ---
-
     function showConfirmationModal(eventId, eventName) {
         eventIdToRegister = eventId;
 
         if ($('#eventDetailsModal').is(':visible')) {
-            // Hide details modal if confirmation is triggered from it
             hideEventModal();
         }
 
-        // Clean the event name
-        const cleanedEventName = typeof eventName === 'string' ? eventName.replace(/\\u002D/g, '-') : String(eventName || 'Unknown Event');
-
-        $('#confirm-event-name').text(cleanedEventName);
+        $('#confirm-event-name').text(eventName);
 
         const $modal = $('#confirmationModal');
         $modal.css('display', 'flex').hide().fadeIn(200);
@@ -408,7 +691,6 @@
     function hideConfirmationModal() {
         $('#confirmationModal').fadeOut(200, function() {
             $(this).css('display', 'none');
-            // IMPORTANT: Do NOT reset eventIdToRegister here, as it's needed for the next step (password modal)
             if (!$('#eventDetailsModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible')) {
                  $('body').removeClass('modal-open');
             }
@@ -416,11 +698,9 @@
     }
 
     // --- Password Error Display Functions ---
-
     function showPasswordError(message) {
         $('#passwordErrorText').text(message);
         $('#passwordErrorMessage').fadeIn(300);
-        // Clear the password input for re-entry
         $('#registrationPassword').val('');
     }
 
@@ -429,16 +709,10 @@
         $('#passwordErrorText').text('');
     }
 
-
     // --- Password Modal Functions ---
-
     function showPasswordModal(eventName) {
-        // Hide previous confirmation modal
         hideConfirmationModal();
-
-        // Clear previous password input
         $('#registrationPassword').val('');
-        // Clear any previous error message before showing
         clearPasswordError();
 
         $('#password-confirm-event-name').text(eventName);
@@ -451,16 +725,14 @@
     function hidePasswordModal() {
         $('#passwordModal').fadeOut(200, function() {
             $(this).css('display', 'none');
-            // Reset only when cancelling the entire flow, or if no other modal is visible
             if (!$('#eventDetailsModal').is(':visible') && !$('#confirmationModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible')) {
-                 eventIdToRegister = null; // Reset only when cancelling the entire flow
+                 eventIdToRegister = null;
                  $('body').removeClass('modal-open');
             }
         });
     }
 
-    // --- Registration Feedback Modal Functions (NEW) ---
-
+    // --- Registration Feedback Modal Functions ---
     function showRegistrationFeedbackModal(isSuccess, title, message, subtext) {
         const $modal = $('#registrationFeedbackModal');
         const $title = $('#feedback-modal-title');
@@ -468,20 +740,17 @@
         const $message = $('#feedback-modal-message');
         const $subtext = $('#feedback-modal-subtext');
 
-        // Set content
         $title.text(title);
         $message.text(message);
         $subtext.text(subtext || '');
 
-        // Set icon and color
-        $iconContainer.html(''); // Clear previous icon
+        $iconContainer.html('');
         if (isSuccess) {
             $iconContainer.append('<i class="fas fa-check-circle success-icon"></i>');
         } else {
             $iconContainer.append('<i class="fas fa-times-circle error-icon"></i>');
         }
 
-        // Show the modal
         $modal.css('display', 'flex').hide().fadeIn(200);
         $('body').addClass('modal-open');
     }
@@ -489,22 +758,16 @@
     function hideRegistrationFeedbackModal() {
         $('#registrationFeedbackModal').fadeOut(200, function() {
             $(this).css('display', 'none');
-             // Ensure modal-open class is removed if no other modal is visible
             if (!$('#eventDetailsModal').is(':visible') && !$('#confirmationModal').is(':visible') && !$('#passwordModal').is(':visible')) {
                  $('body').removeClass('modal-open');
             }
         });
     }
 
-
     // --- Flow Executors ---
-
-    // Step 1: User clicks Confirm Registration (Now leads to Password Modal)
     function executeRegistration() {
         if (eventIdToRegister) {
-            // Get the event name for display in the password modal
             const eventName = $('#confirm-event-name').text();
-            // Move to the password step
             showPasswordModal(eventName);
         } else {
              alert("Error: No event selected for registration.");
@@ -513,20 +776,14 @@
     }
 
     function registerForEventFromModalConfirmation() {
-        // Use the event ID stored when the details modal was opened
         if (currentModalEventId) {
             const $card = $(`[data-event-id="${currentModalEventId}"]`);
-            // Get the name from the card title text
             const eventName = $card.find('.card-title').text();
-
-            // Call the main handler which performs the cleanup
             showConfirmationModal(currentModalEventId, eventName);
         }
     }
 
-    // Step 2: User clicks Verify & Register (UPDATED LOGIC to remove refresh on success)
     function executeRegistrationWithPassword() {
-        // Hide any previous errors before starting the request
         clearPasswordError();
 
         const password = $('#registrationPassword').val();
@@ -539,52 +796,39 @@
         if (eventIdToRegister) {
             registerForEvent(eventIdToRegister, password)
                 .then(response => {
-                    // Success: Hide the password modal and show success modal
                     hidePasswordModal();
-
                     showRegistrationFeedbackModal(
-                        true, // isSuccess
+                        true,
                         'Registration Successful! 🎉',
                         response.message || 'You have been successfully registered for the event!',
-                        'Check the "Registered" filter to see your upcoming events. The list will update on your next filter change or manual refresh.'
+                        'Check the "Registered" filter to see your upcoming events.'
                     );
 
-                    // --- START: Manual Card Status Update (Modified) ---
+                    // Update card status
                     const $card = $(`[data-event-id="${currentModalEventId || eventIdToRegister}"]`);
-                    // 1. Update data attribute for filtering
                     $card.data('status', 'registered');
 
-                    // 2. Update Badges (Remove previous and add Registered)
                     const $badges = $card.find('.card-badges');
-                    $badges.empty(); // Clear all existing badges
+                    $badges.empty();
                     $badges.append('<span class="card-badge badge-registered">Registered</span>');
 
-                    // 3. Replace Sign Up button with Registered button
                     $card.find('.card-actions').find('.register-card-btn').replaceWith('<button class="btn btn-success btn-sm" disabled><i class="fas fa-check"></i> Registered</button>');
-                    // --- END: Manual Card Status Update ---
 
-                    eventIdToRegister = null; // Clear on success
+                    eventIdToRegister = null;
                 })
                 .catch(error => {
-                    // Password verification failed (401/403)
                     if (error.status === 401 || error.status === 403) {
-                        // Show error inside the password modal, keep the modal open
                         showPasswordError(error.message);
                     } else {
-                        // For other errors (e.g., event full, server error)
-                        // Hide password modal and show an alert for the non-password-related issue
                         hidePasswordModal();
-
-                         showRegistrationFeedbackModal(
-                            false, // isSuccess
+                        showRegistrationFeedbackModal(
+                            false,
                             'Registration Failed ❌',
                             error.message,
-                            'Please check event status and try refreshing the list. (List refreshed to update status)'
+                            'Please check event status and try again.'
                         );
-
-                        // KEEP: refreshEventList() here to update the card status if the event became full or disappeared
                         refreshEventList();
-                        eventIdToRegister = null; // Clear on non-recoverable error
+                        eventIdToRegister = null;
                     }
                 });
         } else {
@@ -594,9 +838,7 @@
         return false;
     }
 
-
-    // --- Registration AJAX Executor (UPDATED to return a Promise) ---
-
+    // --- Registration AJAX Executor ---
     function registerForEvent(eventId, password) {
         showLoadingModal('Registering...');
 
@@ -606,7 +848,6 @@
             return Promise.reject({ status: 500, message: 'Security Error: CSRF token missing.' });
         }
 
-        // Use Django template tag with UUID placeholder
         const registerUrl = `{% url 'register_event' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', eventId);
 
         return new Promise((resolve, reject) => {
@@ -624,7 +865,7 @@
                 dataType: 'json',
                 success: function(response) {
                     hideLoadingModal();
-                    resolve(response); // Registration successful
+                    resolve(response);
                 },
                 error: function(xhr) {
                     hideLoadingModal();
@@ -633,7 +874,6 @@
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMessage = xhr.responseJSON.message;
                     } else if (xhr.status === 401 || xhr.status === 403) {
-                        // CRUCIAL: Specific error message for password failure
                         errorMessage = "Verification Failed. The password you entered is incorrect.";
                     } else if (xhr.status === 400) {
                         errorMessage = "Bad Request: Unable to register. Event might be full or you're already registered.";
@@ -649,7 +889,6 @@
             });
         });
     }
-
 
     $(document).ready(function() {
         // Expose functions to the window object
@@ -669,7 +908,6 @@
         window.clearPasswordError = clearPasswordError;
         window.showRegistrationFeedbackModal = showRegistrationFeedbackModal;
         window.hideRegistrationFeedbackModal = hideRegistrationFeedbackModal;
-
 
         filterEventCards();
 
@@ -699,7 +937,6 @@
 
         // Event Delegation for clicking the entire event card (to open details modal)
         $(document).on('click', '.event-card', function(e) {
-            // Check if the click target is any button inside the card
             if ($(e.target).closest('.card-actions button').length || $(e.target).is('button')) {
                 return;
             }
@@ -710,8 +947,16 @@
             }
         });
 
+        // Enter key support in password modal
+        $(document).on('keypress', '#registrationPassword', function(e) {
+            if (e.which === 13) {
+                executeRegistrationWithPassword();
+                return false;
+            }
+        });
+
         // Close modal when clicking the backdrop
-        $('#eventDetailsModal, #confirmationModal, #passwordModal, #registrationFeedbackModal').on('click', function(e) {
+        $(document).on('click', '.custom-modal-backdrop, .event-modal-backdrop', function(e) {
             if (e.target === this) {
                 const modalId = $(e.target).attr('id');
                 if (modalId === 'eventDetailsModal') {
@@ -721,6 +966,23 @@
                 } else if (modalId === 'passwordModal') {
                     hidePasswordModal();
                 } else if (modalId === 'registrationFeedbackModal') {
+                    hideRegistrationFeedbackModal();
+                } else if (modalId === 'custom-loading-modal') {
+                    return;
+                }
+            }
+        });
+
+        // ESC key to close modals
+        $(document).on('keyup', function(e) {
+            if (e.keyCode === 27) {
+                if ($('#eventDetailsModal').is(':visible')) {
+                    hideEventModal();
+                } else if ($('#confirmationModal').is(':visible')) {
+                    hideConfirmationModal();
+                } else if ($('#passwordModal').is(':visible')) {
+                    hidePasswordModal();
+                } else if ($('#registrationFeedbackModal').is(':visible')) {
                     hideRegistrationFeedbackModal();
                 }
             }
