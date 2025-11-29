@@ -4,6 +4,7 @@ from django.db.models import Count, Q
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound
 from django.db import transaction, IntegrityError
 from django.contrib.auth import authenticate
+from django.utils import timezone  # Use Django's timezone utility
 from datetime import datetime, timedelta, date
 import json
 import traceback
@@ -18,34 +19,56 @@ from apps.student_dashboard_page.models import Registration
 def get_registration_status_for_display(registration, event):
     """
     Determines the simplified status of the *student's registration* for display.
-    Prioritizes registration status and event lifecycle.
+    Prioritizes registration status and event lifecycle, correctly mapping
+    database statuses (ATTENDED, ABSENT, REGISTERED) to student view statuses
+    (Attended, Absent, Did Not Attend, Registered, Cancelled).
     """
-    # 1. Check Registration Status (highest priority)
+    now = timezone.now()
+    event_date = event.date
+
+    # 1. Check Registration Status (Highest priority - finalized status)
     if registration.status == 'CANCELLED':
         return 'Cancelled'
 
+    # Explicitly map attendance statuses
     if registration.status == 'ATTENDED':
         return 'Attended'
 
-    # 2. Check if event is in the past
-    now = datetime.now()
-    event_date = event.date
-    event_start_dt = datetime.combine(event_date, event.start_time)
+    if registration.status == 'ABSENT':
+        return 'Absent'
 
-    # Simple check: if event date is in the past, it's completed
-    if event_date < now.date():
-        return 'Completed'
+    # 2. Calculate Event End Time (needed for "Did Not Attend" check)
+    try:
+        # Use timezone.make_aware if event_start_time is naive
+        # We assume event.date, event.start_time are simple date/time objects
+        event_start_dt = timezone.make_aware(datetime.combine(event_date, event.start_time))
 
-    # If event date is today but start time has passed
-    if event_date == now.date() and now >= event_start_dt:
-        return 'Ongoing'
+        if event.end_time:
+            event_end_dt = timezone.make_aware(datetime.combine(event_date, event.end_time))
+        else:
+            # Fallback for events without an explicit end time (e.g., +2 hours)
+            event_end_dt = event_start_dt + timedelta(hours=2)
 
-    # 3. Check for manual overrides
+    except Exception:
+        # Should not happen if data is clean, but protects against timezone errors
+        return 'Status Error'
+
+    # 3. Check for 'Did Not Attend' (Only applies to 'REGISTERED' status)
+    if registration.status == 'REGISTERED':
+        if now > event_end_dt:
+            # Event has finished, and attendance was never recorded (ATTENDED/ABSENT)
+            return 'Did Not Attend'
+
+        # Check if the event is currently ongoing
+        if event_start_dt <= now <= event_end_dt:
+            return 'Ongoing'
+
+    # 4. Check for manual overrides (should typically supersede 'Ongoing' if set)
     manual_status = (event.manual_status_override or 'AUTO').upper()
     if manual_status == 'CLOSED_MANUAL':
         return 'Temporarily Closed'
 
-    # 4. Default: Registered for future event
+    # 5. Default: Event is in the future
     return 'Registered'
 
 
@@ -88,7 +111,7 @@ def my_events(request):
         event = registration.event
         registered_count = registration.event_attendee_count
 
-        # Use the status function
+        # Use the refined status function
         final_status = get_registration_status_for_display(
             registration,
             event
@@ -112,6 +135,7 @@ def my_events(request):
             'time': time_display,
             'organization_name': org_name,
             'location': event.location or 'N/A',
+            # This 'status' field now holds 'Attended', 'Absent', 'Did Not Attend', 'Registered', or 'Cancelled'
             'status': final_status,
             'short_description': short_description,
             'full_description': description,
@@ -149,8 +173,6 @@ def cancel_registration(request, registration_id):
         print(f"DEBUG: Looking for registration with ID: {registration_id}")
 
         try:
-            # Note: This relies on the frontend passing the correct UUID from the
-            # successful registration response, which the 'register_event' fix addresses.
             registration = Registration.objects.get(id=registration_id)
             print(f"DEBUG: Found registration: {registration}")
             print(f"DEBUG: Registration student: {registration.student.user}")
@@ -177,13 +199,11 @@ def cancel_registration(request, registration_id):
 
         # 4. Event Timing Check
         event = registration.event
-        now = datetime.now()
-        event_start_dt = datetime.combine(event.date, event.start_time)
+        now = timezone.now()  # Use timezone.now() for consistency
+        event_start_dt = timezone.make_aware(datetime.combine(event.date, event.start_time))
 
         print(f"DEBUG: Event timing check:")
         print(f"DEBUG: - Event: {event.title}")
-        print(f"DEBUG: - Event date: {event.date}")
-        print(f"DEBUG: - Event start time: {event.start_time}")
         print(f"DEBUG: - Event start datetime: {event_start_dt}")
         print(f"DEBUG: - Current datetime: {now}")
         print(f"DEBUG: - Can cancel? {now < event_start_dt}")
@@ -221,7 +241,7 @@ def cancel_registration(request, registration_id):
         print(f"DEBUG: Proceeding with cancellation...")
         with transaction.atomic():
             registration.status = 'CANCELLED'
-            registration.cancelled_at = datetime.now()
+            registration.cancelled_at = timezone.now()  # Use timezone.now()
             registration.save()
             print(f"DEBUG: Registration cancelled successfully")
 

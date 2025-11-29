@@ -1,84 +1,349 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/track_attendance_css.css' %}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% csrf_token %}
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+<style>
+    /* Status Message Styling */
+    .alert-message {
+        padding: 12px;
+        margin-top: 15px;
+        border-radius: 4px;
+        font-weight: bold;
+        text-align: center;
+        border: 1px solid transparent;
+    }
+    .alert-message.error-notice {
+        background-color: #fce4e4;
+        color: #c70000;
+        border-color: #fcc;
+    }
+    .alert-message.success-notice {
+        background-color: #e6f7e9;
+        color: #1a6435;
+        border-color: #cfd;
+    }
+    .alert-message.warning-notice {
+        background-color: #fff8e1;
+        color: #b37300;
+        border-color: #ffe;
+    }
+
+    /* Attendance Buttons */
+    .btn-mark-status {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        color: white;
+        transition: background-color 0.2s;
+        min-width: 100px;
+        background-color: #007bff; /* Default: Mark Present/Absent (Blue) */
+    }
+    .btn-mark-status.present {
+        background-color: #dc3545; /* Current status is Present, button action is Mark Absent (Red) */
+    }
+    .btn-mark-status:hover:not(:disabled) {
+        background-color: #0056b3;
+    }
+    .btn-mark-status.present:hover:not(:disabled) {
+        background-color: #bd2130;
+    }
+    .btn-mark-status:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+
+    /* Loading and Status Messages */
+    #loading-message, #no-event-message {
+        text-align: center;
+        padding: 15px;
+        font-style: italic;
+        color: #777;
+    }
+    .hidden {
+        display: none !important;
+    }
+
+    /* Table Styling (General/Placeholder for external CSS) */
+    .attendance-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+    .attendance-table th, .attendance-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    .attendance-table th {
+        background-color: #f2f2f2;
+    }
+    .status-col {
+        width: 15%;
+        text-align: center;
+        font-weight: bold;
+    }
+    .action-col {
+        width: 15%;
+        text-align: center;
+    }
+    .current-status.Present { color: green; }
+    .current-status.Absent { color: red; }
+    .current-status.Unmarked { color: orange; }
+
+</style>
 
 <div class="full-width-card attendance-container">
     <div class="card-header">
-        <h2>Live Attendance Tracker</h2>
-        <p class="card-subtitle">Select an event to start recording or view historical attendance data.</p>
+        <h2>Event Attendance Recorder 📋</h2>
+        <p class="card-subtitle">Select an event to mark attendance. **Unrecorded** students are prioritized at the top.</p>
     </div>
 
     <div class="attendance-controls">
         <label for="event-select" class="control-label">Select Event:</label>
-
-        {# 2. The Select Element: Select2 will transform this #}
         <select id="event-select" class="control-select">
             <option value="">-- Choose an Event --</option>
             {% for event in events_list %}
-            <option value="{{ event.id }}" data-status="{{ event.status|default:'SCHEDULED' }}">
-                {{ event.title }}
-            </option>
+            <option value="{{ event.id }}" data-status="{{ event.status|default:'SCHEDULED' }}">{{ event.title }}</option>
             {% endfor %}
         </select>
-
-        <button id="start-live-mode" class="btn btn-secondary start-button" disabled>
-            <i class="fas fa-play-circle"></i> Start Live Mode
-        </button>
     </div>
 
-    <div class="placeholder-attendance-table">
-        <p class="text-center">
-            <i class="fas fa-qrcode"></i>
-            Attendance Log: QR code scanner view or manual check-in form will load here based on event status.
-        </p>
+    <div id="status-control-message" class="alert-message hidden"></div>
+
+    <div id="attendance-list-area">
+        <p id="loading-message" class="hidden">Loading student list...</p>
+        <p id="no-event-message">Please select an event to load the registration list.</p>
+
+        <h3 id="unrecorded-header" class="attendance-section-header hidden">Unrecorded Students (Unmarked)</h3>
+        <table id="unrecorded-table" class="attendance-table hidden">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>ID / Email</th>
+                    <th class="status-col">Current Status</th>
+                    <th class="action-col">Mark</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h3 id="recorded-header" class="attendance-section-header hidden">Recorded Students (Present/Absent)</h3>
+        <table id="recorded-table" class="attendance-table hidden">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>ID / Email</th>
+                    <th class="status-col">Current Status</th>
+                    <th class="action-col">Mark</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 </div>
 
-
 <script>
 $(document).ready(function() {
-    var startButton = $('#start-live-mode');
-    var eventSelect = $('#event-select');
+    const eventSelect = $('#event-select');
+    const unrecordedTable = $('#unrecorded-table');
+    const recordedTable = $('#recorded-table');
+    const unrecordedHeader = $('#unrecorded-header');
+    const recordedHeader = $('#recorded-header');
+    const loadingMessage = $('#loading-message');
+    const noEventMessage = $('#no-event-message');
+    const statusControlMessage = $('#status-control-message');
 
-    // **CRUCIAL LINE:** This initializes Select2, making your dropdown searchable.
-    eventSelect.select2({
-        placeholder: "-- Choose an Event --",
-        allowClear: true
-    });
+    let isAttendanceEnabled = false;
 
-    // Function to check if an event is selected
-    function checkSelection() {
-        if (eventSelect.val() && eventSelect.val() !== "") {
-            startButton.prop('disabled', false);
-        } else {
-            startButton.prop('disabled', true);
+    // --- CSRF Token Retrieval ---
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+            if (cookieValue !== null && cookieValue !== '') {
+                return cookieValue;
+            }
         }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // --- Utility Functions ---
+    function updateSectionVisibility() {
+        const unCount = unrecordedTable.find('tbody tr').length;
+        const recCount = recordedTable.find('tbody tr').length;
+        // Hide headers/tables if they are empty
+        unrecordedHeader.toggleClass('hidden', unCount === 0);
+        unrecordedTable.toggleClass('hidden', unCount === 0);
+        recordedHeader.toggleClass('hidden', recCount === 0);
+        recordedTable.toggleClass('hidden', recCount === 0);
     }
 
-    // Attach change event listener to the Select2 instance
+    function generateRowHtml(student) {
+        // student.status will be 'Present', 'Absent', or 'Unmarked' from the Django view
+        const isPresent = student.status === 'Present';
+        // If current status is 'Present', the button action is to 'Mark Absent' (X)
+        const icon = isPresent ? 'fa-times' : 'fa-check';
+        const btnClass = isPresent ? 'present' : '';
+        const btnText = isPresent ? ' Absent' : ' Present';
+
+        return `
+            <tr data-student-id="${student.student_id}" data-recorded="${student.is_recorded}">
+                <td>${student.name}</td>
+                <td>${student.identifier}</td>
+                <td class="status-col current-status ${student.status}">${student.status}</td>
+                <td class="action-col">
+                    <button class="btn-mark-status ${btnClass}" data-status="${student.status}" data-student-id="${student.student_id}" ${isAttendanceEnabled ? '' : 'disabled'}>
+                        <i class="fas ${icon}"></i>${btnText}
+                    </button>
+                </td>
+            </tr>`;
+    }
+
+    // --- Main Data Loading Function ---
+    function updateAttendanceDisplay(eventId) {
+        unrecordedTable.find('tbody').empty();
+        recordedTable.find('tbody').empty();
+        isAttendanceEnabled = false;
+
+        noEventMessage.addClass('hidden');
+        loadingMessage.removeClass('hidden');
+        statusControlMessage.addClass('hidden').removeClass('warning-notice error-notice success-notice').text('');
+        updateSectionVisibility();
+
+        if (!eventId) {
+            loadingMessage.addClass('hidden');
+            noEventMessage.text('Please select an event to load the registration list.').removeClass('hidden');
+            return;
+        }
+
+        $.ajax({
+            url: `api/get-students/${eventId}/`, // Assumes a Django path structure
+            method: 'GET',
+            success: function(response) {
+                loadingMessage.addClass('hidden');
+                noEventMessage.addClass('hidden'); // Ensure hidden on successful load
+
+                const students = response.students;
+                isAttendanceEnabled = response.attendance_enabled;
+
+                if (!isAttendanceEnabled) {
+                    // Display attendance control message (e.g., event not started)
+                    statusControlMessage.html('⚠️ ' + response.status_message).removeClass('hidden').addClass('warning-notice');
+                }
+
+                if (students.length === 0) {
+                    // This block ensures the "No students" message is only shown when the list is truly empty.
+                    noEventMessage.text('NOTICE: There are no students registered for this event.').removeClass('hidden');
+                    updateSectionVisibility();
+                    return;
+                }
+
+                const unFragment = document.createDocumentFragment();
+                const recFragment = document.createDocumentFragment();
+
+                // Populate fragments based on recorded status
+                students.forEach(student => {
+                    // The row is constructed here, using the current isAttendanceEnabled status
+                    const row = $(generateRowHtml(student))[0];
+                    if (student.is_recorded) recFragment.appendChild(row);
+                    else unFragment.appendChild(row);
+                });
+
+                unrecordedTable.find('tbody').append(unFragment);
+                recordedTable.find('tbody').append(recFragment);
+
+                // Disable buttons globally if attendance is not enabled
+                if (!isAttendanceEnabled) $('.btn-mark-status').prop('disabled', true);
+
+                updateSectionVisibility();
+            },
+            error: function(xhr) {
+                loadingMessage.addClass('hidden');
+                // Display error message
+                const err = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to load student list.';
+                noEventMessage.text('Error: ' + err).removeClass('hidden').addClass('error-notice');
+                updateSectionVisibility();
+            }
+        });
+    }
+
+    // --- Event Handlers ---
     eventSelect.on('change', function() {
-        checkSelection();
+        const selectedEventId = $(this).val();
+        updateAttendanceDisplay(selectedEventId);
     });
 
-    // Initial check
-    checkSelection();
-
-    // Handle the "Start Live Mode" click (Placeholder)
-    startButton.on('click', function(e) {
-        e.preventDefault();
-        var eventId = eventSelect.val();
-        var eventTitle = eventSelect.find('option:selected').text();
-
-        if (eventId) {
-            console.log('Starting Live Mode for Event:', eventTitle, 'ID:', eventId);
-            alert('Live Mode Ready for Event: ' + eventTitle);
-            // TODO: Add your actual redirect or AJAX call here
+    $('#attendance-list-area').on('click', '.btn-mark-status', function() {
+        const button = $(this);
+        // Pre-check if attendance is allowed
+        if (!isAttendanceEnabled) {
+            alert('Attendance cannot be recorded at this time. ' + statusControlMessage.text().replace('⚠️ ', ''));
+            return;
         }
+
+        const row = button.closest('tr');
+        const eventId = eventSelect.val();
+        if (!eventId) return alert("Please select an event first.");
+
+        const studentId = row.data('student-id');
+        const currentStatus = button.data('status');
+        const wasUnmarked = currentStatus === 'Unmarked'; // Check if we are moving from unrecorded to recorded
+
+        // Determine the status for the *next* action. If current status is 'Present', the next action is to 'Mark Absent'.
+        const newStatus = currentStatus === 'Present' ? 'Absent' : 'Present';
+
+        button.prop('disabled', true).addClass('loading');
+        // Simple visual feedback for loading, assuming you might have a loading CSS class
+
+        $.ajax({
+            url: 'api/record-attendance/', // Assumes a Django path structure
+            method: 'POST',
+            // Send boolean to Django view. True means ATTENDED/Present, False means ABSENT/Absent.
+            data: { student_id: studentId, event_id: eventId, is_present: newStatus === 'Present' },
+            headers: { 'X-CSRFToken': csrftoken },
+            success: function(resp) {
+                button.prop('disabled', false).removeClass('loading');
+
+                // resp.new_status will be 'Present' or 'Absent' from the server (using map_db_status_to_js)
+
+                // 1. Update status cell
+                const statusCell = row.find('.current-status');
+                statusCell.removeClass('Present Absent Unmarked').addClass(resp.new_status).text(resp.new_status);
+
+                // 2. Update button state for next click
+                button.data('status', resp.new_status);
+                // If the new status is Present, the button should now show 'Absent' (for the next toggle)
+                if (resp.new_status === 'Present') button.addClass('present').html('<i class="fas fa-times"></i> Absent');
+                // If the new status is Absent, the button should now show 'Present' (for the next toggle)
+                else button.removeClass('present').html('<i class="fas fa-check"></i> Present');
+
+                // 3. Move row if it was previously Unmarked
+                if (wasUnmarked) {
+                    row.data('recorded', true);
+                    // Move the row to the recorded table
+                    row.appendTo(recordedTable.find('tbody'));
+                    updateSectionVisibility();
+                }
+            },
+            error: function(xhr) {
+                button.prop('disabled', false).removeClass('loading');
+                const err = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save attendance.';
+                alert('Error saving attendance: ' + err);
+            }
+        });
     });
 });
 </script>

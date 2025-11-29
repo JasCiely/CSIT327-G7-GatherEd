@@ -26,11 +26,12 @@
             {% if registered_events_data %}
             <div id="eventsCardGrid" class="events-card-grid">
                 {% for data in registered_events_data %}
+                    {# It is crucial that data.status is prepared in the Django view to be descriptive: ATTENDED, ABSENT, REGISTERED, or DID NOT ATTEND #}
                     {% with status_lower=data.status|lower %}
                     <div class="event-card clickable-card"
                          data-registration-id="{{ data.registration.id }}"
                          data-event-id="{{ data.id }}"
-                         data-status="{{ status_lower }}"
+                         data-raw-status="{{ status_lower }}" {# Store the raw status for JS checks #}
                          data-name="{{ data.name|lower }}"
                          data-date="{{ data.date }}"
                          data-time="{{ data.time }}"
@@ -67,9 +68,9 @@
                             </div>
 
                             <div class="card-actions">
-                                {# Cancellation is allowed only if status is REGISTERED/Temporarily Closed #}
-                                {% if 'completed' not in status_lower and 'ongoing' not in status_lower and 'cancelled' not in status_lower and 'closed' not in status_lower %}
-                                <button class="btn-action cancel cancel-registration-btn btn-cancel"
+                                {# Cancellation is allowed only if status is REGISTERED. Check against finalized statuses. #}
+                                {% if status_lower == 'registered' %}
+                                <button class="btn-action cancel cancel-registration-btn btn-danger"
                                         title="Cancel Registration"
                                         data-registration-id="{{ data.registration.id }}"
                                         data-event-name="{{ data.name|escapejs }}">
@@ -77,6 +78,7 @@
                                 </button>
                                 {% else %}
                                 <button class="btn btn-secondary btn-sm" disabled>
+                                    {# Display the descriptive status (Attended, Absent, Did Not Attend, Cancelled) #}
                                     <i class="fas fa-info-circle"></i> {{ data.status }}
                                 </button>
                                 {% endif %}
@@ -239,7 +241,7 @@
             registrationId: registrationId,
             csrfToken: getCsrfToken() ? 'Present' : 'Missing',
             currentUrl: window.location.href,
-            cancelUrl: `/student/cancel_registration/${registrationId}/`
+            cancelUrl: `/student_dashboard/cancel_registration/${registrationId}/`
         });
     }
 
@@ -271,11 +273,16 @@
         currentModalEventId = null;
         registrationIdToCancel = null;
 
+        // Use the current URL minus query parameters, appending the AJAX flag
+        const refreshUrl = window.location.href.split('?')[0];
+
         $.ajax({
-            url: window.location.href.split('?')[0] + '?is_ajax=true',
+            url: refreshUrl,
             method: 'GET',
+            data: { is_ajax: 'true' }, // Pass is_ajax flag
             headers: {'X-Requested-With': 'XMLHttpRequest'},
             success: function(data) {
+                // Since the server returns the full fragment, we extract the list area content
                 const $newContent = $(data);
                 const $extractedContent = $newContent.find('.events-list-area').html();
                 if ($extractedContent) {
@@ -305,6 +312,7 @@
 
         $cards.each(function() {
             const $card = $(this);
+            // Search criteria includes the name
             const nameText = String($card.data('name') || '').toLowerCase();
 
             const matchesSearch = nameText.includes(currentSearchTerm);
@@ -338,18 +346,22 @@
 
         currentModalEventId = eventId;
 
+        // Retrieve data attributes
         const eventName = $card.find('.card-title').text();
         const pictureUrl = $card.data('picture-url');
         const defaultImageUrl = 'https://placehold.co/700x200/121212/00A9FF?text=Registered+Event';
-        const fullDescription = $card.data('full-description');
-        const statusText = $card.data('status');
+        // IMPORTANT: The data attribute already escapes the description, use .html() if it contains HTML, but .text() if you want raw text. Assuming raw text for modal-event-description which is a <p> tag.
+        const fullDescription = $card.data('full-description').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+        // IMPORTANT: Use the text visible in the card, which should be the computed status from the server
+        const statusText = $card.find('.card-actions button:disabled').text().replace(' ', '').trim() || $card.data('raw-status');
 
         // Populate details
         $('#modal-event-title').text(eventName);
         $('#modal-event-datetime').text(`${$card.data('date')} ${$card.data('time')}`);
         $('#modal-event-location').text($card.data('location') || 'Not specified');
         $('#modal-event-organization').text($card.data('organization') || 'N/A');
-        $('#modal-event-status').text(`Registration Status: ${statusText}`);
+        // 🎯 Update modal status to show the derived status (Attended/Absent/Did Not Attend)
+        $('#modal-event-status').text(`Registration Status: ${statusText.toUpperCase()}`);
         $('#modal-event-image').attr('src', pictureUrl || defaultImageUrl);
         $('#modal-event-description').text(fullDescription || 'No detailed description available.');
 
@@ -550,7 +562,7 @@
             return Promise.reject({ status: 403, message: 'Security Error: CSRF token missing. Please refresh the page.' });
         }
 
-        const cancelUrl = `/student_dashboard/cancel_registration/${registrationId}/`;
+        const cancelUrl = `/student_dashboard/my-events/cancel_registration/${registrationId}/`;
 
         console.log('Cancel registration debug:', {
             registrationId: registrationId,
@@ -597,6 +609,7 @@
                     } else if (xhr.status === 404) {
                         errorMessage = "The registration record was not found in the system.";
                     } else if (xhr.status === 400) {
+                        // This handles server-side checks like "Cannot cancel because the event has already passed"
                         errorMessage = xhr.responseJSON.message || "Cannot cancel registration due to event status or timing.";
                     } else if (xhr.status === 500) {
                         errorMessage = "Server error. Please try again later.";
@@ -639,6 +652,7 @@
 
         // Event Delegation for clicking the entire event card (to open details modal)
         $(document).on('click', '.event-card', function(e) {
+            // Prevent modal from opening if the user clicked the cancel button or modal itself
             if ($(e.target).closest('.cancel-registration-btn').length || $(e.target).closest('.event-modal-backdrop').length) {
                 return;
             }
