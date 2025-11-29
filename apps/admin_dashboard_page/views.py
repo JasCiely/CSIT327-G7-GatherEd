@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 
 from apps.admin_dashboard_page.models import Event
+from apps.admin_dashboard_page.models import AdminProfile  # Make sure this import exists
 
 
 def logout_view(request):
@@ -92,19 +93,27 @@ def format_to_readable_date(date_str):
 
 @login_required
 def admin_dashboard(request):
-    is_ajax = request.GET.get('is_ajax') == 'true'
-    today = datetime.date.today()
-    user = request.user
+    # Check if user is actually an admin and verified
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to access the admin dashboard.")
+        return redirect('student_dashboard')
 
     try:
-        admin_profile = user.adminprofile
-    except AttributeError:
+        admin_profile = AdminProfile.objects.get(user=request.user)
+        if not admin_profile.is_verified:
+            messages.error(request, "Please verify your email address to access the dashboard.")
+            return redirect('logout')
+    except AdminProfile.DoesNotExist:
         messages.error(request, "Admin profile not found. Please contact support.")
         return redirect('logout')
+
+    is_ajax = request.GET.get('is_ajax') == 'true'
+    today = datetime.date.today()
 
     admin_filter_id = admin_profile.id
     cache_key = f"dashboard_data_{admin_filter_id}"
     cached_data = cache.get(cache_key)
+
     if cached_data:
         context = cached_data
     else:
@@ -138,6 +147,7 @@ def admin_dashboard(request):
         formatted_events = formatted_events[:10]
         context = {
             'admin_organization': admin_profile.organization_name,
+            'admin_name': admin_profile.name,
             'total_events': total_events,
             'total_attendance': 0,
             'new_feedback': 0,
@@ -147,8 +157,8 @@ def admin_dashboard(request):
         cache.set(cache_key, context, timeout=60)
 
     if not request.session.get('welcome_shown', False):
-        name = user.first_name or user.username or "Admin"
-        messages.success(request, f"Welcome back, {name}!")
+        name = admin_profile.name or request.user.username or "Admin"
+        messages.success(request, f"Welcome, {name}!")
         request.session['welcome_shown'] = True
 
     template = 'fragments/dashboard_content.html' if is_ajax else 'admin_dashboard.html'
