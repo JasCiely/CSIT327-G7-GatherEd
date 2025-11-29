@@ -115,6 +115,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
+    'apps.register_page.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
@@ -147,8 +148,14 @@ LOGOUT_REDIRECT_URL = 'events:login'
 # =====================
 # EMAIL (CONSOLE MODE)
 # =====================
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'support@gathered.edu'
+# settings.py
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'jasmineciely.p@gmail.com'
+EMAIL_HOST_PASSWORD = 'nqnc khws edux olno'
+DEFAULT_FROM_EMAIL = 'noreply@gatheredu.com'
 
 # =====================
 # SUPABASE KEYS

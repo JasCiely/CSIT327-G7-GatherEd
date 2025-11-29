@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.utils import timezone
+import random
 
 class AdminProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -11,7 +12,9 @@ class AdminProfile(models.Model):
         unique=True,
         db_column='organization_name'
     )
-
+    is_verified = models.BooleanField(default=False)
+    otp_code = models.CharField(max_length=6, blank=True, null=True)
+    otp_created_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -19,6 +22,20 @@ class AdminProfile(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.organization_name})"
+
+    def generate_otp(self):
+        """Generate 6-digit OTP"""
+        self.otp_code = str(random.randint(100000, 999999))
+        self.otp_created_at = timezone.now()
+        self.save()
+        return self.otp_code
+
+    def is_otp_expired(self):
+        """Check if OTP is expired (10 minutes)"""
+        if not self.otp_created_at:
+            return True
+        expiration_time = self.otp_created_at + timezone.timedelta(minutes=10)
+        return timezone.now() > expiration_time
 
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

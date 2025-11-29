@@ -51,7 +51,7 @@
         </ul>
         <div class="auth-buttons">
             <a href="{% url 'login' %}" class="btn btn-login">Login</a>
-            <a href="{% url 'register' %}" class="btn btn-primary">Sign Up</a>
+            <a href="{% url 'register_choice' %}" class="btn btn-primary">Sign Up</a>
         </div>
     </nav>
 </header>
@@ -63,7 +63,7 @@
             <h1>Simplify School Event & Club Management</h1>
             <p>Tired of lost sign-up sheets? GatherEd provides a centralized platform for seamless event organization, communication, and attendance tracking for your school community.</p>
             <div class="cta-buttons">
-                <a href="{% url 'register' %}" class="btn btn-primary">Get Started Now</a>
+                <a href="{% url 'register_choice' %}" class="btn btn-primary">Get Started Now</a>
                 <a href="#features" class="btn btn-secondary">Learn More <i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
@@ -129,7 +129,7 @@
         <div class="cta-content">
             <h2>Ready to Revolutionize Your School's Events?</h2>
             <p>Improve efficiency and student engagement with a centralized platform designed for the modern school.</p>
-            <a href="{% url 'register' %}" class="btn btn-primary">Join GatherEd</a>
+            <a href="{% url 'register_choice' %}" class="btn btn-primary">Join GatherEd</a>
         </div>
     </section>
 
@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", function() {
         {% for message in messages %}
             var bgColor = "linear-gradient(to right, #6c757d, #5a6268)";
             {% if message.tags == 'success' %} bgColor = "linear-gradient(to right, #28a745, #218838)"; {% endif %}
-            {% if message.tags == 'error' %} bgColor = "linear-gradient(to right, #D63129, #C22C25git"; {% endif %}
+            {% if message.tags == 'error' %} bgColor = "linear-gradient(to right, #D63129, #C22C25)"; {% endif %}
             Toastify({
                 text: "{{ message|escapejs }}",
                 duration: 4000,
