@@ -562,7 +562,7 @@
             return Promise.reject({ status: 403, message: 'Security Error: CSRF token missing. Please refresh the page.' });
         }
 
-        const cancelUrl = `/student_dashboard/cancel_registration/${registrationId}/`;
+        const cancelUrl = `/student_dashboard/my-events/cancel_registration/${registrationId}/`;
 
         console.log('Cancel registration debug:', {
             registrationId: registrationId,

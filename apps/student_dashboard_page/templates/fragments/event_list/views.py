@@ -117,60 +117,40 @@ def event_list(request):
     """
     Displays upcoming and active events for the student dashboard.
     """
-    current_student = None
-    if request.user.is_authenticated:
-        try:
-            current_student = StudentProfile.objects.get(user_id=request.user.pk)
-        except StudentProfile.DoesNotExist:
-            current_student = None
-        except Exception:
-            current_student = None
+    try:
+        current_student = StudentProfile.objects.get(user=request.user)
+    except StudentProfile.DoesNotExist:
+        current_student = None
 
     today = date.today()
     now = datetime.now().time()
 
-    # FIXED: Annotation to check for ALL active registration statuses
-    is_registered_annotation = Value(False, output_field=BooleanField())
-    if current_student:
-        # Check if the student has any active registration status
-        is_registered_annotation = Count(
-            Case(
-                When(
-                    registrations__student=current_student,
-                    registrations__status__in=['REGISTERED', 'ATTENDED', 'ABSENT'],
-                    then=1
-                ),
-                output_field=IntegerField(),
-            )
-        )
-
-    # Count all registrations that consume capacity (registered and attended)
-    attendee_count_annotation = Count(
-        'registrations',
-        filter=Q(registrations__status__in=['REGISTERED', 'ATTENDED']),
-        distinct=True
-    )
-
-    # Fetch all relevant fields including manual override fields
+    # Fetch upcoming and active events
     upcoming_and_active_events = (
         Event.objects
-        # Filter for upcoming/active events based on standard time
         .filter(Q(date__gt=today) | Q(date=today, end_time__gte=now))
         .select_related('admin')
-        .annotate(
-            registered_count=attendee_count_annotation,
-            is_registered_by_student=is_registered_annotation
-        )
         .order_by('date', 'start_time')
     )
 
     events_list = []
     for event in upcoming_and_active_events:
-        registered_count = getattr(event, 'registered_count', 0)
-        # Note: is_registered_by_student is a Count, so check if it's > 0
-        is_registered = getattr(event, 'is_registered_by_student', 0) > 0
+        # Calculate registered count
+        registered_count = Registration.objects.filter(
+            event=event,
+            status__in=['REGISTERED', 'ATTENDED']
+        ).count()
 
-        # Use the updated logic
+        # Check if current student is registered
+        is_registered = False
+        if current_student:
+            is_registered = Registration.objects.filter(
+                event=event,
+                student=current_student,
+                status__in=['REGISTERED', 'ATTENDED', 'ABSENT']
+            ).exists()
+
+        # Determine status
         final_status = get_registration_status_from_event(
             event,
             registered_count,
@@ -186,7 +166,6 @@ def event_list(request):
             'time': f"{event.start_time.strftime('%I:%M %p')} - {event.end_time.strftime('%I:%M %p')}",
             'organization_name': org_name,
             'location': event.location or 'N/A',
-            # Use the calculated final_status
             'status': final_status,
             'short_description': event.description[:100] + '...' if event.description and len(
                 event.description) > 100 else event.description or 'No description available',
@@ -345,4 +324,60 @@ def register_event(request, event_id):
         return JsonResponse({
             'success': False,
             'message': f'An internal server error occurred: {str(e)}'
+        }, status=500)
+
+
+@login_required
+def cancel_registration(request, event_id):
+    """
+    Handles student cancellation of an event registration.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
+
+    try:
+        user = request.user
+        try:
+            current_student = StudentProfile.objects.get(user=user)
+        except StudentProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Student profile not found.'}, status=403)
+
+        try:
+            event = Event.objects.get(pk=event_id)
+        except Event.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Event not found.'}, status=404)
+
+        # Find the active registration
+        registration = Registration.objects.filter(
+            student=current_student,
+            event=event,
+            status__in=['REGISTERED', 'ATTENDED']
+        ).first()
+
+        if not registration:
+            return JsonResponse({
+                'success': False,
+                'message': 'No active registration found for this event.'
+            }, status=404)
+
+        if registration.status == 'ATTENDED':
+             return JsonResponse({
+                'success': False,
+                'message': 'Cannot cancel registration for an event you have already attended.'
+            }, status=400)
+
+        # Update status to CANCELLED
+        registration.status = 'CANCELLED'
+        registration.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Registration cancelled successfully.'
+        })
+
+    except Exception as e:
+        print(f"Error cancelling registration: {e}")
+        return JsonResponse({
+            'success': False,
+            'message': 'An error occurred while cancelling registration.'
         }, status=500)
