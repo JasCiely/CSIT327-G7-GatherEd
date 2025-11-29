@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+import uuid
 
 
 class AdminProfile(models.Model):
@@ -31,3 +33,17 @@ class StudentProfile(models.Model):
 
     def __str__(self):
         return self.name
+
+class AdminInvitation(models.Model):
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    email = models.EmailField(unique=True)
+    invited_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    organization_name = models.CharField(max_length=255)
+
+    def is_expired(self):
+        return self.expires_at < timezone.now()
+
+    def __str__(self):
+        return f"Invite for {self.email} (Used: {self.is_used})"

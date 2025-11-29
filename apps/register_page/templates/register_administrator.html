@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizer Sign Up - GatherEd</title>
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/register_css.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-input {
+            width: 100%;
+            padding-right: 40px;
+            box-sizing: border-box;
+        }
+        .toggle-eye {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+        .toggle-eye:hover {
+            color: #333;
+        }
+        .toggle-eye i {
+            font-size: 16px;
+        }
+        .form-group.password-container {
+            position: relative;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--primary-color);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-weight: 500;
+            align-self: flex-start; /* Added to align left */
+        }
+        .back-link i {
+            margin-right: 0.5rem;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .password-hint {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        /* Added container for back link alignment */
+        .back-link-container {
+            display: flex;
+            justify-content: flex-start;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="back-link-container">
+                <a href="{% url 'register_choice' %}" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+            <div class="logo">
+                <i class="fas fa-users-cog"></i> GatherEd Organizer
+            </div>
+            <h2>Organizer Registration</h2>
+
+            <form action="{% url 'register_administrator' %}" method="post">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="John Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="employee_id">Employee ID</label>
+                    <input type="text" id="employee_id" name="cit_id" placeholder="Enter Employee ID" inputmode="numeric" maxlength="15" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="organization_name">Organization Affiliation</label>
+                    <select id="organization_name" name="organization_name" required>
+                        <option value="" disabled selected>Select Organization</option>
+                        <optgroup label="NON-DEPARTMENTAL ORGANIZATION">
+                            <option value="RACMC-CIT">Rotaract Club of Metro Cebu - CIT Chapter</option>
+                            <option value="DOST SA CIT-U">DOST SA CIT-U</option>
+                            <option value="CRCY">College Red Cross Youth</option>
+                            <option value="EDS">Elite Debate Society</option>
+                            <option value="HONSOC">CIT-U Honor Society</option>
+                            <option value="CIT-U SPRCY">Senior Plus Red Cross Youth</option>
+                            <option value="WEL">Wildcats Esports League</option>
+                            <option value="CFC">CIT-U Christian Fellowship</option>
+                            <option value="REAVO">Radio/Rescue Emergency Assistance Volunteer Organization</option>
+                            <option value="JJC CIT-U">CIT University Junior Jaycees</option>
+                            <option value="TTSP">The Technologian Student Press</option>
+                            <option value="TQ">The Technologian Quills</option>
+                            <option value="PFCIT-U SHS">SHS Peer Facilitators Program</option>
+                        </optgroup>
+                        <optgroup label="DEPARTMENTAL ORGANIZATION">
+                            <option value="CASEPsychSoc">PsychSoc (Psychology Society)</option>
+                            <option value="YEACIT-U">Young Educators Association</option>
+                            <option value="CELSA">Communication and English Language Students Association</option>
+                            <option value="CAMVAS">Creative Alliance of Multimedia and Visual Arts Student</option>
+                            <option value="CCJJCC">Junior Criminology Council</option>
+                            <option value="CCSCSS">Computer Students' Society</option>
+                            <option value="CEAJPIChE CIT-U">Junior Philippine Institute of Chemical Engineers</option>
+                            <option value="UAPSA">United Architects of the Philippines Student Auxiliary</option>
+                            <option value="JPSME">Junior Philippine Society of Mechanical Engineers</option>
+                            <option value="IIEE-CSC CIT-U">Institute of Integrated Electrical Engineers - CSC</option>
+                            <option value="ICpEP.SE">Institute of Computer Engineers Student Edition</option>
+                            <option value="IECEP CIT-U SC">Institute of Electronics Engineers of the Philippines</option>
+                            <option value="IEC">Industrial Engineering Council</option>
+                            <option value="ACIP - CITU SC">American Concrete Institute Philippines - SC</option>
+                            <option value="PICE CIT-U SC">Philippine Institute of Civil Engineers - SC</option>
+                            <option value="PSEM-VSC">Philippine Society of Mining Engineers - VSC</option>
+                            <option value="CMBAJAHTEX">Junior Association of Hospitality and Tourism Executives</option>
+                            <option value="JFINEX - CITU">Junior Financial Executives - CIT University Chapter</option>
+                            <option value="JPMAP">Junior People Management Association of the Philippines</option>
+                            <option value="IMA">Institute of Management Accountants</option>
+                            <option value="JPIA">Junior Philippine Institute of Accountants</option>
+                        </optgroup>
+                        <optgroup label="SENIOR HIGH SCHOOL">
+                            <option value="CNAHSHASBO">Health Alliance Student Body Organization</option>
+                            <option value="NCES">Nursing Community Extension Services</option>
+                            <option value="SHS DC">Senior High School Dance Club</option>
+                            <option value="YAS">Young Artist Society</option>
+                            <option value="GTCIT-U SHS">SHS GleeTechs</option>
+                            <option value="WCC">WILDCATS CHESS CLUB</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="john.doe@cit.edu" required>
+                </div>
+
+                <div class="form-group password-container">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" class="password-input" required>
+                        <button type="button" class="toggle-eye" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <small class="password-hint">Must be at least 8 characters with uppercase, lowercase, and number</small>
+                </div>
+
+                <div class="form-group password-container">
+                    <label for="confirm_password">Confirm Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirm_password" name="confirm_password" class="password-input" required>
+                        <button type="button" class="toggle-eye" id="toggleConfirmPassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full-width">
+                    <i class="fas fa-users-cog"></i> Create Organizer Account
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            {% if messages %}
+                {% for message in messages %}
+                    Toastify({
+                        text: "{{ message|escapejs }}",
+                        duration: 4000,
+                        gravity: "top",
+                        position: "right",
+                        close: true,
+                        style: { background: 'linear-gradient(to right, #D63129, #C22C25' },
+                    }).showToast();
+                {% endfor %}
+            {% endif %}
+
+            // Allow only numbers and hyphens for employee ID
+            document.getElementById('employee_id').addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9-]/g, '');
+            });
+
+            function toggleVisibility(btnId, inputId) {
+                const btn = document.getElementById(btnId);
+                const input = document.getElementById(inputId);
+                const icon = btn.querySelector('i');
+                btn.addEventListener('click', () => {
+                    const show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    icon.classList.toggle('fa-eye');
+                    icon.classList.toggle('fa-eye-slash');
+                });
+            }
+
+            toggleVisibility('togglePassword', 'password');
+            toggleVisibility('toggleConfirmPassword', 'confirm_password');
+        });
+    </script>
+</body>
+</html>
