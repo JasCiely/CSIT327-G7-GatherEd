@@ -229,22 +229,6 @@ def verify_otp(request):
                 return redirect('register_administrator')
 
             if admin_profile.otp_code == entered_otp:
-                # Check if organization was taken by another verified admin during OTP process
-                verified_admin_exists = AdminProfile.objects.filter(
-                    organization_name=admin_profile.organization_name,
-                    is_verified=True
-                ).exclude(id=admin_profile.id).exists()
-
-                if verified_admin_exists:
-                    messages.error(
-                        request,
-                        f'This organization "{admin_profile.organization_name}" has been assigned to another administrator during the verification process. Please register with a different organization.'
-                    )
-                    # Clean up this registration
-                    admin_profile.user.delete()
-                    request.session.flush()
-                    return redirect('register_administrator')
-
                 # OTP verified successfully
                 admin_profile.is_verified = True
                 admin_profile.otp_code = None
@@ -254,20 +238,11 @@ def verify_otp(request):
                 admin_profile.user.is_active = True
                 admin_profile.user.save()
 
-                # Clean up any other unverified admins for this organization
-                AdminProfile.objects.filter(
-                    organization_name=admin_profile.organization_name,
-                    is_verified=False
-                ).exclude(id=admin_profile.id).delete()
-
-                # Log the user in
-                login(request, admin_profile.user)
-
                 # Clean up session
                 request.session.flush()
 
-                messages.success(request, 'Account verified successfully! You are now logged in.')
-                return redirect('admin_dashboard')
+                messages.success(request, 'Account verified successfully! Please log in to continue.')
+                return redirect('login')  # Redirect to login page instead of auto-login
             else:
                 messages.error(request, 'Invalid verification code. Please try again.')
                 return render(request, 'verify_otp.html')
