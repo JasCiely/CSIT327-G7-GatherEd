@@ -5,106 +5,16 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<style>
-    /* Status Message Styling */
-    .alert-message {
-        padding: 12px;
-        margin-top: 15px;
-        border-radius: 4px;
-        font-weight: bold;
-        text-align: center;
-        border: 1px solid transparent;
-    }
-    .alert-message.error-notice {
-        background-color: #fce4e4;
-        color: #c70000;
-        border-color: #fcc;
-    }
-    .alert-message.success-notice {
-        background-color: #e6f7e9;
-        color: #1a6435;
-        border-color: #cfd;
-    }
-    .alert-message.warning-notice {
-        background-color: #fff8e1;
-        color: #b37300;
-        border-color: #ffe;
-    }
-
-    /* Attendance Buttons */
-    .btn-mark-status {
-        padding: 6px 12px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: bold;
-        color: white;
-        transition: background-color 0.2s;
-        min-width: 100px;
-        background-color: #007bff; /* Default: Mark Present/Absent (Blue) */
-    }
-    .btn-mark-status.present {
-        background-color: #dc3545; /* Current status is Present, button action is Mark Absent (Red) */
-    }
-    .btn-mark-status:hover:not(:disabled) {
-        background-color: #0056b3;
-    }
-    .btn-mark-status.present:hover:not(:disabled) {
-        background-color: #bd2130;
-    }
-    .btn-mark-status:disabled {
-        background-color: #cccccc;
-        cursor: not-allowed;
-    }
-
-    /* Loading and Status Messages */
-    #loading-message, #no-event-message {
-        text-align: center;
-        padding: 15px;
-        font-style: italic;
-        color: #777;
-    }
-    .hidden {
-        display: none !important;
-    }
-
-    /* Table Styling (General/Placeholder for external CSS) */
-    .attendance-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
-    .attendance-table th, .attendance-table td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-    }
-    .attendance-table th {
-        background-color: #f2f2f2;
-    }
-    .status-col {
-        width: 15%;
-        text-align: center;
-        font-weight: bold;
-    }
-    .action-col {
-        width: 15%;
-        text-align: center;
-    }
-    .current-status.Present { color: green; }
-    .current-status.Absent { color: red; }
-    .current-status.Unmarked { color: orange; }
-
-</style>
-
 <div class="full-width-card attendance-container">
     <div class="card-header">
-        <h2>Event Attendance Recorder 📋</h2>
-        <p class="card-subtitle">Select an event to mark attendance. **Unrecorded** students are prioritized at the top.</p>
+        <h2><i class="fas fa-clipboard-list"></i> Event Attendance Recorder</h2>
+        <p class="card-subtitle">Select an event to mark attendance. <strong>Unrecorded students are prioritized at the top.</strong></p>
     </div>
 
     <div class="attendance-controls">
-        <label for="event-select" class="control-label">Select Event:</label>
+        <label for="event-select" class="control-label">
+            <i class="fas fa-calendar-alt"></i> Select Event:
+        </label>
         <select id="event-select" class="control-select">
             <option value="">-- Choose an Event --</option>
             {% for event in events_list %}
@@ -116,30 +26,43 @@
     <div id="status-control-message" class="alert-message hidden"></div>
 
     <div id="attendance-list-area">
-        <p id="loading-message" class="hidden">Loading student list...</p>
-        <p id="no-event-message">Please select an event to load the registration list.</p>
+        <div id="loading-message" class="hidden">
+            <div class="loading-spinner"></div>
+            <p>Loading student list...</p>
+        </div>
 
-        <h3 id="unrecorded-header" class="attendance-section-header hidden">Unrecorded Students (Unmarked)</h3>
+        <div id="no-event-message" class="empty-state">
+            <i class="fas fa-clipboard-check"></i>
+            <p>Please select an event to load the registration list.</p>
+        </div>
+
+        <h3 id="unrecorded-header" class="attendance-section-header hidden">
+            <i class="fas fa-users"></i> Unrecorded Students
+            <span id="unrecorded-count" class="count-badge"></span>
+        </h3>
         <table id="unrecorded-table" class="attendance-table hidden">
             <thead>
                 <tr>
                     <th>Student Name</th>
                     <th>ID / Email</th>
                     <th class="status-col">Current Status</th>
-                    <th class="action-col">Mark</th>
+                    <th class="action-col">Action</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
 
-        <h3 id="recorded-header" class="attendance-section-header hidden">Recorded Students (Present/Absent)</h3>
+        <h3 id="recorded-header" class="attendance-section-header hidden">
+            <i class="fas fa-user-check"></i> Recorded Students
+            <span id="recorded-count" class="count-badge"></span>
+        </h3>
         <table id="recorded-table" class="attendance-table hidden">
             <thead>
                 <tr>
                     <th>Student Name</th>
                     <th>ID / Email</th>
                     <th class="status-col">Current Status</th>
-                    <th class="action-col">Mark</th>
+                    <th class="action-col">Action</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -154,6 +77,8 @@ $(document).ready(function() {
     const recordedTable = $('#recorded-table');
     const unrecordedHeader = $('#unrecorded-header');
     const recordedHeader = $('#recorded-header');
+    const unrecordedCount = $('#unrecorded-count');
+    const recordedCount = $('#recorded-count');
     const loadingMessage = $('#loading-message');
     const noEventMessage = $('#no-event-message');
     const statusControlMessage = $('#status-control-message');
@@ -184,6 +109,11 @@ $(document).ready(function() {
     function updateSectionVisibility() {
         const unCount = unrecordedTable.find('tbody tr').length;
         const recCount = recordedTable.find('tbody tr').length;
+
+        // Update count badges
+        unrecordedCount.text(`(${unCount})`);
+        recordedCount.text(`(${recCount})`);
+
         // Hide headers/tables if they are empty
         unrecordedHeader.toggleClass('hidden', unCount === 0);
         unrecordedTable.toggleClass('hidden', unCount === 0);
@@ -199,11 +129,22 @@ $(document).ready(function() {
         const btnClass = isPresent ? 'present' : '';
         const btnText = isPresent ? ' Absent' : ' Present';
 
+        // Status icon mapping
+        let statusIcon = 'fa-question-circle';
+        if (student.status === 'Present') statusIcon = 'fa-check-circle';
+        else if (student.status === 'Absent') statusIcon = 'fa-times-circle';
+        else if (student.status === 'Cancelled') statusIcon = 'fa-ban';
+
         return `
             <tr data-student-id="${student.student_id}" data-recorded="${student.is_recorded}">
                 <td>${student.name}</td>
                 <td>${student.identifier}</td>
-                <td class="status-col current-status ${student.status}">${student.status}</td>
+                <td class="status-col">
+                    <div class="current-status ${student.status}">
+                        <i class="fas ${statusIcon}"></i>
+                        ${student.status}
+                    </div>
+                </td>
                 <td class="action-col">
                     <button class="btn-mark-status ${btnClass}" data-status="${student.status}" data-student-id="${student.student_id}" ${isAttendanceEnabled ? '' : 'disabled'}>
                         <i class="fas ${icon}"></i>${btnText}
@@ -225,7 +166,10 @@ $(document).ready(function() {
 
         if (!eventId) {
             loadingMessage.addClass('hidden');
-            noEventMessage.text('Please select an event to load the registration list.').removeClass('hidden');
+            noEventMessage.removeClass('hidden').html(`
+                <i class="fas fa-clipboard-check"></i>
+                <p>Please select an event to load the registration list.</p>
+            `);
             return;
         }
 
@@ -241,12 +185,15 @@ $(document).ready(function() {
 
                 if (!isAttendanceEnabled) {
                     // Display attendance control message (e.g., event not started)
-                    statusControlMessage.html('⚠️ ' + response.status_message).removeClass('hidden').addClass('warning-notice');
+                    statusControlMessage.html('<i class="fas fa-exclamation-triangle"></i> ' + response.status_message).removeClass('hidden').addClass('warning-notice');
                 }
 
                 if (students.length === 0) {
                     // This block ensures the "No students" message is only shown when the list is truly empty.
-                    noEventMessage.text('NOTICE: There are no students registered for this event.').removeClass('hidden');
+                    noEventMessage.removeClass('hidden').html(`
+                        <i class="fas fa-user-slash"></i>
+                        <p>NOTICE: There are no students registered for this event.</p>
+                    `);
                     updateSectionVisibility();
                     return;
                 }
@@ -274,7 +221,10 @@ $(document).ready(function() {
                 loadingMessage.addClass('hidden');
                 // Display error message
                 const err = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to load student list.';
-                noEventMessage.text('Error: ' + err).removeClass('hidden').addClass('error-notice');
+                noEventMessage.removeClass('hidden').html(`
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>Error: ${err}</p>
+                `);
                 updateSectionVisibility();
             }
         });
@@ -305,8 +255,7 @@ $(document).ready(function() {
         // Determine the status for the *next* action. If current status is 'Present', the next action is to 'Mark Absent'.
         const newStatus = currentStatus === 'Present' ? 'Absent' : 'Present';
 
-        button.prop('disabled', true).addClass('loading');
-        // Simple visual feedback for loading, assuming you might have a loading CSS class
+        button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
 
         $.ajax({
             url: 'api/record-attendance/', // Assumes a Django path structure
@@ -315,20 +264,25 @@ $(document).ready(function() {
             data: { student_id: studentId, event_id: eventId, is_present: newStatus === 'Present' },
             headers: { 'X-CSRFToken': csrftoken },
             success: function(resp) {
-                button.prop('disabled', false).removeClass('loading');
+                button.prop('disabled', false);
 
                 // resp.new_status will be 'Present' or 'Absent' from the server (using map_db_status_to_js)
 
                 // 1. Update status cell
                 const statusCell = row.find('.current-status');
-                statusCell.removeClass('Present Absent Unmarked').addClass(resp.new_status).text(resp.new_status);
+                const statusIcon = resp.new_status === 'Present' ? 'fa-check-circle' : 'fa-times-circle';
+                statusCell.removeClass('Present Absent Unmarked').addClass(resp.new_status)
+                    .html(`<i class="fas ${statusIcon}"></i> ${resp.new_status}`);
 
                 // 2. Update button state for next click
                 button.data('status', resp.new_status);
                 // If the new status is Present, the button should now show 'Absent' (for the next toggle)
-                if (resp.new_status === 'Present') button.addClass('present').html('<i class="fas fa-times"></i> Absent');
-                // If the new status is Absent, the button should now show 'Present' (for the next toggle)
-                else button.removeClass('present').html('<i class="fas fa-check"></i> Present');
+                if (resp.new_status === 'Present') {
+                    button.addClass('present').html('<i class="fas fa-times"></i> Absent');
+                } else {
+                    // If the new status is Absent, the button should now show 'Present' (for the next toggle)
+                    button.removeClass('present').html('<i class="fas fa-check"></i> Present');
+                }
 
                 // 3. Move row if it was previously Unmarked
                 if (wasUnmarked) {
@@ -339,9 +293,16 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                button.prop('disabled', false).removeClass('loading');
+                button.prop('disabled', false);
                 const err = xhr.responseJSON ? xhr.responseJSON.error : 'Failed to save attendance.';
                 alert('Error saving attendance: ' + err);
+
+                // Reset button to previous state
+                if (currentStatus === 'Present') {
+                    button.addClass('present').html('<i class="fas fa-times"></i> Absent');
+                } else {
+                    button.removeClass('present').html('<i class="fas fa-check"></i> Present');
+                }
             }
         });
     });
