@@ -689,3 +689,22 @@
         box-shadow: none;
     }
 }
+
+.current-status.Cancelled,
+.current-status.cancelled-status {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.current-status.Cancelled i,
+.current-status.cancelled-status i {
+    color: #6c757d;
+}
+
+.btn-mark-status:disabled {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+    border-color: #dee2e6;
+}
