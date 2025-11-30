@@ -122,8 +122,13 @@ $(document).ready(function() {
     }
 
     function generateRowHtml(student) {
-        // student.status will be 'Present', 'Absent', or 'Unmarked' from the Django view
+        // student.status will be 'Present', 'Absent', 'Cancelled', or 'Unmarked' from the Django view
         const isPresent = student.status === 'Present';
+        const isCancelled = student.status === 'Cancelled';
+
+        // If status is Cancelled, button should be disabled
+        const isDisabled = isCancelled || !isAttendanceEnabled;
+
         // If current status is 'Present', the button action is to 'Mark Absent' (X)
         const icon = isPresent ? 'fa-times' : 'fa-check';
         const btnClass = isPresent ? 'present' : '';
@@ -135,18 +140,21 @@ $(document).ready(function() {
         else if (student.status === 'Absent') statusIcon = 'fa-times-circle';
         else if (student.status === 'Cancelled') statusIcon = 'fa-ban';
 
+        // Special styling for cancelled status
+        const statusClass = isCancelled ? 'cancelled-status' : student.status;
+
         return `
-            <tr data-student-id="${student.student_id}" data-recorded="${student.is_recorded}">
+            <tr data-student-id="${student.student_id}" data-recorded="${student.is_recorded}" data-status="${student.status}">
                 <td>${student.name}</td>
                 <td>${student.identifier}</td>
                 <td class="status-col">
-                    <div class="current-status ${student.status}">
+                    <div class="current-status ${statusClass}">
                         <i class="fas ${statusIcon}"></i>
                         ${student.status}
                     </div>
                 </td>
                 <td class="action-col">
-                    <button class="btn-mark-status ${btnClass}" data-status="${student.status}" data-student-id="${student.student_id}" ${isAttendanceEnabled ? '' : 'disabled'}>
+                    <button class="btn-mark-status ${btnClass}" data-status="${student.status}" data-student-id="${student.student_id}" ${isDisabled ? 'disabled' : ''}>
                         <i class="fas ${icon}"></i>${btnText}
                     </button>
                 </td>
@@ -205,15 +213,21 @@ $(document).ready(function() {
                 students.forEach(student => {
                     // The row is constructed here, using the current isAttendanceEnabled status
                     const row = $(generateRowHtml(student))[0];
-                    if (student.is_recorded) recFragment.appendChild(row);
-                    else unFragment.appendChild(row);
+                    // 🎯 UPDATED: Students with 'Cancelled' status should go to recorded table
+                    if (student.is_recorded || student.status === 'Cancelled') {
+                        recFragment.appendChild(row);
+                    } else {
+                        unFragment.appendChild(row);
+                    }
                 });
 
                 unrecordedTable.find('tbody').append(unFragment);
                 recordedTable.find('tbody').append(recFragment);
 
                 // Disable buttons globally if attendance is not enabled
-                if (!isAttendanceEnabled) $('.btn-mark-status').prop('disabled', true);
+                if (!isAttendanceEnabled) {
+                    $('.btn-mark-status').prop('disabled', true);
+                }
 
                 updateSectionVisibility();
             },
@@ -238,22 +252,30 @@ $(document).ready(function() {
 
     $('#attendance-list-area').on('click', '.btn-mark-status', function() {
         const button = $(this);
+        const row = button.closest('tr');
+        const currentStatus = row.data('status');
+
+        // 🎯 CRITICAL: Prevent any action for cancelled students
+        if (currentStatus === 'Cancelled') {
+            alert('Cannot record attendance for cancelled registrations.');
+            return;
+        }
+
         // Pre-check if attendance is allowed
         if (!isAttendanceEnabled) {
             alert('Attendance cannot be recorded at this time. ' + statusControlMessage.text().replace('⚠️ ', ''));
             return;
         }
 
-        const row = button.closest('tr');
         const eventId = eventSelect.val();
         if (!eventId) return alert("Please select an event first.");
 
         const studentId = row.data('student-id');
-        const currentStatus = button.data('status');
-        const wasUnmarked = currentStatus === 'Unmarked'; // Check if we are moving from unrecorded to recorded
+        const currentButtonStatus = button.data('status');
+        const wasUnmarked = currentButtonStatus === 'Unmarked'; // Check if we are moving from unrecorded to recorded
 
         // Determine the status for the *next* action. If current status is 'Present', the next action is to 'Mark Absent'.
-        const newStatus = currentStatus === 'Present' ? 'Absent' : 'Present';
+        const newStatus = currentButtonStatus === 'Present' ? 'Absent' : 'Present';
 
         button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
 
@@ -271,11 +293,13 @@ $(document).ready(function() {
                 // 1. Update status cell
                 const statusCell = row.find('.current-status');
                 const statusIcon = resp.new_status === 'Present' ? 'fa-check-circle' : 'fa-times-circle';
-                statusCell.removeClass('Present Absent Unmarked').addClass(resp.new_status)
+                statusCell.removeClass('Present Absent Unmarked Cancelled').addClass(resp.new_status)
                     .html(`<i class="fas ${statusIcon}"></i> ${resp.new_status}`);
 
-                // 2. Update button state for next click
+                // 2. Update row data and button state
+                row.data('status', resp.new_status);
                 button.data('status', resp.new_status);
+
                 // If the new status is Present, the button should now show 'Absent' (for the next toggle)
                 if (resp.new_status === 'Present') {
                     button.addClass('present').html('<i class="fas fa-times"></i> Absent');
@@ -298,7 +322,7 @@ $(document).ready(function() {
                 alert('Error saving attendance: ' + err);
 
                 // Reset button to previous state
-                if (currentStatus === 'Present') {
+                if (currentButtonStatus === 'Present') {
                     button.addClass('present').html('<i class="fas fa-times"></i> Absent');
                 } else {
                     button.removeClass('present').html('<i class="fas fa-check"></i> Present');

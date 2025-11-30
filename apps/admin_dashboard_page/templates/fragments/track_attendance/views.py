@@ -141,7 +141,8 @@ def get_event_students(request, event_id):
             'name': record.student.name,
             'identifier': record.student.cit_id,
             'status': js_status,
-            'is_recorded': js_status != 'Unmarked'
+            # 🎯 UPDATED: Consider 'Cancelled' as recorded (should not be editable)
+            'is_recorded': js_status != 'Unmarked' or js_status == 'Cancelled'
         })
 
     return JsonResponse({
@@ -198,6 +199,12 @@ def record_attendance(request):
             student_id=student_pk
         )
 
+        # 🎯 CRITICAL: Prevent updating attendance for cancelled registrations
+        if record.status == 'CANCELLED':
+            return JsonResponse({
+                'error': 'Cannot record attendance for cancelled registrations.'
+            }, status=400)
+
         # 4. Update the status and timestamp
         db_new_status = map_js_status_to_db(is_present) # Will be 'ATTENDED' or 'ABSENT'
         js_new_status = map_db_status_to_js(db_new_status) # Will be 'Present' or 'Absent'
@@ -215,11 +222,6 @@ def record_attendance(request):
             # Clear other tracking fields
             record.attended_at = None
             record.cancelled_at = None
-        # If status is set back to 'REGISTERED' (which is not handled by this toggle, but for completeness):
-        # else:
-        #     record.attended_at = None
-        #     record.absent_marked_at = None
-        #     record.cancelled_at = None
 
         record.save()
 
