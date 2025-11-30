@@ -234,6 +234,129 @@
 </div>
 
 <style>
+    /* Spinning animation for refresh icons */
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Refresh button styles */
+    .btn-refresh {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #0088cc 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 4px rgba(0, 169, 255, 0.3);
+    }
+
+    .btn-refresh:hover {
+        background: linear-gradient(135deg, #0088cc 0%, #0077b3 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 169, 255, 0.4);
+    }
+
+    .btn-refresh:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(0, 169, 255, 0.4);
+    }
+
+    .btn-refresh:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Loading modal spinner */
+    .loading-spinner {
+        font-size: 2rem;
+        color: var(--primary-color);
+        animation: spin 1.5s linear infinite;
+    }
+
+    /* Cancel Registration Button Styles */
+    .cancel-registration-btn {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cancel-registration-btn:hover {
+        background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+    }
+
+    .cancel-registration-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(220, 53, 69, 0.4);
+    }
+
+    .cancel-registration-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3);
+    }
+
+    .cancel-registration-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .cancel-registration-btn:hover::before {
+        left: 100%;
+    }
+
+    /* Disabled state for other status buttons */
+    .btn-secondary:disabled {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: #e0e0e0;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    /* Ensure proper spacing in card actions */
+    .card-actions {
+        margin-top: auto;
+        padding-top: 15px;
+    }
+
+    .card-actions .btn {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* Modal styles */
     .confirmation-modal-style {
         max-width: 500px;
         background: var(--panel-background);
@@ -423,6 +546,7 @@
         font-size: 0.9rem;
     }
 
+    /* Responsive adjustments */
     @media (max-width: 768px) {
         .confirmation-modal-style {
             margin: 20px;
@@ -436,6 +560,21 @@
         .btn {
             width: 100%;
             justify-content: center;
+        }
+
+        .btn-refresh {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+
+        .cancel-registration-btn {
+            padding: 10px 12px;
+            font-size: 0.8rem;
+        }
+
+        .card-actions .btn {
+            font-size: 0.8rem;
+            padding: 8px 12px;
         }
     }
 </style>
@@ -512,6 +651,13 @@
     }
 
     function refreshEventList() {
+        // Disable the refresh button and add spinning animation
+        const $refreshBtn = $('#refreshEventsBtn');
+        const $refreshIcon = $refreshBtn.find('i');
+
+        $refreshBtn.prop('disabled', true);
+        $refreshIcon.addClass('spin');
+
         showLoadingModal('Refreshing My Events List...');
         currentModalEventId = null;
         registrationIdToCancel = null;
@@ -540,6 +686,11 @@
                     `Could not reload the event list (Status ${xhr.status}).`,
                     'Please check your connection and try again.'
                 );
+            },
+            complete: function() {
+                // Re-enable the refresh button and remove spinning animation
+                $refreshBtn.prop('disabled', false);
+                $refreshIcon.removeClass('spin');
             }
         });
     }
@@ -671,6 +822,14 @@
         }
 
         if (registrationIdToCancel) {
+            // Add spinning animation to the verify button
+            const $verifyBtn = $('#confirm-password-btn');
+            const $verifyIcon = $verifyBtn.find('i');
+            const originalText = $verifyBtn.html();
+
+            $verifyBtn.prop('disabled', true);
+            $verifyBtn.html('<i class="fas fa-sync-alt spin"></i> Verifying...');
+
             cancelRegistration(registrationIdToCancel, password)
                 .then(response => {
                     hidePasswordModal();
@@ -694,6 +853,11 @@
                             'Please try again or contact support.'
                         );
                     }
+                })
+                .finally(() => {
+                    // Restore the verify button
+                    $verifyBtn.prop('disabled', false);
+                    $verifyBtn.html(originalText);
                 });
         }
         return false;
