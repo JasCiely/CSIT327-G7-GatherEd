@@ -7,10 +7,20 @@ from django.conf import settings
 def send_otp_email(admin_profile, request):
     """Generate and send OTP email using SendGrid API"""
     try:
-        # Generate 6-digit OTP
-        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        # Get user email
+        user_email = admin_profile.user.email
 
-        # Save OTP to admin profile
+        # ===================== DOMAIN CHECK =====================
+        ALLOWED_DOMAIN = '@cit.edu'
+        if not user_email.endswith(ALLOWED_DOMAIN):
+            print(f"❌ REJECTED: Email {user_email} is not from {ALLOWED_DOMAIN}")
+            return False
+        # ========================================================
+
+        print(f"✅ Domain check passed: {user_email}")
+
+        # Generate OTP
+        otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
         admin_profile.otp_code = otp
         admin_profile.otp_created_at = timezone.now()
         admin_profile.save()
@@ -21,7 +31,7 @@ def send_otp_email(admin_profile, request):
         # In development (DEBUG=True), just print to console
         if settings.DEBUG:
             print("\n" + "=" * 60)
-            print(f"📧 DEVELOPMENT MODE - Email would be sent to: {admin_profile.user.email}")
+            print(f"📧 DEVELOPMENT MODE - Email would be sent to: {user_email}")
             print(f"📧 OTP CODE: {otp}")
             print("=" * 60 + "\n")
             return True
@@ -87,7 +97,7 @@ def send_otp_email(admin_profile, request):
         # Create email
         message = Mail(
             from_email='GatherEd Security <jasminecielyp@gmail.com>',
-            to_emails=admin_profile.user.email,
+            to_emails=user_email,
             subject='🔐 Your GatherEd Verification Code - Valid for 30 Seconds!',
             html_content=html_content,
             plain_text_content=plain_text
@@ -99,7 +109,7 @@ def send_otp_email(admin_profile, request):
 
         # Check response
         if response.status_code in [200, 202]:
-            print(f"✅ OTP email sent successfully to {admin_profile.user.email}")
+            print(f"✅ OTP email sent successfully to {user_email}")
             return True
         else:
             print(f"❌ SendGrid API error: {response.status_code}")
