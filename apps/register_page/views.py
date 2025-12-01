@@ -1,4 +1,3 @@
-# views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -94,6 +93,10 @@ def register_student(request):
 
 def register_administrator(request):
     """Handle administrator registration - Step 1: Create account"""
+    # Reset OTP resend count when starting new registration
+    if 'otp_resend_count' in request.session:
+        del request.session['otp_resend_count']
+
     if request.method != 'POST':
         return render(request, 'register_administrator.html')
 
@@ -141,7 +144,8 @@ def register_administrator(request):
     ).exists()
 
     if verified_admin_exists:
-        messages.error(request, f'The organization "{organization_name}" already has a verified administrator. Please contact the existing administrator or choose a different organization.')
+        messages.error(request,
+                       f'The organization "{organization_name}" already has a verified administrator. Please contact the existing administrator or choose a different organization.')
         return render(request, 'register_administrator.html')
 
     # Create administrator user
@@ -168,13 +172,16 @@ def register_administrator(request):
         request.session['pending_admin_id'] = user.id
         request.session['pending_admin_email'] = email
 
+        # Initialize OTP resend counter
+        request.session['otp_resend_count'] = 0
+
         # Send OTP email
         email_sent = send_otp_email(admin_profile, request)
 
         if email_sent:
             messages.info(
                 request,
-                f'Verification code sent to {email}. Please check your email and enter the code below.'
+                f'Verification code sent to {email}. Please check your email and enter the code within 30 seconds.'
             )
             return redirect('verify_otp')
         else:
@@ -196,6 +203,47 @@ def register_administrator(request):
         return render(request, 'register_administrator.html')
 
 
+def cleanup_pending_registration(request):
+    """Clean up pending registration when user goes back"""
+    pending_admin_id = request.session.get('pending_admin_id')
+
+    if pending_admin_id:
+        try:
+            # Get the admin profile and user
+            admin_profile = AdminProfile.objects.get(user_id=pending_admin_id)
+            user = admin_profile.user
+
+            # Delete both the profile and user
+            admin_profile.delete()
+            user.delete()
+
+            # Clear session data
+            if 'pending_admin_id' in request.session:
+                del request.session['pending_admin_id']
+            if 'pending_admin_email' in request.session:
+                del request.session['pending_admin_email']
+            if 'otp_resend_count' in request.session:
+                del request.session['otp_resend_count']
+
+            messages.info(request, 'Registration cancelled. You can start a new registration.')
+
+        except (AdminProfile.DoesNotExist, User.DoesNotExist):
+            # If the objects don't exist, just clear the session
+            if 'pending_admin_id' in request.session:
+                del request.session['pending_admin_id']
+            if 'pending_admin_email' in request.session:
+                del request.session['pending_admin_email']
+            if 'otp_resend_count' in request.session:
+                del request.session['otp_resend_count']
+
+    return redirect('register_administrator')
+
+
+def cleanup_and_register(request):
+    """Clean up and redirect to registration page"""
+    return cleanup_pending_registration(request)
+
+
 def verify_otp(request):
     """Handle OTP verification - Step 2: Verify account"""
     if request.method == 'GET':
@@ -203,7 +251,26 @@ def verify_otp(request):
         if 'pending_admin_id' not in request.session:
             messages.error(request, 'No pending verification found. Please register first.')
             return redirect('register_administrator')
-        return render(request, 'verify_otp.html')
+
+        # Calculate remaining time for the current OTP
+        remaining_time = 0
+        is_otp_expired = False
+        try:
+            admin_profile = AdminProfile.objects.get(user_id=request.session.get('pending_admin_id'))
+            if admin_profile.otp_created_at:
+                elapsed_time = (timezone.now() - admin_profile.otp_created_at).total_seconds()
+                remaining_time = max(0, 30 - int(elapsed_time))
+                is_otp_expired = elapsed_time >= 30
+        except AdminProfile.DoesNotExist:
+            # If admin profile doesn't exist, cleanup and redirect
+            cleanup_pending_registration(request)
+            messages.error(request, 'Registration session expired. Please register again.')
+            return redirect('register_administrator')
+
+        return render(request, 'verify_otp.html', {
+            'remaining_time': remaining_time,
+            'is_otp_expired': is_otp_expired
+        })
 
     elif request.method == 'POST':
         # Verify OTP code
@@ -212,7 +279,23 @@ def verify_otp(request):
 
         if not entered_otp:
             messages.error(request, 'Please enter the verification code.')
-            return render(request, 'verify_otp.html')
+            # Calculate remaining time for error case
+            remaining_time = 0
+            is_otp_expired = False
+            try:
+                admin_profile = AdminProfile.objects.get(user_id=pending_admin_id)
+                if admin_profile.otp_created_at:
+                    elapsed_time = (timezone.now() - admin_profile.otp_created_at).total_seconds()
+                    remaining_time = max(0, 30 - int(elapsed_time))
+                    is_otp_expired = elapsed_time >= 30
+            except AdminProfile.DoesNotExist:
+                cleanup_pending_registration(request)
+                messages.error(request, 'Registration session expired. Please register again.')
+                return redirect('register_administrator')
+            return render(request, 'verify_otp.html', {
+                'remaining_time': remaining_time,
+                'is_otp_expired': is_otp_expired
+            })
 
         if not pending_admin_id:
             messages.error(request, 'Session expired. Please register again.')
@@ -221,13 +304,16 @@ def verify_otp(request):
         try:
             admin_profile = AdminProfile.objects.get(user_id=pending_admin_id)
 
+            # Check if OTP is expired first
             if admin_profile.is_otp_expired():
-                messages.error(request, 'Verification code has expired. Please register again.')
-                # Clean up expired registration
-                admin_profile.user.delete()
-                request.session.flush()
-                return redirect('register_administrator')
+                messages.error(request,
+                               'Verification code has expired. Please request a new code using the "Resend Code" link.')
+                return render(request, 'verify_otp.html', {
+                    'remaining_time': 0,
+                    'is_otp_expired': True
+                })
 
+            # Then check if OTP is correct
             if admin_profile.otp_code == entered_otp:
                 # OTP verified successfully
                 admin_profile.is_verified = True
@@ -238,23 +324,32 @@ def verify_otp(request):
                 admin_profile.user.is_active = True
                 admin_profile.user.save()
 
-                # Clean up session
+                # Clean up session including resend counter
                 request.session.flush()
 
                 messages.success(request, 'Account verified successfully! Please log in to continue.')
-                return redirect('login')  # Redirect to login page instead of auto-login
+                return redirect('login')
             else:
-                messages.error(request, 'Invalid verification code. Please try again.')
-                return render(request, 'verify_otp.html')
+                # OTP is incorrect but still valid (not expired)
+                # Calculate remaining time for the current OTP
+                elapsed_time = (timezone.now() - admin_profile.otp_created_at).total_seconds()
+                remaining_time = max(0, 30 - int(elapsed_time))
+                is_otp_expired = elapsed_time >= 30
+
+                messages.error(request, 'Invalid verification code. Please try again with the same code.')
+                return render(request, 'verify_otp.html', {
+                    'remaining_time': remaining_time,
+                    'is_otp_expired': is_otp_expired
+                })
 
         except AdminProfile.DoesNotExist:
+            cleanup_pending_registration(request)
             messages.error(request, 'Admin profile not found. Please register again.')
-            request.session.flush()
             return redirect('register_administrator')
 
 
 def resend_otp(request):
-    """Resend OTP verification code"""
+    """Resend OTP verification code - Maximum 3 attempts allowed"""
     pending_admin_id = request.session.get('pending_admin_id')
 
     if not pending_admin_id:
@@ -280,21 +375,45 @@ def resend_otp(request):
                 f'This organization "{admin_profile.organization_name}" has been assigned to another administrator. Please register with a different organization.'
             )
             # Clean up this registration
-            admin_profile.user.delete()
-            request.session.flush()
+            cleanup_pending_registration(request)
             return redirect('register_administrator')
 
-        # Generate and send new OTP
+        # Check OTP resend attempt count
+        otp_resend_count = request.session.get('otp_resend_count', 0)
+
+        if otp_resend_count >= 3:
+            messages.error(
+                request,
+                'Maximum OTP resend attempts (3) reached. Please register again.'
+            )
+            # Clean up this registration
+            cleanup_pending_registration(request)
+            return redirect('register_administrator')
+
+        # Generate and send new OTP (this creates a new OTP with fresh timestamp)
         email_sent = send_otp_email(admin_profile, request)
 
         if email_sent:
-            messages.success(request, 'New verification code sent! Please check your email.')
+            # Increment resend counter
+            otp_resend_count += 1
+            request.session['otp_resend_count'] = otp_resend_count
+
+            attempts_remaining = 3 - otp_resend_count
+            messages.success(
+                request,
+                f'New verification code sent! Please check your email. ({attempts_remaining} attempts remaining)'
+            )
+
+            # Force session save to ensure counter is updated
+            request.session.modified = True
+
         else:
             messages.error(request, 'Failed to send verification code. Please try again.')
 
+        # Always redirect back to verify OTP page with resend parameter
         return redirect('verify_otp')
 
     except AdminProfile.DoesNotExist:
+        cleanup_pending_registration(request)
         messages.error(request, 'Admin profile not found. Please register again.')
-        request.session.flush()
         return redirect('register_administrator')
