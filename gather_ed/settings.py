@@ -30,7 +30,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
-# Add Render’s dynamic hostname if available
+# Add Render's dynamic hostname if available
 RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
@@ -146,15 +146,14 @@ LOGIN_REDIRECT_URL = 'events:dashboard'
 LOGOUT_REDIRECT_URL = 'events:login'
 
 # =====================
-# EMAIL (CONSOLE MODE)
+# EMAIL (SendGrid API - NO SMTP)
 # =====================
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@gatheredu.com')
+# Console backend for development - emails print to terminal
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'jasminecielyp@gmail.com'
+
+# Note: We're NOT using SMTP at all. SendGrid API is used directly in utils.py
+# No EMAIL_HOST, EMAIL_PORT, etc. needed
 
 # =====================
 # SUPABASE KEYS
