@@ -876,7 +876,7 @@
             return Promise.reject({ status: 500, message: 'Security Error: CSRF token missing.' });
         }
 
-        const cancelUrl = `/student_dashboard/cancel_registration/${registrationId}/`;
+        const cancelUrl = `/student_dashboard/my-events/cancel_registration/${registrationId}/`;
 
         return new Promise((resolve, reject) => {
             $.ajax({
