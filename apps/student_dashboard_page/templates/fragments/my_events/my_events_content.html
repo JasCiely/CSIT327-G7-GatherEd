@@ -68,12 +68,18 @@
 
                             <div class="card-actions">
                                 {% if status_lower == 'registered' %}
-                                <button class="btn-action cancel cancel-registration-btn btn-danger"
-                                        title="Cancel Registration"
-                                        data-registration-id="{{ data.registration.id }}"
-                                        data-event-name="{{ data.name }}">
-                                    <i class="fas fa-user-minus"></i> Cancel Registration
-                                </button>
+                                    {% if data.can_cancel %}
+                                    <button class="btn-action cancel cancel-registration-btn btn-danger"
+                                            title="Cancel Registration"
+                                            data-registration-id="{{ data.registration.id }}"
+                                            data-event-name="{{ data.name }}">
+                                        <i class="fas fa-user-minus"></i> Cancel Registration
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-secondary btn-sm" disabled title="Cancellation not allowed - attendance recording has begun">
+                                        <i class="fas fa-ban"></i> Cannot Cancel
+                                    </button>
+                                    {% endif %}
                                 {% elif status_lower == 'cancelled' %}
                                 <a href="{% url 'event_list' %}" class="btn btn-primary btn-sm">
                                     <i class="fas fa-redo"></i> Register Again
