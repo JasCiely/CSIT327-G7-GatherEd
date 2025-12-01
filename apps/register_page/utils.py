@@ -34,3 +34,31 @@ def send_otp_email(admin_profile, request):
     except Exception as e:
         logger.error(f"Failed to send OTP email: {str(e)}")
         return False
+
+
+def send_student_otp_email(student_profile, request):
+    """Send OTP verification email to student"""
+    try:
+        otp_code = student_profile.generate_otp()
+
+        subject = 'Your GatherEd Student Verification Code'
+
+        html_message = render_to_string('email/student_otp_verification.html', {
+            'student_name': student_profile.name,
+            'otp_code': otp_code,
+        })
+
+        plain_message = strip_tags(html_message)
+
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[student_profile.user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send student OTP email: {str(e)}")
+        return False

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Account - GatherEd</title>
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/register_css.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        .otp-input {
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 8px;
+            font-weight: bold;
+        }
+        .resend-link {
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .resend-link:hover {
+            color: var(--primary-dark);
+        }
+        .timer {
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="logo">
+                <i class="fas fa-user-graduate"></i> GatherEd Student
+            </div>
+            <h2>Verify Your Account</h2>
+
+            <div class="verification-info">
+                <p>We've sent a 6-digit verification code to:</p>
+                <p class="email-display"><strong>{{ request.session.pending_student_email }}</strong></p>
+                <p>Please enter the code below to verify your account.</p>
+            </div>
+
+            <form action="{% url 'verify_student_otp' %}" method="post">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="otp_code">Verification Code</label>
+                    <input type="text" id="otp_code" name="otp_code" class="otp-input"
+                           placeholder="000000" maxlength="6" pattern="[0-9]{6}"
+                           title="Enter 6-digit code" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full-width">
+                    <i class="fas fa-check-circle"></i> Verify Account
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Didn't receive the code?
+                    <a href="{% url 'resend_student_otp' %}" class="resend-link">Resend Code</a>
+                </p>
+                <p class="timer">Code expires in 10 minutes</p>
+                <p><a href="{% url 'register_student' %}">Back to Registration</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            {% if messages %}
+                {% for message in messages %}
+                    Toastify({
+                        text: "{{ message|escapejs }}",
+                        duration: 4000,
+                        gravity: "top",
+                        position: "right",
+                        close: true,
+                        style: {
+                            background: '{% if message.tags == "error" %}linear-gradient(to right, #D63129, #C22C25){% else %}linear-gradient(to right, #4CAF50, #45a049){% endif %}'
+                        },
+                    }).showToast();
+                {% endfor %}
+            {% endif %}
+
+            // Auto-format OTP input
+            const otpInput = document.getElementById('otp_code');
+            otpInput.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 6) {
+                    this.value = this.value.slice(0, 6);
+                }
+            });
+
+            // Auto-submit when 6 digits are entered
+            otpInput.addEventListener('input', function() {
+                if (this.value.length === 6) {
+                    this.form.submit();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

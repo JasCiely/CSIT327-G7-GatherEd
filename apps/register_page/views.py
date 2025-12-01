@@ -9,7 +9,7 @@ from django.db.models import Q
 import re
 
 from apps.register_page.models import AdminProfile, StudentProfile
-from apps.register_page.utils import send_otp_email
+from apps.register_page.utils import send_otp_email, send_student_otp_email
 
 EMAIL_DOMAIN = '@cit.edu'
 
@@ -20,7 +20,7 @@ def register_choice(request):
 
 
 def register_student(request):
-    """Handle student registration"""
+    """Handle student registration - Step 1: Create account"""
     if request.method != 'POST':
         return render(request, 'register_student.html')
 
@@ -67,20 +67,39 @@ def register_student(request):
             username=email,
             email=email,
             password=password,
-            is_staff=False
+            is_staff=False,
+            is_active=False  # Deactivate until verified
         )
 
-        StudentProfile.objects.create(
+        student_profile = StudentProfile.objects.create(
             user=user,
             name=name,
             cit_id=cit_id,
+            is_verified=False,
             created_at=timezone.now()
         )
 
-        logged_in_user = authenticate(request, username=email, password=password)
-        login(request, logged_in_user)
-        messages.success(request, 'Student registration successful! You are now logged in.')
-        return redirect('student_dashboard')
+        # Store user ID in session for OTP verification
+        request.session['pending_student_id'] = user.id
+        request.session['pending_student_email'] = email
+
+        # Send OTP email
+        email_sent = send_student_otp_email(student_profile, request)
+
+        if email_sent:
+            messages.info(
+                request,
+                f'Verification code sent to {email}. Please check your email and enter the code below.'
+            )
+            return redirect('verify_student_otp')
+        else:
+            messages.error(
+                request,
+                'Account created but failed to send verification email. Please try again.'
+            )
+            # Clean up if email fails
+            user.delete()
+            return render(request, 'register_student.html')
 
     except Exception as e:
         if user:
@@ -298,3 +317,91 @@ def resend_otp(request):
         messages.error(request, 'Admin profile not found. Please register again.')
         request.session.flush()
         return redirect('register_administrator')
+
+
+def verify_student_otp(request):
+    """Handle student OTP verification - Step 2: Verify account"""
+    if request.method == 'GET':
+        # Check if there's a pending student verification
+        if 'pending_student_id' not in request.session:
+            messages.error(request, 'No pending verification found. Please register first.')
+            return redirect('register_student')
+        return render(request, 'verify_student_otp.html')
+
+    elif request.method == 'POST':
+        # Verify OTP code
+        entered_otp = request.POST.get('otp_code')
+        pending_student_id = request.session.get('pending_student_id')
+
+        if not entered_otp:
+            messages.error(request, 'Please enter the verification code.')
+            return render(request, 'verify_student_otp.html')
+
+        if not pending_student_id:
+            messages.error(request, 'Session expired. Please register again.')
+            return redirect('register_student')
+
+        try:
+            student_profile = StudentProfile.objects.get(user_id=pending_student_id)
+
+            if student_profile.is_otp_expired():
+                messages.error(request, 'Verification code has expired. Please register again.')
+                # Clean up expired registration
+                student_profile.user.delete()
+                request.session.flush()
+                return redirect('register_student')
+
+            if student_profile.otp_code == entered_otp:
+                # OTP verified successfully
+                student_profile.is_verified = True
+                student_profile.otp_code = None
+                student_profile.otp_created_at = None
+                student_profile.save()
+
+                student_profile.user.is_active = True
+                student_profile.user.save()
+
+                # Clean up session
+                request.session.flush()
+
+                messages.success(request, 'Account verified successfully! Please log in to continue.')
+                return redirect('login')  # Redirect to login page instead of auto-login
+            else:
+                messages.error(request, 'Invalid verification code. Please try again.')
+                return render(request, 'verify_student_otp.html')
+
+        except StudentProfile.DoesNotExist:
+            messages.error(request, 'Student profile not found. Please register again.')
+            request.session.flush()
+            return redirect('register_student')
+
+
+def resend_student_otp(request):
+    """Resend student OTP verification code"""
+    pending_student_id = request.session.get('pending_student_id')
+
+    if not pending_student_id:
+        messages.error(request, 'Session expired. Please register again.')
+        return redirect('register_student')
+
+    try:
+        student_profile = StudentProfile.objects.get(user_id=pending_student_id)
+
+        if student_profile.is_verified:
+            messages.info(request, 'Your account is already verified.')
+            return redirect('student_dashboard')
+
+        # Generate and send new OTP
+        email_sent = send_student_otp_email(student_profile, request)
+
+        if email_sent:
+            messages.success(request, 'New verification code sent! Please check your email.')
+        else:
+            messages.error(request, 'Failed to send verification code. Please try again.')
+
+        return redirect('verify_student_otp')
+
+    except StudentProfile.DoesNotExist:
+        messages.error(request, 'Student profile not found. Please register again.')
+        request.session.flush()
+        return redirect('register_student')
