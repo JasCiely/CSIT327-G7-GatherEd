@@ -76,6 +76,10 @@
                                         data-event-name="{{ data.name|escapejs }}">
                                     <i class="fas fa-user-minus"></i> Cancel Registration
                                 </button>
+                                {% elif status_lower == 'cancelled' %}
+                                <a href="{% url 'event_list' %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-redo"></i> Register Again
+                                </a>
                                 {% else %}
                                 <button class="btn btn-secondary btn-sm" disabled>
                                     {# Display the descriptive status (Attended, Absent, Did Not Attend, Cancelled) #}
