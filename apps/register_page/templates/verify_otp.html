@@ -7,32 +7,516 @@
     {% load static %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/register_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <style>
-        .otp-input {
-            font-size: 24px;
-            text-align: center;
-            letter-spacing: 8px;
-            font-weight: bold;
+        :root {
+            --primary-color: #00A9FF;
+            --secondary-color: #2F93FF;
+            --primary-color-light: #004D73;
+            --background-dark: #0A0A0A;
+            --background-medium: #181818;
+            --background-light: #252525;
+            --text-light: #F0F0F0;
+            --text-color-dark: #FFFFFF;
+            --text-muted: #9E9E9E;
+            --text-color-medium: #CCCCCC;
+            --border-color: #333333;
+            --border-color-light: #444444;
+            --card-shadow-color: rgba(0, 0, 0, 0.8);
+            --card-hover-shadow: 0 10px 20px rgba(0, 169, 255, 0.25);
+            --warning-color: #FFC107;
+            --success-color: #6BFF8E;
+            --attention-color: #FF6B6B;
+            --info-color: #FFD26B;
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
         }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Roboto', sans-serif;
+            background-color: var(--background-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .auth-box {
+            background: var(--background-medium);
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px var(--card-shadow-color);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .auth-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+
+        .logo i {
+            margin-right: 12px;
+            font-size: 2rem;
+            color: var(--secondary-color);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 700;
+            color: var(--text-light);
+            font-size: 1.8rem;
+            letter-spacing: -0.5px;
+        }
+
+        .verification-info {
+            background-color: rgba(0, 169, 255, 0.08);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .verification-info.expired {
+            background-color: rgba(255, 107, 107, 0.08);
+            border-left: 4px solid var(--attention-color);
+        }
+
+        .email-display {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            margin: 15px 0;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        .otp-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .otp-input {
+            width: 60px;
+            height: 70px;
+            font-size: 28px;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background-color: var(--background-light);
+            transition: var(--transition);
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .otp-input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 169, 255, 0.2);
+        }
+
+        .otp-input.filled {
+            border-color: var(--primary-color);
+            background-color: rgba(0, 169, 255, 0.1);
+        }
+
+        .otp-input.error {
+            border-color: var(--attention-color);
+            background-color: rgba(255, 107, 107, 0.1);
+        }
+
+        .otp-input:disabled {
+            background-color: var(--background-dark);
+            border-color: var(--border-color);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .error-message {
+            color: var(--attention-color);
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .error-message i {
+            margin-right: 8px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 10px;
+            letter-spacing: 0.2px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--background-dark);
+            box-shadow: 0 4px 15px rgba(0, 169, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            box-shadow: 0 6px 20px rgba(0, 169, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background-color: var(--border-color);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.6;
+        }
+
+        .btn:disabled:hover {
+            background-color: var(--border-color);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn i {
+            margin-right: 10px;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .auth-footer p {
+            margin-bottom: 12px;
+        }
+
         .resend-link {
             color: var(--primary-color);
             cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .resend-link:hover {
+            color: var(--secondary-color);
             text-decoration: underline;
         }
-        .resend-link:hover {
-            color: var(--primary-dark);
-        }
+
         .timer {
-            color: #666;
+            font-weight: 500;
             font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .timer i {
+            margin-right: 5px;
+        }
+
+        .timer-active {
+            color: var(--primary-color);
+        }
+
+        .timer-expired {
+            color: var(--attention-color);
+            font-weight: 600;
+        }
+
+        .back-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .back-link:hover {
+            color: var(--primary-color);
+        }
+
+        .attempts-info {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-radius: var(--border-radius);
+            padding: 10px;
+            margin: 10px 0;
+            text-align: center;
+            border-left: 4px solid var(--warning-color);
+            font-size: 0.9rem;
+            color: var(--warning-color);
+        }
+
+        .attempts-info i {
+            margin-right: 8px;
+        }
+
+        .expired-notice {
+            background-color: rgba(255, 107, 107, 0.1);
+            border: 1px solid var(--attention-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            color: var(--attention-color);
+        }
+
+        .resend-loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        @media (max-width: 576px) {
+            .auth-box {
+                padding: 30px 20px;
+            }
+
+            .otp-input {
+                width: 50px;
+                height: 60px;
+                font-size: 24px;
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--background-medium);
+            border-radius: var(--border-radius);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            max-width: 450px;
+            width: 90%;
+            border: 1px solid var(--border-color);
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.5rem;
+        }
+
+        .modal-icon.warning {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: var(--warning-color);
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        .modal-content {
+            margin-bottom: 25px;
+            color: var(--text-color-medium);
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 100px;
+        }
+
+        .modal-btn-cancel {
+            background-color: var(--background-light);
+            color: var(--text-color-medium);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-btn-cancel:hover {
+            background-color: var(--border-color);
+            color: var(--text-light);
+        }
+
+        .modal-btn-confirm {
+            background-color: var(--attention-color);
+            color: var(--text-light);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .modal-btn-confirm:hover {
+            background-color: #ff5252;
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .modal-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Add to existing CSS */
+        .back-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .back-link:hover {
+            color: var(--primary-color);
         }
     </style>
 </head>
 <body>
+    <!-- Cleanup Confirmation Modal -->
+    <div class="modal-overlay" id="cleanupModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-icon warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3 class="modal-title">Cancel Registration?</h3>
+            </div>
+            <div class="modal-content">
+                <p>Are you sure you want to cancel your current registration? This action will:</p>
+                <ul style="margin: 15px 0; padding-left: 20px;">
+                    <li>Delete your unverified account</li>
+                    <li>Remove all registration data</li>
+                    <li>Require you to start over</li>
+                </ul>
+                <p>Your verification code will no longer be valid.</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn modal-btn-cancel" id="cancelCleanup">
+                    Continue Registration
+                </button>
+                <button type="button" class="modal-btn modal-btn-confirm" id="confirmCleanup">
+                    <span id="confirmText">Yes, Cancel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="auth-container">
         <div class="auth-box">
             <div class="logo">
@@ -40,33 +524,87 @@
             </div>
             <h2>Verify Your Account</h2>
 
-            <div class="verification-info">
+            <div class="verification-info {% if is_otp_expired %}expired{% endif %}">
                 <p>We've sent a 6-digit verification code to:</p>
                 <p class="email-display"><strong>{{ request.session.pending_admin_email }}</strong></p>
-                <p>Please enter the code below to verify your account.</p>
+                {% if not is_otp_expired %}
+                    <p>Please enter the code below to verify your account.</p>
+                    <p><small><strong>Note:</strong> The code expires in 30 seconds. If it expires, you can request a new one using the "Resend Code" link below.</small></p>
+                {% else %}
+                    <div class="expired-notice">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Verification code has expired.</strong> Please request a new code below.
+                    </div>
+                {% endif %}
             </div>
 
-            <form action="{% url 'verify_otp' %}" method="post">
+            <form action="{% url 'verify_otp' %}" method="post" id="otp-form">
                 {% csrf_token %}
 
                 <div class="form-group">
                     <label for="otp_code">Verification Code</label>
-                    <input type="text" id="otp_code" name="otp_code" class="otp-input"
-                           placeholder="000000" maxlength="6" pattern="[0-9]{6}"
-                           title="Enter 6-digit code" required>
+                    <div class="otp-container">
+                        {% for i in "123456" %}
+                        <input type="text"
+                               class="otp-input"
+                               maxlength="1"
+                               pattern="[0-9]"
+                               required
+                               {% if is_otp_expired %}disabled{% endif %}>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" id="otp_code" name="otp_code">
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            {% if message.tags == 'error' and 'Invalid verification code' in message.message %}
+                                <div class="error-message">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ message }}
+                                </div>
+                            {% elif message.tags == 'error' and 'Verification code has expired' in message.message %}
+                                <div class="error-message">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ message }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-full-width">
-                    <i class="fas fa-check-circle"></i> Verify Account
+                <button type="submit"
+                        class="btn btn-primary"
+                        id="verify-btn"
+                        {% if is_otp_expired %}disabled{% endif %}>
+                    <i class="fas fa-check-circle"></i>
+                    {% if is_otp_expired %}Code Expired{% else %}Verify Account{% endif %}
                 </button>
             </form>
 
             <div class="auth-footer">
                 <p>Didn't receive the code?
-                    <a href="{% url 'resend_otp' %}" class="resend-link">Resend Code</a>
+                    <a href="{% url 'resend_otp' %}" class="resend-link" id="resend-link">
+                        Resend Code
+                    </a>
                 </p>
-                <p class="timer">Code expires in 10 minutes</p>
-                <p><a href="{% url 'register_administrator' %}">Back to Registration</a></p>
+
+                {% if not is_otp_expired %}
+                <div class="timer timer-active">
+                    <i class="fas fa-clock"></i> <span id="countdown">{{ remaining_time }} seconds</span>
+                </div>
+                {% else %}
+                <div class="timer timer-expired">
+                    <i class="fas fa-clock"></i> <span id="countdown">Code Expired</span>
+                </div>
+                {% endif %}
+
+                {% if request.session.otp_resend_count %}
+                    <div class="attempts-info">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Resend attempts used: {{ request.session.otp_resend_count }}/3</span>
+                    </div>
+                {% endif %}
+                <p><a class="back-link" id="back-link">Back to Registration</a></p>
             </div>
         </div>
     </div>
@@ -74,36 +612,306 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Modal elements
+            const cleanupModal = document.getElementById('cleanupModal');
+            const cancelCleanupBtn = document.getElementById('cancelCleanup');
+            const confirmCleanupBtn = document.getElementById('confirmCleanup');
+            const confirmText = document.getElementById('confirmText');
+            const backLink = document.getElementById('back-link');
+
+            // Modal functions
+            function showCleanupModal() {
+                cleanupModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function hideCleanupModal() {
+                cleanupModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            // Cleanup function
+            function performCleanup() {
+                // Show loading state
+                confirmCleanupBtn.disabled = true;
+                confirmText.innerHTML = '<span class="loading-spinner"></span> Cleaning up...';
+
+                // Redirect to cleanup URL
+                window.location.href = "{% url 'cleanup_and_register' %}";
+            }
+
+            // Modal event listeners
+            cancelCleanupBtn.addEventListener('click', hideCleanupModal);
+            confirmCleanupBtn.addEventListener('click', performCleanup);
+
+            // Back link shows modal instead of direct redirect
+            backLink.addEventListener('click', showCleanupModal);
+
+            // Close modal when clicking outside
+            cleanupModal.addEventListener('click', (e) => {
+                if (e.target === cleanupModal) {
+                    hideCleanupModal();
+                }
+            });
+
+            // Toast notifications
             {% if messages %}
                 {% for message in messages %}
-                    Toastify({
-                        text: "{{ message|escapejs }}",
-                        duration: 4000,
-                        gravity: "top",
-                        position: "right",
-                        close: true,
-                        style: {
-                            background: '{% if message.tags == "error" %}linear-gradient(to right, #D63129, #C22C25){% else %}linear-gradient(to right, #4CAF50, #45a049){% endif %}'
-                        },
-                    }).showToast();
+                    {% if not 'Invalid verification code' in message.message and not 'Verification code has expired' in message.message %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: '{% if message.tags == "error" %}linear-gradient(to right, #D63129, #C22C25){% else %}linear-gradient(to right, #4CAF50, #45a049){% endif %}',
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                            },
+                            callback: function() {
+                                if ("{{ message.tags }}" === "success" && "{{ message|escapejs }}".includes("verification code sent")) {
+                                    startCountdown();
+                                }
+                            }
+                        }).showToast();
+                    {% endif %}
                 {% endfor %}
             {% endif %}
 
-            // Auto-format OTP input
-            const otpInput = document.getElementById('otp_code');
-            otpInput.addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9]/g, '');
-                if (this.value.length > 6) {
-                    this.value = this.value.slice(0, 6);
+            // OTP input handling
+            const otpInputs = document.querySelectorAll('.otp-input');
+            const hiddenOtpInput = document.getElementById('otp_code');
+            const countdownElement = document.getElementById('countdown');
+            const timerElement = document.querySelector('.timer');
+            const verifyBtn = document.getElementById('verify-btn');
+            const resendLink = document.getElementById('resend-link');
+            const otpForm = document.getElementById('otp-form');
+
+            // Browser back button handling
+            let cleanupPerformed = false;
+
+            function handleBrowserBack() {
+                if (!cleanupPerformed) {
+                    // Show modal instead of direct cleanup
+                    showCleanupModal();
+                    // Push state to keep user on current page
+                    window.history.pushState(null, null, window.location.href);
+                    return false;
+                }
+                return true;
+            }
+
+            // Initialize OTP functionality based on current state
+            function initializeOTP() {
+                {% if not is_otp_expired %}
+                enableOTPForm();
+
+                if (!window.otpJustResent) {
+                    startCountdown();
+                }
+                {% else %}
+                disableOTPForm();
+                {% endif %}
+
+                // Set up browser back button handling
+                window.history.pushState(null, null, window.location.href);
+                window.addEventListener('popstate', handleBrowserBack);
+            }
+
+            function enableOTPForm() {
+                otpInputs.forEach(input => {
+                    input.value = '';
+                    input.disabled = false;
+                    input.classList.remove('error', 'filled');
+                });
+
+                if (otpInputs.length > 0) {
+                    otpInputs[0].focus();
+                }
+
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify Account';
+
+                setupOTPHandlers();
+            }
+
+            function disableOTPForm() {
+                otpInputs.forEach(input => {
+                    input.disabled = true;
+                    input.placeholder = '';
+                    input.classList.add('error');
+                });
+
+                verifyBtn.disabled = true;
+                verifyBtn.innerHTML = '<i class="fas fa-ban"></i> Code Expired';
+            }
+
+            function setupOTPHandlers() {
+                otpInputs.forEach(input => {
+                    input.addEventListener('input', () => {
+                        clearErrorState();
+                    });
+                });
+
+                otpInputs.forEach((input, index) => {
+                    input.addEventListener('input', (e) => {
+                        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+
+                        if (e.target.value.length === 1 && index < otpInputs.length - 1) {
+                            otpInputs[index + 1].focus();
+                        }
+
+                        updateHiddenOtp();
+
+                        if (e.target.value) {
+                            e.target.classList.add('filled');
+                        } else {
+                            e.target.classList.remove('filled');
+                        }
+                    });
+
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Backspace') {
+                            if (input.value === '' && index > 0) {
+                                otpInputs[index - 1].focus();
+                            }
+                            input.classList.remove('filled');
+                        }
+                    });
+
+                    input.addEventListener('paste', (e) => {
+                        e.preventDefault();
+                        const pasteData = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+
+                        for (let i = 0; i < Math.min(pasteData.length, otpInputs.length); i++) {
+                            otpInputs[i].value = pasteData[i];
+                            otpInputs[i].classList.add('filled');
+                        }
+
+                        const nextIndex = Math.min(pasteData.length, otpInputs.length);
+                        if (nextIndex < otpInputs.length) {
+                            otpInputs[nextIndex].focus();
+                        } else {
+                            otpInputs[otpInputs.length - 1].focus();
+                        }
+
+                        updateHiddenOtp();
+                    });
+                });
+
+                {% if messages %}
+                    {% for message in messages %}
+                        {% if message.tags == 'error' and 'Invalid verification code' in message.message %}
+                            showErrorState();
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            }
+
+            function updateHiddenOtp() {
+                let otp = '';
+                otpInputs.forEach(input => {
+                    otp += input.value;
+                });
+                hiddenOtpInput.value = otp;
+
+                if (otp.length === 6) {
+                    otpForm.submit();
+                }
+            }
+
+            function clearErrorState() {
+                otpInputs.forEach(input => {
+                    input.classList.remove('error');
+                });
+            }
+
+            function showErrorState() {
+                otpInputs.forEach(input => {
+                    input.classList.add('error');
+                });
+            }
+
+            // Countdown timer
+            function startCountdown() {
+                if (window.otpTimer) {
+                    clearTimeout(window.otpTimer);
+                }
+
+                let timeLeft = {{ remaining_time }};
+
+                if (window.otpJustResent) {
+                    timeLeft = 30;
+                    window.otpJustResent = false;
+                }
+
+                function updateCountdown() {
+                    if (timeLeft > 0) {
+                        countdownElement.textContent = `${timeLeft.toString().padStart(2, '0')} seconds`;
+                        countdownElement.classList.remove('timer-expired');
+                        timerElement.classList.remove('timer-expired');
+                        timerElement.classList.add('timer-active');
+                        timeLeft--;
+                        window.otpTimer = setTimeout(updateCountdown, 1000);
+                    } else {
+                        expireOTP();
+                    }
+                }
+
+                updateCountdown();
+            }
+
+            function expireOTP() {
+                countdownElement.textContent = 'Code expired';
+                countdownElement.classList.add('timer-expired');
+                timerElement.classList.remove('timer-active');
+                timerElement.classList.add('timer-expired');
+
+                disableOTPForm();
+
+                const verificationInfo = document.querySelector('.verification-info');
+                verificationInfo.classList.add('expired');
+                const infoContent = verificationInfo.innerHTML;
+                verificationInfo.innerHTML = `
+                    <p>We've sent a 6-digit verification code to:</p>
+                    <p class="email-display"><strong>{{ request.session.pending_admin_email }}</strong></p>
+                    <div class="expired-notice">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Verification code has expired.</strong> Please request a new code below.
+                    </div>
+                `;
+            }
+
+            // Initialize the OTP form
+            initializeOTP();
+
+            // Resend link handling
+            resendLink.addEventListener('click', function(e) {
+                window.otpJustResent = true;
+                this.classList.add('resend-loading');
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            });
+
+            // Cleanup flag for beforeunload
+            window.addEventListener('beforeunload', function(e) {
+                if (window.location.href.includes('verify_otp') && !cleanupPerformed) {
+                    e.preventDefault();
+                    e.returnValue = 'If you leave, your current registration will be cancelled. Are you sure?';
+                    return e.returnValue;
                 }
             });
 
-            // Auto-submit when 6 digits are entered
-            otpInput.addEventListener('input', function() {
-                if (this.value.length === 6) {
-                    this.form.submit();
-                }
+            // Set cleanup flag when user confirms cleanup
+            confirmCleanupBtn.addEventListener('click', function() {
+                cleanupPerformed = true;
             });
+
+            // Also check URL parameters for resend action
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('resend') || window.location.href.includes('resend_otp')) {
+                window.otpJustResent = true;
+            }
         });
     </script>
 </body>
