@@ -26,19 +26,18 @@
             {% if registered_events_data %}
             <div id="eventsCardGrid" class="events-card-grid">
                 {% for data in registered_events_data %}
-                    {# It is crucial that data.status is prepared in the Django view to be descriptive: ATTENDED, ABSENT, REGISTERED, or DID NOT ATTEND #}
                     {% with status_lower=data.status|lower %}
                     <div class="event-card clickable-card"
                          data-registration-id="{{ data.registration.id }}"
                          data-event-id="{{ data.id }}"
-                         data-raw-status="{{ status_lower }}" {# Store the raw status for JS checks #}
+                         data-raw-status="{{ status_lower }}"
                          data-name="{{ data.name|lower }}"
                          data-date="{{ data.date }}"
                          data-time="{{ data.time }}"
                          data-location="{{ data.location }}"
                          data-organization="{{ data.organization_name }}"
-                         data-capacity="{{ data.capacity }}"
-                         data-full-description="{{ data.full_description|escape }}"
+                         data-capacity="Registrations: {{ data.attendee_count|default:'0' }} / {{ data.capacity }}"
+                         data-full-description="{{ data.full_description }}"
                          data-picture-url="{{ data.picture_url|default:'' }}">
 
                         <div class="card-image-wrapper">
@@ -68,12 +67,11 @@
                             </div>
 
                             <div class="card-actions">
-                                {# Cancellation is allowed only if status is REGISTERED. Check against finalized statuses. #}
                                 {% if status_lower == 'registered' %}
                                 <button class="btn-action cancel cancel-registration-btn btn-danger"
                                         title="Cancel Registration"
                                         data-registration-id="{{ data.registration.id }}"
-                                        data-event-name="{{ data.name|escapejs }}">
+                                        data-event-name="{{ data.name }}">
                                     <i class="fas fa-user-minus"></i> Cancel Registration
                                 </button>
                                 {% elif status_lower == 'cancelled' %}
@@ -82,7 +80,6 @@
                                 </a>
                                 {% else %}
                                 <button class="btn btn-secondary btn-sm" disabled>
-                                    {# Display the descriptive status (Attended, Absent, Did Not Attend, Cancelled) #}
                                     <i class="fas fa-info-circle"></i> {{ data.status }}
                                 </button>
                                 {% endif %}
@@ -104,9 +101,9 @@
     </div>
 </div>
 
-{# --- MODALS (Details, Confirmation, Password, Feedback) --- #}
+{# --- MODALS --- #}
 
-{# --- LOADING MODAL (For Reload List, AJAX actions) --- #}
+{# --- LOADING MODAL --- #}
 <div id="custom-loading-modal" class="custom-modal-backdrop" style="display: none;">
     <div class="custom-modal-content">
         <h3>Refreshing Event Data...</h3>
@@ -114,83 +111,102 @@
     </div>
 </div>
 
+{# --- EVENT DETAILS MODAL --- #}
 <div id="eventDetailsModal" class="event-modal-backdrop" style="display: none;">
     <div class="event-modal-content">
         <button class="modal-close-btn" onclick="hideEventModal()"><i class="fas fa-times"></i></button>
+
         <img src="https://placehold.co/700x200/121212/00A9FF?text=Registered+Event" alt="Event Image" class="modal-image" id="modal-event-image">
+
         <div class="modal-body">
             <div class="modal-header">
-                <h3 id="modal-event-title"></h3>
+                <h3 id="modal-event-title">Event Title</h3>
             </div>
+
             <div class="modal-details">
-                <p class="modal-detail-row"><i class="fas fa-clock"></i> <span id="modal-event-datetime"></span></p>
-                <p class="modal-detail-row"><i class="fas fa-map-marker-alt"></i> <span id="modal-event-location"></span></p>
-                <p class="modal-detail-row"><i class="fas fa-school"></i> <span id="modal-event-organization"></span></p>
-                <p class="modal-detail-row"><i class="fas fa-info-circle"></i> <span id="modal-event-status"></span></p>
+                <p class="modal-detail-row"><i class="fas fa-clock"></i> <span id="modal-event-datetime">Date and Time</span></p>
+                <p class="modal-detail-row"><i class="fas fa-map-marker-alt"></i> <span id="modal-event-location">Location</span></p>
+                <p class="modal-detail-row"><i class="fas fa-school"></i> <span id="modal-event-organization">Organization</span></p>
+                <p class="modal-detail-row"><i class="fas fa-users"></i> <span id="modal-event-capacity">Registrations: 0 / 2</span></p>
+                <p class="modal-detail-row"><i class="fas fa-info-circle"></i> <span id="modal-event-status">Status</span></p>
             </div>
+
             <div class="modal-full-description">
                 <h4>Event Description</h4>
-                <p id="modal-event-description"></p>
+                <p id="modal-event-description">Full description will appear here...</p>
             </div>
         </div>
+
         <div class="modal-footer">
-             <button class="btn btn-secondary" id="modal-action-btn-close" onclick="hideEventModal()">
+            <button class="btn btn-secondary" id="modal-action-btn-close" onclick="hideEventModal()">
                 <i class="fas fa-check"></i> Close
             </button>
         </div>
     </div>
 </div>
 
+{# --- CONFIRMATION MODAL --- #}
 <div id="confirmationModal" class="event-modal-backdrop" style="display: none;">
     <div class="event-modal-content confirmation-modal-style">
         <div class="modal-header">
-            <h3><i class="fas fa-user-minus"></i> Confirm Cancellation</h3>
+            <h3><i class="fas fa-exclamation-triangle warning-icon"></i> Cancel Registration</h3>
         </div>
         <div class="modal-body">
-            <p>You are about to **cancel your registration** for the event:</p>
-            <p class="event-name-emphasis"><span id="confirm-event-name"></span></p>
-
-            <p class="muted">
-                This action cannot be easily undone. Click **Proceed to Verification** to confirm.
-            </p>
+            <div class="confirmation-content">
+                <p class="confirmation-text">You are about to cancel your registration for:</p>
+                <div class="event-name-container">
+                    <p class="event-name-emphasis" id="confirm-event-name">Event Name</p>
+                </div>
+                <div class="warning-note">
+                    <i class="fas fa-info-circle info-icon"></i>
+                    <span>This action cannot be undone. You'll need to register again if you change your mind.</span>
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="hideConfirmationModal()">
-                <i class="fas fa-arrow-left"></i> Go Back
+                <i class="fas fa-times"></i> Keep Registration
             </button>
             <button class="btn btn-danger" id="confirm-cancel-btn" onclick="executeCancellationConfirmation()">
-                <i class="fas fa-chevron-right"></i> Proceed to Verification
+                <i class="fas fa-user-minus"></i> Cancel Registration
             </button>
         </div>
     </div>
 </div>
 
+{# --- PASSWORD MODAL --- #}
 <div id="passwordModal" class="event-modal-backdrop" style="display: none;">
     <div class="event-modal-content confirmation-modal-style">
         <div class="modal-header">
-            <h3><i class="fas fa-lock"></i> Verify Your Identity</h3>
+            <h3><i class="fas fa-lock security-icon"></i> Verify Your Identity</h3>
         </div>
-
         <div class="modal-body">
             <div id="passwordErrorMessage" class="error-message-box" style="display:none;">
                 <i class="fas fa-exclamation-triangle"></i>
                 <span id="passwordErrorText"></span>
             </div>
-            <p>Please enter your **password** to confirm **cancellation** for:</p>
-            <p class="event-name-emphasis"><span id="password-confirm-event-name"></span></p>
-
-            <form onsubmit="executeCancellationWithPassword(); return false;">
-                <div class="form-group" style="margin-top: 20px;">
-                    <input type="password"
-                           id="cancellationPassword"
-                           class="control-input"
-                           placeholder="Enter your password"
-                           required
-                           autocomplete="current-password"
-                           name="password">
+            <div class="password-content">
+                <p class="password-text">Please enter your password to confirm cancellation for:</p>
+                <div class="event-name-container">
+                    <p class="event-name-emphasis" id="password-confirm-event-name">Event Name</p>
                 </div>
-            </form>
-            <p class="muted">This step ensures only you can manage your registrations.</p>
+                <form onsubmit="executeCancellationWithPassword(); return false;">
+                    <div class="form-group">
+                        <label for="cancellationPassword" class="password-label">Your Password</label>
+                        <input type="password"
+                               id="cancellationPassword"
+                               class="control-input password-input"
+                               placeholder="Enter your password"
+                               required
+                               autocomplete="current-password"
+                               name="password">
+                    </div>
+                </form>
+                <div class="security-note">
+                    <i class="fas fa-shield-alt security-icon-small"></i>
+                    <span>This step ensures only you can cancel your registrations.</span>
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="hidePasswordModal()">
@@ -221,13 +237,357 @@
     </div>
 </div>
 
+<style>
+    /* Spinning animation for refresh icons */
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Refresh button styles */
+    .btn-refresh {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #0088cc 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 4px rgba(0, 169, 255, 0.3);
+    }
+
+    .btn-refresh:hover {
+        background: linear-gradient(135deg, #0088cc 0%, #0077b3 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 169, 255, 0.4);
+    }
+
+    .btn-refresh:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(0, 169, 255, 0.4);
+    }
+
+    .btn-refresh:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Loading modal spinner */
+    .loading-spinner {
+        font-size: 2rem;
+        color: var(--primary-color);
+        animation: spin 1.5s linear infinite;
+    }
+
+    /* Cancel Registration Button Styles */
+    .cancel-registration-btn {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cancel-registration-btn:hover {
+        background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+    }
+
+    .cancel-registration-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(220, 53, 69, 0.4);
+    }
+
+    .cancel-registration-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3);
+    }
+
+    .cancel-registration-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .cancel-registration-btn:hover::before {
+        left: 100%;
+    }
+
+    /* Disabled state for other status buttons */
+    .btn-secondary:disabled {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: #e0e0e0;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    /* Ensure proper spacing in card actions */
+    .card-actions {
+        margin-top: auto;
+        padding-top: 15px;
+    }
+
+    .card-actions .btn {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* Modal styles */
+    .confirmation-modal-style {
+        max-width: 500px;
+        background: var(--panel-background);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+        padding: 24px 24px 16px;
+        border-bottom: 1px solid var(--border-color);
+        text-align: left;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        color: var(--text-light);
+        font-size: 1.3rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .warning-icon {
+        color: #ffa726;
+    }
+
+    .security-icon {
+        color: var(--primary-color);
+    }
+
+    .security-icon-small {
+        color: var(--primary-color);
+        font-size: 0.9em;
+    }
+
+    .modal-body {
+        padding: 20px 24px;
+        text-align: left;
+    }
+
+    .confirmation-content,
+    .password-content {
+        text-align: left;
+    }
+
+    .confirmation-text,
+    .password-text {
+        color: var(--text-light);
+        margin-bottom: 16px;
+        line-height: 1.5;
+        font-size: 0.95rem;
+    }
+
+    .event-name-container {
+        background: rgba(0, 169, 255, 0.1);
+        border: 1px solid rgba(0, 169, 255, 0.3);
+        border-radius: 8px;
+        padding: 16px;
+        margin: 16px 0;
+        text-align: center;
+    }
+
+    .event-name-emphasis {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin: 0;
+        word-break: break-word;
+    }
+
+    .warning-note,
+    .security-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+        background: rgba(255, 167, 38, 0.1);
+        border: 1px solid rgba(255, 167, 38, 0.3);
+        border-radius: 6px;
+        margin-top: 16px;
+    }
+
+    .security-note {
+        background: rgba(0, 169, 255, 0.1);
+        border: 1px solid rgba(0, 169, 255, 0.3);
+    }
+
+    .warning-note span,
+    .security-note span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.4;
+        flex: 1;
+    }
+
+    .info-icon {
+        color: #ffa726;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+
+    .form-group {
+        margin: 20px 0;
+    }
+
+    .password-label {
+        display: block;
+        color: var(--text-light);
+        margin-bottom: 8px;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .password-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-light);
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .password-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(0, 169, 255, 0.2);
+        outline: none;
+    }
+
+    .modal-footer {
+        padding: 20px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: var(--text-muted);
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+        border: 1px solid #dc3545;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+        border-color: #bd2130;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+    }
+
+    .error-message-box {
+        background: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #dc3545;
+        font-size: 0.9rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .confirmation-modal-style {
+            margin: 20px;
+            max-width: calc(100vw - 40px);
+        }
+
+        .modal-footer {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-refresh {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+
+        .cancel-registration-btn {
+            padding: 10px 12px;
+            font-size: 0.8rem;
+        }
+
+        .card-actions .btn {
+            font-size: 0.8rem;
+            padding: 8px 12px;
+        }
+    }
+</style>
+
 <script>
     let currentModalEventId = null;
     let registrationIdToCancel = null;
 
-    // Function to reliably retrieve the CSRF token from the DOM
     function getCsrfToken() {
-        // Multiple ways to get the CSRF token
         let csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
         if (!csrfToken) {
             csrfToken = $('[name=csrfmiddlewaretoken]').val();
@@ -239,25 +599,48 @@
         return csrfToken;
     }
 
-    // Debugging helper
-    function debugCancellation(registrationId) {
-        console.log('Cancellation Debug Info:', {
-            registrationId: registrationId,
-            csrfToken: getCsrfToken() ? 'Present' : 'Missing',
-            currentUrl: window.location.href,
-            cancelUrl: `/student_dashboard/cancel_registration/${registrationId}/`
-        });
+    function showEventModal(eventId) {
+        const $card = $(`[data-event-id="${eventId}"]`);
+
+        if ($card.length === 0) {
+            console.error(`Event card not found for ID: ${eventId}`);
+            return;
+        }
+
+        currentModalEventId = eventId;
+
+        const eventName = $card.find('.card-title').text();
+        const pictureUrl = $card.data('picture-url');
+        const defaultImageUrl = 'https://placehold.co/700x200/121212/00A9FF?text=Registered+Event';
+        const fullDescription = $card.data('full-description');
+        const statusText = $card.find('.card-actions button:disabled').text().replace(' ', '').trim() || $card.data('raw-status');
+        const capacityText = $card.data('capacity');
+
+        $('#modal-event-title').text(eventName);
+        $('#modal-event-datetime').text(`${$card.data('date')} ${$card.data('time')}`);
+        $('#modal-event-location').text($card.data('location') || 'Not specified');
+        $('#modal-event-organization').text($card.data('organization') || 'N/A');
+        $('#modal-event-capacity').text(capacityText || 'Registrations: 0 / 0');
+        $('#modal-event-status').text(`Registration Status: ${statusText.toUpperCase()}`);
+        $('#modal-event-image').attr('src', pictureUrl || defaultImageUrl);
+        $('#modal-event-description').text(fullDescription || 'No detailed description available.');
+
+        const $modal = $('#eventDetailsModal');
+        $modal.css('display', 'flex').hide().fadeIn(300);
+        $('body').addClass('modal-open');
     }
 
-    // --- Loading, Refresh, Filter Functions ---
-    function showLoadingModal(message) {
-        // Hide other modals just in case
-        hideEventModal();
-        hideConfirmationModal();
-        hidePasswordModal();
-        hideRegistrationFeedbackModal();
+    function hideEventModal() {
+        $('#eventDetailsModal').fadeOut(200, function() {
+            $(this).css('display', 'none');
+            if (!$('#confirmationModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible') && !$('#custom-loading-modal').is(':visible')) {
+                $('body').removeClass('modal-open');
+            }
+        });
+        currentModalEventId = null;
+    }
 
-        // Update the message and show the dedicated loading modal
+    function showLoadingModal(message) {
         $('#custom-loading-modal').css('display', 'flex').hide().fadeIn(200);
         $('body').addClass('modal-open');
     }
@@ -265,7 +648,6 @@
     function hideLoadingModal() {
         $('#custom-loading-modal').fadeOut(200, function() {
             $(this).css('display', 'none');
-            // Remove modal-open only if no other modal is visible
             if (!$('#eventDetailsModal').is(':visible') && !$('#confirmationModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible')) {
                 $('body').removeClass('modal-open');
             }
@@ -273,20 +655,25 @@
     }
 
     function refreshEventList() {
+        // Disable the refresh button and add spinning animation
+        const $refreshBtn = $('#refreshEventsBtn');
+        const $refreshIcon = $refreshBtn.find('i');
+
+        $refreshBtn.prop('disabled', true);
+        $refreshIcon.addClass('spin');
+
         showLoadingModal('Refreshing My Events List...');
         currentModalEventId = null;
         registrationIdToCancel = null;
 
-        // Use the current URL minus query parameters, appending the AJAX flag
         const refreshUrl = window.location.href.split('?')[0];
 
         $.ajax({
             url: refreshUrl,
             method: 'GET',
-            data: { is_ajax: 'true' }, // Pass is_ajax flag
+            data: { is_ajax: 'true' },
             headers: {'X-Requested-With': 'XMLHttpRequest'},
             success: function(data) {
-                // Since the server returns the full fragment, we extract the list area content
                 const $newContent = $(data);
                 const $extractedContent = $newContent.find('.events-list-area').html();
                 if ($extractedContent) {
@@ -303,22 +690,24 @@
                     `Could not reload the event list (Status ${xhr.status}).`,
                     'Please check your connection and try again.'
                 );
+            },
+            complete: function() {
+                // Re-enable the refresh button and remove spinning animation
+                $refreshBtn.prop('disabled', false);
+                $refreshIcon.removeClass('spin');
             }
         });
     }
 
     function filterEventCards() {
         const currentSearchTerm = ($('#eventSearch').val() || '').toLowerCase().trim();
-
         const $grid = $('#eventsCardGrid');
         const $cards = $grid.find('.event-card');
         let visibleCount = 0;
 
         $cards.each(function() {
             const $card = $(this);
-            // Search criteria includes the name
             const nameText = String($card.data('name') || '').toLowerCase();
-
             const matchesSearch = nameText.includes(currentSearchTerm);
 
             if (matchesSearch) {
@@ -337,63 +726,10 @@
         }
     }
 
-
-    // --- Details Modal Logic ---
-
-    function showEventModal(eventId) {
-        const $card = $(`[data-event-id="${eventId}"]`);
-
-        if ($card.length === 0) {
-            console.error(`Event card not found for ID: ${eventId}`);
-            return;
-        }
-
-        currentModalEventId = eventId;
-
-        // Retrieve data attributes
-        const eventName = $card.find('.card-title').text();
-        const pictureUrl = $card.data('picture-url');
-        const defaultImageUrl = 'https://placehold.co/700x200/121212/00A9FF?text=Registered+Event';
-        // IMPORTANT: The data attribute already escapes the description, use .html() if it contains HTML, but .text() if you want raw text. Assuming raw text for modal-event-description which is a <p> tag.
-        const fullDescription = $card.data('full-description').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
-        // IMPORTANT: Use the text visible in the card, which should be the computed status from the server
-        const statusText = $card.find('.card-actions button:disabled').text().replace(' ', '').trim() || $card.data('raw-status');
-
-        // Populate details
-        $('#modal-event-title').text(eventName);
-        $('#modal-event-datetime').text(`${$card.data('date')} ${$card.data('time')}`);
-        $('#modal-event-location').text($card.data('location') || 'Not specified');
-        $('#modal-event-organization').text($card.data('organization') || 'N/A');
-        // 🎯 Update modal status to show the derived status (Attended/Absent/Did Not Attend)
-        $('#modal-event-status').text(`Registration Status: ${statusText.toUpperCase()}`);
-        $('#modal-event-image').attr('src', pictureUrl || defaultImageUrl);
-        $('#modal-event-description').text(fullDescription || 'No detailed description available.');
-
-        const $modal = $('#eventDetailsModal');
-        $modal.css('display', 'flex').hide().fadeIn(200);
-        $('body').addClass('modal-open');
-    }
-
-    function hideEventModal() {
-        $('#eventDetailsModal').fadeOut(200, function() {
-            $(this).css('display', 'none');
-            if (!$('#confirmationModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible') && !$('#custom-loading-modal').is(':visible')) {
-                $('body').removeClass('modal-open');
-            }
-        });
-        currentModalEventId = null;
-    }
-
-
-    // --- Cancellation Confirmation Modal Functions ---
-
     function showConfirmationModalForCancellation(registrationId, eventName) {
-        debugCancellation(registrationId); // Debug line
         registrationIdToCancel = registrationId;
 
-        const cleanedEventName = String(eventName || 'Unknown Event').replace(/\\u002D/g, '-');
-
-        $('#confirm-event-name').text(cleanedEventName);
+        $('#confirm-event-name').text(eventName);
 
         const $modal = $('#confirmationModal');
         $modal.css('display', 'flex').hide().fadeIn(200);
@@ -403,28 +739,14 @@
     function hideConfirmationModal() {
         $('#confirmationModal').fadeOut(200, function() {
             $(this).css('display', 'none');
-            if (!$('#eventDetailsModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible') && !$('#custom-loading-modal').is(':visible')) {
-                 $('body').removeClass('modal-open');
+            if (!$('#eventDetailsModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible')) {
+                $('body').removeClass('modal-open');
             }
         });
     }
 
-    // --- Password Modal Functions ---
-
-    function showPasswordError(message) {
-        $('#passwordErrorText').text(message);
-        $('#passwordErrorMessage').fadeIn(300);
-        $('#cancellationPassword').val('');
-    }
-
-    function clearPasswordError() {
-        $('#passwordErrorMessage').hide();
-        $('#passwordErrorText').text('');
-    }
-
-    function showPasswordModalForCancellation(eventName) {
+    function showPasswordModal(eventName) {
         hideConfirmationModal();
-
         $('#cancellationPassword').val('');
         clearPasswordError();
 
@@ -438,14 +760,11 @@
     function hidePasswordModal() {
         $('#passwordModal').fadeOut(200, function() {
             $(this).css('display', 'none');
-            if (!$('#eventDetailsModal').is(':visible') && !$('#confirmationModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible') && !$('#custom-loading-modal').is(':visible')) {
-                 registrationIdToCancel = null;
-                 $('body').removeClass('modal-open');
+            if (!$('#eventDetailsModal').is(':visible') && !$('#confirmationModal').is(':visible') && !$('#registrationFeedbackModal').is(':visible')) {
+                $('body').removeClass('modal-open');
             }
         });
     }
-
-    // --- Feedback Modal Functions ---
 
     function showCancellationFeedbackModal(isSuccess, title, message, subtext) {
         const $modal = $('#registrationFeedbackModal');
@@ -472,22 +791,27 @@
     function hideRegistrationFeedbackModal() {
         $('#registrationFeedbackModal').fadeOut(200, function() {
             $(this).css('display', 'none');
-            if (!$('#eventDetailsModal').is(':visible') && !$('#confirmationModal').is(':visible') && !$('#passwordModal').is(':visible') && !$('#custom-loading-modal').is(':visible')) {
-                 $('body').removeClass('modal-open');
+            if (!$('#eventDetailsModal').is(':visible') && !$('#confirmationModal').is(':visible') && !$('#passwordModal').is(':visible')) {
+                $('body').removeClass('modal-open');
             }
         });
     }
 
+    function showPasswordError(message) {
+        $('#passwordErrorText').text(message);
+        $('#passwordErrorMessage').fadeIn(300);
+        $('#cancellationPassword').val('');
+    }
 
-    // --- Flow Executors ---
+    function clearPasswordError() {
+        $('#passwordErrorMessage').hide();
+        $('#passwordErrorText').text('');
+    }
 
     function executeCancellationConfirmation() {
         if (registrationIdToCancel) {
             const eventName = $('#confirm-event-name').text();
-            showPasswordModalForCancellation(eventName);
-        } else {
-             alert("Error: No registration selected for cancellation.");
-             hideConfirmationModal();
+            showPasswordModal(eventName);
         }
     }
 
@@ -495,18 +819,6 @@
         clearPasswordError();
 
         const password = $('#cancellationPassword').val();
-        const csrfToken = getCsrfToken();
-
-        if (!csrfToken) {
-            hidePasswordModal();
-            showCancellationFeedbackModal(
-                false,
-                'Security Error',
-                'CSRF token is missing from the page. Please reload.',
-                'This prevents unauthorized actions.'
-            );
-            return false;
-        }
 
         if (!password) {
             showPasswordError("Please enter your password to confirm cancellation.");
@@ -514,66 +826,57 @@
         }
 
         if (registrationIdToCancel) {
-            // Disable the button to prevent multiple clicks
-            $('#confirm-password-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Verifying...');
+            // Add spinning animation to the verify button
+            const $verifyBtn = $('#confirm-password-btn');
+            const $verifyIcon = $verifyBtn.find('i');
+            const originalText = $verifyBtn.html();
 
-            cancelRegistration(registrationIdToCancel, password, csrfToken)
+            $verifyBtn.prop('disabled', true);
+            $verifyBtn.html('<i class="fas fa-sync-alt spin"></i> Verifying...');
+
+            cancelRegistration(registrationIdToCancel, password)
                 .then(response => {
-                    $('#confirm-password-btn').prop('disabled', false).html('<i class="fas fa-key"></i> Verify & Cancel');
                     hidePasswordModal();
                     showCancellationFeedbackModal(
                         true,
-                        'Cancellation Successful! ✅',
+                        'Registration Cancelled',
                         response.message || 'Your registration has been successfully cancelled.',
-                        'The event list will now be refreshed.'
+                        'The event list will update automatically.'
                     );
-                    // Refresh the event list after a short delay
-                    setTimeout(() => {
-                        refreshEventList();
-                    }, 2000);
-                    registrationIdToCancel = null;
+                    setTimeout(refreshEventList, 1500);
                 })
                 .catch(error => {
-                    $('#confirm-password-btn').prop('disabled', false).html('<i class="fas fa-key"></i> Verify & Cancel');
                     if (error.status === 401 || error.status === 403) {
                         showPasswordError(error.message);
                     } else {
                         hidePasswordModal();
                         showCancellationFeedbackModal(
                             false,
-                            'Cancellation Failed ❌',
+                            'Cancellation Failed',
                             error.message,
-                            'Please check the event status and try again later.'
+                            'Please try again or contact support.'
                         );
-                        registrationIdToCancel = null;
                     }
+                })
+                .finally(() => {
+                    // Restore the verify button
+                    $verifyBtn.prop('disabled', false);
+                    $verifyBtn.html(originalText);
                 });
-        } else {
-            alert("Error: Registration context lost.");
-            hidePasswordModal();
         }
         return false;
     }
 
-
-    // --- Cancellation AJAX Executor ---
-
-    function cancelRegistration(registrationId, password, csrfToken) {
+    function cancelRegistration(registrationId, password) {
         showLoadingModal('Cancelling Registration...');
 
+        const csrfToken = getCsrfToken();
         if (!csrfToken) {
             hideLoadingModal();
-            return Promise.reject({ status: 403, message: 'Security Error: CSRF token missing. Please refresh the page.' });
+            return Promise.reject({ status: 500, message: 'Security Error: CSRF token missing.' });
         }
 
-        const cancelUrl = `/student_dashboard/my-events/cancel_registration/${registrationId}/`;
-
-        console.log('Cancel registration debug:', {
-            registrationId: registrationId,
-            hasCsrfToken: !!csrfToken,
-            url: cancelUrl,
-            fullUrl: window.location.origin + cancelUrl
-        });
+        const cancelUrl = `/student_dashboard/cancel_registration/${registrationId}/`;
 
         return new Promise((resolve, reject) => {
             $.ajax({
@@ -589,20 +892,10 @@
                 },
                 dataType: 'json',
                 success: function(response) {
-                    console.log('Cancellation success:', response);
                     hideLoadingModal();
-                    if (response.success) {
-                        resolve(response);
-                    } else {
-                        reject({ status: 400, message: response.message || 'Cancellation failed.' });
-                    }
+                    resolve(response);
                 },
                 error: function(xhr) {
-                    console.log('Cancellation error:', {
-                        status: xhr.status,
-                        statusText: xhr.statusText,
-                        responseText: xhr.responseText
-                    });
                     hideLoadingModal();
                     let errorMessage = "Cancellation failed. Please try again.";
 
@@ -611,12 +904,7 @@
                     } else if (xhr.status === 401 || xhr.status === 403) {
                         errorMessage = "Verification Failed. The password you entered is incorrect.";
                     } else if (xhr.status === 404) {
-                        errorMessage = "The registration record was not found in the system.";
-                    } else if (xhr.status === 400) {
-                        // This handles server-side checks like "Cannot cancel because the event has already passed"
-                        errorMessage = xhr.responseJSON.message || "Cannot cancel registration due to event status or timing.";
-                    } else if (xhr.status === 500) {
-                        errorMessage = "Server error. Please try again later.";
+                        errorMessage = "Registration not found.";
                     }
 
                     reject({ status: xhr.status, message: errorMessage });
@@ -625,9 +913,7 @@
         });
     }
 
-
     $(document).ready(function() {
-        // Expose functions to the window object for inline HTML handlers
         window.refreshEventList = refreshEventList;
         window.filterEventCards = filterEventCards;
         window.showEventModal = showEventModal;
@@ -638,10 +924,8 @@
         window.executeCancellationConfirmation = executeCancellationConfirmation;
         window.executeCancellationWithPassword = executeCancellationWithPassword;
 
-
         filterEventCards();
 
-        // Event Delegation for Cancel button
         $(document).on('click', '.cancel-registration-btn', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -654,10 +938,10 @@
             }
         });
 
-        // Event Delegation for clicking the entire event card (to open details modal)
         $(document).on('click', '.event-card', function(e) {
-            // Prevent modal from opening if the user clicked the cancel button or modal itself
-            if ($(e.target).closest('.cancel-registration-btn').length || $(e.target).closest('.event-modal-backdrop').length) {
+            if ($(e.target).closest('.cancel-registration-btn').length ||
+                $(e.target).closest('.card-actions').length ||
+                e.target.tagName === 'BUTTON') {
                 return;
             }
 
@@ -667,15 +951,13 @@
             }
         });
 
-        // Enter key support in password modal
         $(document).on('keypress', '#cancellationPassword', function(e) {
-            if (e.which === 13) { // Enter key
+            if (e.which === 13) {
                 executeCancellationWithPassword();
                 return false;
             }
         });
 
-        // Close modal when clicking the backdrop
         $(document).on('click', '.custom-modal-backdrop, .event-modal-backdrop', function(e) {
             if (e.target === this) {
                 const modalId = $(e.target).attr('id');
@@ -689,6 +971,20 @@
                     hideRegistrationFeedbackModal();
                 } else if (modalId === 'custom-loading-modal') {
                     return;
+                }
+            }
+        });
+
+        $(document).on('keyup', function(e) {
+            if (e.keyCode === 27) {
+                if ($('#eventDetailsModal').is(':visible')) {
+                    hideEventModal();
+                } else if ($('#confirmationModal').is(':visible')) {
+                    hideConfirmationModal();
+                } else if ($('#passwordModal').is(':visible')) {
+                    hidePasswordModal();
+                } else if ($('#registrationFeedbackModal').is(':visible')) {
+                    hideRegistrationFeedbackModal();
                 }
             }
         });
