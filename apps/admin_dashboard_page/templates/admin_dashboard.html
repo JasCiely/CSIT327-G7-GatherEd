@@ -39,9 +39,6 @@
                 <a href="javascript:void(0);" data-url="{% url 'track_attendance' %}?is_ajax=true" data-clean-url="{% url 'track_attendance' %}" class="nav-item" onclick="handleNavClick(this)">
                     <i class="fas fa-user-check"></i> Track Attendance
                 </a>
-                <a href="javascript:void(0);" data-url="{% url 'manage_feedback' %}?is_ajax=true" data-clean-url="{% url 'manage_feedback' %}" class="nav-item" onclick="handleNavClick(this)">
-                    <i class="fas fa-comments"></i> View Feedback
-                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -55,10 +52,6 @@
             <header class="top-nav">
                 <h1 class="page-title" id="page-title">Dashboard Overview</h1>
                 <div class="header-actions">
-                    <div class="notification-icon" onclick="toggleNotifications()">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge" id="notification-count">{{ notification_count }}</span>
-                    </div>
                     <div class="user-profile">
                         {% if request.user.is_authenticated %}
                             <span class="profile-name">{{ request.user.adminprofile.name|default:'Administrator' }}</span>
@@ -74,13 +67,6 @@
                 {% include 'fragments/dashboard_content.html' %}
             </div>
         </main>
-    </div>
-
-    <div id="notification-drawer" class="notification-drawer">
-        <h3>Notifications</h3>
-        <div id="notification-list">
-            <p style="color: var(--text-muted);">Notifications will load here from the backend.</p>
-        </div>
     </div>
 
     <script defer>
@@ -217,14 +203,6 @@
             });
         }
 
-        window.toggleNotifications = function () {
-            const drawer = document.getElementById("notification-drawer");
-            const badge = document.getElementById("notification-count");
-            drawer.classList.toggle("open");
-            const count = parseInt(badge.textContent || "0");
-            badge.style.display = drawer.classList.contains("open") ? "none" : (count > 0 ? "block" : "none");
-        };
-
         // =======================================
         // 🚪 Logout Confirmation
         // =======================================
@@ -271,7 +249,7 @@
                 window.addEventListener("popstate", function () {
                     Swal.fire({
                         title: "Do you want to log out?",
-                        text: "You’ll need to log in again to access the dashboard.",
+                        text: "You'll need to log in again to access the dashboard.",
                         icon: "question",
                         background: "#1e1e1e",
                         color: "#fff",
