@@ -146,16 +146,15 @@ LOGIN_REDIRECT_URL = 'events:dashboard'
 LOGOUT_REDIRECT_URL = 'events:login'
 
 # =====================
-# EMAIL (CONSOLE MODE)
+# EMAIL (SENDGRID)
 # =====================
-# settings.py
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'jasmineciely.p@gmail.com'
-EMAIL_HOST_PASSWORD = 'nqnc khws edux olno'
-DEFAULT_FROM_EMAIL = 'noreply@gatheredu.com'
+EMAIL_HOST_USER = 'apikey'  # This is literally the string 'apikey'
+EMAIL_HOST_PASSWORD = os.getenv('SENDGRID_API_KEY', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@gatheredu.com')
 
 # =====================
 # SUPABASE KEYS
