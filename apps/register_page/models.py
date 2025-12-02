@@ -31,10 +31,10 @@ class AdminProfile(models.Model):
         return self.otp_code
 
     def is_otp_expired(self):
-        """Check if OTP is expired (30 seconds)"""
+        """Check if OTP is expired (10 minutes)"""
         if not self.otp_created_at:
             return True
-        expiration_time = self.otp_created_at + timezone.timedelta(seconds=30)
+        expiration_time = self.otp_created_at + timezone.timedelta(minutes=10)
         return timezone.now() > expiration_time
 
 class StudentProfile(models.Model):
@@ -60,8 +60,8 @@ class StudentProfile(models.Model):
         return self.otp_code
 
     def is_otp_expired(self):  # Add this method
-        """Check if OTP is expired (30 seconds)"""
+        """Check if OTP is expired (10 minutes)"""
         if not self.otp_created_at:
             return True
-        expiration_time = self.otp_created_at + timezone.timedelta(seconds=30)
+        expiration_time = self.otp_created_at + timezone.timedelta(minutes=10)
         return timezone.now() > expiration_time

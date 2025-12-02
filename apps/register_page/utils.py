@@ -2,13 +2,14 @@ import random
 import os
 from django.utils import timezone
 from django.conf import settings
+from django.template.loader import render_to_string
 
 
-def send_otp_email(admin_profile, request):
+def send_otp_email(profile, request, is_student=False):
     """Generate and send OTP email using SendGrid API"""
     try:
         # Get user email
-        user_email = admin_profile.user.email
+        user_email = profile.user.email
 
         # ===================== DOMAIN CHECK =====================
         ALLOWED_DOMAIN = '@cit.edu'
@@ -21,9 +22,9 @@ def send_otp_email(admin_profile, request):
 
         # Generate OTP
         otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        admin_profile.otp_code = otp
-        admin_profile.otp_created_at = timezone.now()
-        admin_profile.save()
+        profile.otp_code = otp
+        profile.otp_created_at = timezone.now()
+        profile.save()
 
         # Get SendGrid API key
         SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
@@ -45,60 +46,86 @@ def send_otp_email(admin_profile, request):
         from sendgrid import SendGridAPIClient
         from sendgrid.helpers.mail import Mail
 
-        # Simple HTML email
-        html_content = f'''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; background: #667eea; color: white; padding: 20px; border-radius: 10px 10px 0 0;">
-                <h1 style="margin: 0;">🎓 GatherEd Verification</h1>
-            </div>
-
-            <div style="padding: 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
-                <p>Hello <strong>{admin_profile.name}</strong>,</p>
-
-                <p>We're excited to have you back! Here's your verification code:</p>
-
-                <div style="font-size: 48px; font-weight: bold; text-align: center; color: #1e40af; 
-                          background: white; padding: 20px; margin: 20px 0; border-radius: 10px; 
-                          border: 2px solid #3b82f6;">
-                    {otp}
+        # Prepare email content based on user type
+        if is_student:
+            # Render student-specific email template
+            context = {
+                'student_name': profile.name,
+                'otp_code': otp
+            }
+            html_content = render_to_string('email/student_otp_verification.html', context)
+            
+            plain_text = f'''
+            Welcome to GatherEd!
+            
+            Hello {profile.name},
+            
+            Your verification code is: {otp}
+            
+            This code will expire in 10 minutes for security reasons.
+            
+            Best regards,
+            The GatherEd Team
+            "Empowering educators, one connection at a time"
+            '''
+            
+            subject = '🎓 Your GatherEd Student Verification Code - Valid for 10 Minutes!'
+        else:
+            # Admin email content (existing)
+            html_content = f'''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="text-align: center; background: #667eea; color: white; padding: 20px; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0;">🎓 GatherEd Verification</h1>
                 </div>
 
-                <p><strong style="color: #dc2626;">⚠️ This code expires in 30 seconds!</strong></p>
+                <div style="padding: 20px; background: #f8fafc; border-radius: 0 0 10px 10px;">
+                    <p>Hello <strong>{profile.name}</strong>,</p>
 
-                <p>Best regards,<br>
-                <strong>The GatherEd Team</strong><br>
-                "Empowering educators, one connection at a time"</p>
-            </div>
-        </body>
-        </html>
-        '''
+                    <p>We're excited to have you back! Here's your verification code:</p>
 
-        # Plain text version
-        plain_text = f'''
-        Welcome Back to GatherEd!
+                    <div style="font-size: 48px; font-weight: bold; text-align: center; color: #1e40af; 
+                              background: white; padding: 20px; margin: 20px 0; border-radius: 10px; 
+                              border: 2px solid #3b82f6;">
+                        {otp}
+                    </div>
 
-        Hello {admin_profile.name},
+                    <p><strong style="color: #dc2626;">⚠️ This code expires in 10 minutes!</strong></p>
 
-        Your verification code is: {otp}
+                    <p>Best regards,<br>
+                    <strong>The GatherEd Team</strong><br>
+                    "Empowering educators, one connection at a time"</p>
+                </div>
+            </body>
+            </html>
+            '''
 
-        This code will expire in 30 seconds for security reasons.
+            plain_text = f'''
+            Welcome Back to GatherEd!
 
-        Best regards,
-        The GatherEd Team
-        "Empowering educators, one connection at a time"
-        '''
+            Hello {profile.name},
+
+            Your verification code is: {otp}
+
+            This code will expire in 10 minutes for security reasons.
+
+            Best regards,
+            The GatherEd Team
+            "Empowering educators, one connection at a time"
+            '''
+            
+            subject = '🔐 Your GatherEd Verification Code - Valid for 10 Minutes!'
 
         # Create email
         message = Mail(
             from_email='GatherEd Security <jasminecielyp@gmail.com>',
             to_emails=user_email,
-            subject='🔐 Your GatherEd Verification Code - Valid for 30 Seconds!',
+            subject=subject,
             html_content=html_content,
             plain_text_content=plain_text
         )
@@ -120,3 +147,8 @@ def send_otp_email(admin_profile, request):
         print(f"❌ Error in send_otp_email: {e}")
         # Return True anyway so registration doesn't fail
         return True
+
+
+def send_student_otp_email(student_profile, request):
+    """Generate and send OTP email for student registration using SendGrid API"""
+    return send_otp_email(student_profile, request, is_student=True)
