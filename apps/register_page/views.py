@@ -9,7 +9,7 @@ from django.db.models import Q
 import re
 
 from apps.register_page.models import AdminProfile, StudentProfile
-from apps.register_page.utils import send_otp_email, send_student_otp_email
+from apps.register_page.utils import send_otp_email, send_student_otp_email, send_student_otp_email
 
 EMAIL_DOMAIN = '@cit.edu'
 
@@ -21,6 +21,10 @@ def register_choice(request):
 
 def register_student(request):
     """Handle student registration - Step 1: Create account"""
+    # Reset OTP resend count when starting new registration
+    if 'student_otp_resend_count' in request.session:
+        del request.session['student_otp_resend_count']
+
     if request.method != 'POST':
         return render(request, 'register_student.html')
 
@@ -83,13 +87,16 @@ def register_student(request):
         request.session['pending_student_id'] = user.id
         request.session['pending_student_email'] = email
 
+        # Initialize OTP resend counter
+        request.session['student_otp_resend_count'] = 0
+
         # Send OTP email
         email_sent = send_student_otp_email(student_profile, request)
 
         if email_sent:
             messages.info(
                 request,
-                f'Verification code sent to {email}. Please check your email and enter the code below.'
+                f'Verification code sent to {email}. Please check your email and enter the code within 30 seconds.'
             )
             return redirect('verify_student_otp')
         else:
@@ -405,3 +412,44 @@ def resend_student_otp(request):
         messages.error(request, 'Student profile not found. Please register again.')
         request.session.flush()
         return redirect('register_student')
+
+
+def cleanup_pending_student_registration(request):
+    """Clean up pending student registration when user goes back"""
+    pending_student_id = request.session.get('pending_student_id')
+
+    if pending_student_id:
+        try:
+            # Get the student profile and user
+            student_profile = StudentProfile.objects.get(user_id=pending_student_id)
+            user = student_profile.user
+
+            # Delete both the profile and user
+            student_profile.delete()
+            user.delete()
+
+            # Clear session data
+            if 'pending_student_id' in request.session:
+                del request.session['pending_student_id']
+            if 'pending_student_email' in request.session:
+                del request.session['pending_student_email']
+            if 'student_otp_resend_count' in request.session:
+                del request.session['student_otp_resend_count']
+
+            messages.info(request, 'Registration cancelled. You can start a new registration.')
+
+        except (StudentProfile.DoesNotExist, User.DoesNotExist):
+            # If the objects don't exist, just clear the session
+            if 'pending_student_id' in request.session:
+                del request.session['pending_student_id']
+            if 'pending_student_email' in request.session:
+                del request.session['pending_student_email']
+            if 'student_otp_resend_count' in request.session:
+                del request.session['student_otp_resend_count']
+
+    return redirect('register_student')
+
+
+def cleanup_and_register_student(request):
+    """Clean up and redirect to student registration page"""
+    return cleanup_pending_student_registration(request)
