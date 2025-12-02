@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.db.models import Count, Case, When, Q, Value, BooleanField, IntegerField
 from datetime import date, datetime, timedelta
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 import json
 import traceback
 import uuid
@@ -260,19 +261,26 @@ def register_event(request, event_id):
         # --------------------------------------------------------------------
         # Step 3: 🛑 Comprehensive Re-registration Check
         # Block re-registration if any registration exists that is NOT CANCELLED.
-        existing_registration = Registration.objects.filter(
+        existing_active_registration = Registration.objects.filter(
             student=current_student,
             event=event,
             status__in=['REGISTERED', 'ATTENDED', 'ABSENT']
         ).exists()
 
-        if existing_registration:
+        if existing_active_registration:
             print("ERROR: Registration found with status other than CANCELLED.")
             return JsonResponse({
                 'success': False,
                 'message': 'You have already registered for this event. You cannot register again unless your prior registration was officially **Cancelled**.'
             }, status=400)
         print("✓ No non-cancelled prior registration found.")
+        
+        # Check if there's a CANCELLED registration that can be reactivated
+        cancelled_registration = Registration.objects.filter(
+            student=current_student,
+            event=event,
+            status='CANCELLED'
+        ).first()
         # --------------------------------------------------------------------
 
         # --- Step 3.5: Manual Status and Timing Check ---
@@ -322,14 +330,24 @@ def register_event(request, event_id):
             print(f"ERROR: Registration blocked due to capacity (Count: {current_registrations}, Max: {event.max_attendees}).")
             return JsonResponse({'success': False, 'message': 'Registration failed: Event is full.'}, status=400)
 
-        # Step 5: Create registration
-        registration = Registration.objects.create(
-            event=event,
-            student=current_student,
-            status='REGISTERED',
-        )
-
-        print(f"✓ Registration created: {registration.id}")
+        # Step 5: Create or reactivate registration
+        if cancelled_registration:
+            # Reactivate the cancelled registration
+            cancelled_registration.status = 'REGISTERED'
+            cancelled_registration.registered_at = timezone.now()
+            cancelled_registration.cancelled_at = None
+            cancelled_registration.save()
+            registration = cancelled_registration
+            print(f"✓ Cancelled registration reactivated: {registration.id}")
+        else:
+            # Create new registration
+            registration = Registration.objects.create(
+                event=event,
+                student=current_student,
+                status='REGISTERED',
+            )
+            print(f"✓ Registration created: {registration.id}")
+        
         print("=== REGISTRATION SUCCESSFUL ===")
 
         return JsonResponse({

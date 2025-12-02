@@ -72,6 +72,31 @@ def get_registration_status_for_display(registration, event):
     return 'Registered'
 
 
+def can_cancel_registration(event):
+    """
+    Determines if a registration can be cancelled based on:
+    1. Event has not started yet, OR
+    2. Event has started but attendance recording has not begun
+    
+    Returns: Boolean indicating if cancellation is allowed
+    """
+    now = timezone.now()
+    event_start_dt = timezone.make_aware(datetime.combine(event.date, event.start_time))
+    
+    # If event hasn't started, cancellation is allowed
+    if now < event_start_dt:
+        return True
+    
+    # If event has started, check if attendance recording has begun
+    has_attendance_recorded = Registration.objects.filter(
+        event=event,
+        status__in=['ATTENDED', 'ABSENT']
+    ).exists()
+    
+    # Cancellation not allowed if attendance recording has begun
+    return not has_attendance_recorded
+
+
 # --- STUDENT DASHBOARD VIEWS ---
 
 @login_required
@@ -142,7 +167,8 @@ def my_events(request):
             'picture_url': event.picture_url,
             'attendee_count': registered_count,
             'capacity': event.max_attendees,
-            'registration': registration
+            'registration': registration,
+            'can_cancel': can_cancel_registration(event) and registration.status == 'REGISTERED'
         })
 
     context = {
@@ -197,7 +223,7 @@ def cancel_registration(request, registration_id):
                 'message': f'Cannot cancel registration: status is already {registration.status}.'
             }, status=400)
 
-        # 4. Event Timing Check
+        # 4. Event Timing Check and Attendance Recording Check
         event = registration.event
         now = timezone.now()  # Use timezone.now() for consistency
         event_start_dt = timezone.make_aware(datetime.combine(event.date, event.start_time))
@@ -208,11 +234,26 @@ def cancel_registration(request, registration_id):
         print(f"DEBUG: - Current datetime: {now}")
         print(f"DEBUG: - Can cancel? {now < event_start_dt}")
 
+        # Check if event has started
         if now >= event_start_dt:
-            return JsonResponse({
-                'success': False,
-                'message': f'Cannot cancel registration for event "{event.title}" that has already started.'
-            }, status=400)
+            # Check if attendance recording has begun for this event
+            has_attendance_recorded = Registration.objects.filter(
+                event=event,
+                status__in=['ATTENDED', 'ABSENT']
+            ).exists()
+            
+            print(f"DEBUG: - Has attendance been recorded? {has_attendance_recorded}")
+            
+            if has_attendance_recorded:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Cannot cancel registration for event "{event.title}" as attendance recording has already begun.'
+                }, status=400)
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Cannot cancel registration for event "{event.title}" that has already started.'
+                }, status=400)
 
         # 5. Password Verification
         try:
