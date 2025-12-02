@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 
 from apps.admin_dashboard_page.models import Event
-from apps.admin_dashboard_page.models import AdminProfile  # Make sure this import exists
+from apps.admin_dashboard_page.models import AdminProfile
+from apps.student_dashboard_page.models import Registration
 
 
 def logout_view(request):
@@ -117,7 +118,17 @@ def admin_dashboard(request):
     if cached_data:
         context = cached_data
     else:
-        total_events = Event.objects.filter(admin_id=admin_filter_id).count()
+        # Get all events managed by this admin
+        admin_events = Event.objects.filter(admin_id=admin_filter_id)
+        total_events = admin_events.count()
+
+        # Calculate total attendance (ATTENDED + ABSENT) for all admin's events
+        # Count registrations where status is either 'ATTENDED' or 'ABSENT'
+        total_attendance = Registration.objects.filter(
+            event__admin_id=admin_filter_id,
+            status__in=['ATTENDED', 'ABSENT']  # Count both attended and absent
+        ).count()
+
         upcoming_events_qs = Event.objects.filter(
             admin_id=admin_filter_id,
             date__gte=today
@@ -149,7 +160,7 @@ def admin_dashboard(request):
             'admin_organization': admin_profile.organization_name,
             'admin_name': admin_profile.name,
             'total_events': total_events,
-            'total_attendance': 0,
+            'total_attendance': total_attendance,
             'new_feedback': 0,
             'notification_count': 0,
             'events': formatted_events,
