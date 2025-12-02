@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Account - GatherEd</title>
+    <title>Verify Student Account - GatherEd</title>
     {% load static %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -206,57 +206,40 @@
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
-            margin-top: 10px;
-            letter-spacing: 0.2px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .btn-primary {
-            background-color: var(--primary-color);
-            color: var(--background-dark);
-            box-shadow: 0 4px 15px rgba(0, 169, 255, 0.3);
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: white;
         }
 
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            box-shadow: 0 6px 20px rgba(0, 169, 255, 0.4);
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 169, 255, 0.4);
         }
 
-        .btn:disabled {
-            background-color: var(--border-color);
-            color: var(--text-muted);
+        .btn-primary:disabled {
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
-            box-shadow: none;
-            opacity: 0.6;
-        }
-
-        .btn:disabled:hover {
-            background-color: var(--border-color);
-            transform: none;
-            box-shadow: none;
-        }
-
-        .btn i {
-            margin-right: 10px;
         }
 
         .auth-footer {
             text-align: center;
-            margin-top: 30px;
-            color: var(--text-muted);
-            font-size: 0.9rem;
+            margin-top: 25px;
         }
 
         .auth-footer p {
-            margin-bottom: 12px;
+            margin: 10px 0;
+            color: var(--text-color-medium);
+            font-size: 0.95rem;
         }
 
         .resend-link {
             color: var(--primary-color);
-            cursor: pointer;
-            font-weight: 500;
             text-decoration: none;
+            font-weight: 600;
             transition: var(--transition);
         }
 
@@ -291,6 +274,7 @@
             color: var(--text-muted);
             text-decoration: none;
             transition: var(--transition);
+            cursor: pointer;
         }
 
         .back-link:hover {
@@ -473,18 +457,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        /* Add to existing CSS */
-        .back-link {
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: var(--transition);
-            cursor: pointer;
-        }
-
-        .back-link:hover {
-            color: var(--primary-color);
-        }
     </style>
 </head>
 <body>
@@ -526,7 +498,7 @@
 
             <div class="verification-info {% if is_otp_expired %}expired{% endif %}">
                 <p>We've sent a 6-digit verification code to:</p>
-                <p class="email-display"><strong>{{ request.session.pending_admin_email }}</strong></p>
+                <p class="email-display"><strong>{{ request.session.pending_student_email }}</strong></p>
                 {% if not is_otp_expired %}
                     <p>Please enter the code below to verify your account.</p>
                     <p><small><strong>Note:</strong> The code expires in 10 minutes. If it expires, you can request a new one using the "Resend Code" link below.</small></p>
@@ -538,7 +510,7 @@
                 {% endif %}
             </div>
 
-            <form action="{% url 'verify_otp' %}" method="post" id="otp-form">
+            <form action="{% url 'verify_student_otp' %}" method="post" id="otp-form">
                 {% csrf_token %}
 
                 <div class="form-group">
@@ -583,7 +555,7 @@
 
             <div class="auth-footer">
                 <p>Didn't receive the code?
-                    <a href="{% url 'resend_otp' %}" class="resend-link" id="resend-link">
+                    <a href="{% url 'resend_student_otp' %}" class="resend-link" id="resend-link">
                         Resend Code
                     </a>
                 </p>
@@ -598,10 +570,10 @@
                 </div>
                 {% endif %}
 
-                {% if request.session.otp_resend_count %}
+                {% if request.session.student_otp_resend_count %}
                     <div class="attempts-info">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <span>Resend attempts used: {{ request.session.otp_resend_count }}/3</span>
+                        <span>Resend attempts used: {{ request.session.student_otp_resend_count }}/3</span>
                     </div>
                 {% endif %}
                 <p><a class="back-link" id="back-link">Back to Registration</a></p>
@@ -655,6 +627,8 @@
             });
 
             // Toast notifications
+            /* Django template tags will be processed server-side */
+            /* The following code is processed by Django template engine */
             {% if messages %}
                 {% for message in messages %}
                     {% if not 'Invalid verification code' in message.message and not 'Verification code has expired' in message.message %}
@@ -677,7 +651,7 @@
                         }).showToast();
                     {% endif %}
                 {% endfor %}
-            {% endif %}
+            {% endif %
 
             // OTP input handling
             const otpInputs = document.querySelectorAll('.otp-input');
@@ -874,10 +848,9 @@
 
                 const verificationInfo = document.querySelector('.verification-info');
                 verificationInfo.classList.add('expired');
-                const infoContent = verificationInfo.innerHTML;
                 verificationInfo.innerHTML = `
                     <p>We've sent a 6-digit verification code to:</p>
-                    <p class="email-display"><strong>{{ request.session.pending_admin_email }}</strong></p>
+                    <p class="email-display"><strong>{{ request.session.pending_student_email }}</strong></p>
                     <div class="expired-notice">
                         <i class="fas fa-exclamation-triangle"></i>
                         <strong>Verification code has expired.</strong> Please request a new code below.
@@ -897,7 +870,7 @@
 
             // Cleanup flag for beforeunload
             window.addEventListener('beforeunload', function(e) {
-                if (window.location.href.includes('verify_otp') && !cleanupPerformed) {
+                if (window.location.href.includes('verify_student_otp') && !cleanupPerformed) {
                     e.preventDefault();
                     e.returnValue = 'If you leave, your current registration will be cancelled. Are you sure?';
                     return e.returnValue;
@@ -911,7 +884,7 @@
 
             // Also check URL parameters for resend action
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('resend') || window.location.href.includes('resend_otp')) {
+            if (urlParams.has('resend') || window.location.href.includes('resend_student_otp')) {
                 window.otpJustResent = true;
             }
         });
