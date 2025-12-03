@@ -23,7 +23,7 @@
         </select>
         
         <!-- Download CSV Button (initially hidden) -->
-        <button id="download-csv-btn" class="btn-download-csv hidden">
+        <button id="download-csv-btn" class="btn-download-csv hidden" title="Download attendance data for all students in this event as CSV">
             <i class="fas fa-file-csv"></i> Download CSV
         </button>
     </div>
@@ -254,9 +254,11 @@ $(document).ready(function() {
         const selectedEventId = $(this).val();
         updateAttendanceDisplay(selectedEventId);
         
-        // Show/hide download button based on event selection
+        // Show/hide download button based on event selection with animation
         if (selectedEventId) {
-            $('#download-csv-btn').removeClass('hidden');
+            setTimeout(() => {
+                $('#download-csv-btn').removeClass('hidden');
+            }, 10);
         } else {
             $('#download-csv-btn').addClass('hidden');
         }
