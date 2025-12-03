@@ -39,9 +39,6 @@
                 <a href="javascript:void(0);" data-url="{% url 'my_events' %}?is_ajax=true" data-clean-url="{% url 'my_events' %}" class="nav-item" onclick="handleNavClick(this)">
                     <i class="fas fa-user-check"></i> My Registrations
                 </a>
-                <a href="javascript:void(0);" data-url="{% url 'submit_feedback' %}?is_ajax=true" data-clean-url="{% url 'submit_feedback' %}" class="nav-item" onclick="handleNavClick(this)">
-                    <i class="fas fa-comment-dots"></i> Submit Feedback
-                </a>
             </nav>
             <div class="sidebar-footer">
                 <a href="{% url 'logout' %}" id="logout-btn" class="nav-item logout">
@@ -75,6 +72,8 @@
         const pageCache = {};
         const CACHE_TIMEOUT = 60000;
         let currentController = null;
+        let historyStack = [{url: "{% url 'student_dashboard' %}", title: "Home", isEntry: true}];
+        let currentHistoryIndex = 0;
 
         document.addEventListener("DOMContentLoaded", function () {
             {% if messages %}
@@ -101,7 +100,7 @@
                         toast: true,
                         position: "top-end",
                         iconHtml: '<i class="fas fa-hand-sparkles" style="color:#FFC107;"></i>',
-                        title: `Welcome back, ${firstName}!`,
+                        title: `Welcome, ${firstName}!`,
                         text: "Ready to explore new events 🎉",
                         showConfirmButton: false,
                         timer: 4000,
@@ -114,6 +113,12 @@
             {% endif %}
 
             preloadCommonStudentPages();
+
+            // Set initial history state
+            window.history.replaceState({
+                index: currentHistoryIndex,
+                isEntry: true
+            }, "", "{% url 'student_dashboard' %}");
         });
 
         window.handleNavClick = function (el) {
@@ -134,7 +139,17 @@
             if (pageCache[url] && now - pageCache[url].timestamp < CACHE_TIMEOUT) {
                 contentArea.innerHTML = pageCache[url].html;
                 fadeInContent(contentArea);
-                history.pushState(null, "", cleanUrl);
+
+                // Add to history stack and update browser history
+                currentHistoryIndex++;
+                historyStack = historyStack.slice(0, currentHistoryIndex + 1);
+                historyStack.push({url: cleanUrl, title: title, isEntry: false});
+
+                window.history.pushState({
+                    index: currentHistoryIndex,
+                    isEntry: false
+                }, "", cleanUrl);
+
                 fetchAndCache(url, false);
                 return;
             }
@@ -144,10 +159,10 @@
                     <div class="spinner-border text-primary" role="status"></div>
                     <span class="loading-text">Loading content...</span>
                 </div>`;
-            fetchAndCache(url, true, cleanUrl);
+            fetchAndCache(url, true, cleanUrl, title);
         };
 
-        function fetchAndCache(url, renderImmediately = false, cleanUrl = "") {
+        function fetchAndCache(url, renderImmediately = false, cleanUrl = "", title = "") {
             const contentArea = document.getElementById("content-area");
 
             if (currentController) currentController.aborted = true;
@@ -170,7 +185,17 @@
                             contentArea.innerHTML = html;
                             contentArea.classList.remove("fade-out");
                             fadeInContent(contentArea);
-                            if (cleanUrl) history.pushState(null, "", cleanUrl);
+                            if (cleanUrl) {
+                                // Add to history stack and update browser history
+                                currentHistoryIndex++;
+                                historyStack = historyStack.slice(0, currentHistoryIndex + 1);
+                                historyStack.push({url: cleanUrl, title: title, isEntry: false});
+
+                                window.history.pushState({
+                                    index: currentHistoryIndex,
+                                    isEntry: false
+                                }, "", cleanUrl);
+                            }
                         }, 150);
                     }
 
@@ -187,6 +212,13 @@
                 });
         }
 
+        function getPageNameFromUrl(url) {
+            if (url.includes('event_list')) return 'view_events';
+            if (url.includes('my_events')) return 'my_registrations';
+            if (url.includes('student_dashboard')) return 'home';
+            return 'page';
+        }
+
         function fadeInContent(element) {
             element.style.opacity = 1;
         }
@@ -194,11 +226,115 @@
         function preloadCommonStudentPages() {
             document.querySelectorAll(".sidebar-nav .nav-item").forEach(link => {
                 const url = link.dataset.url;
-                if (url.includes("event_list") || url.includes("my_events") || url.includes("submit_feedback")) {
+                if (url.includes("event_list") || url.includes("my_events")) {
                     fetch(url, { cache: "no-store" })
                         .then(res => res.text())
                         .then(html => pageCache[url] = { html, timestamp: Date.now() })
                         .catch(() => {});
+                }
+            });
+        }
+
+        // Handle browser back/forward navigation
+        window.addEventListener('popstate', function(event) {
+            if (event.state === null) {
+                // No state - show logout confirmation
+                showLogoutConfirmation();
+                return;
+            }
+
+            const newIndex = event.state.index;
+
+            // If going back beyond our tracked history (should be entry point)
+            if (newIndex < 0) {
+                showLogoutConfirmation();
+                return;
+            }
+
+            // Update current index
+            currentHistoryIndex = newIndex;
+
+            // Get the history entry
+            const historyEntry = historyStack[currentHistoryIndex];
+            if (!historyEntry) {
+                showLogoutConfirmation();
+                return;
+            }
+
+            // If this is the entry point (first home page), show logout
+            if (historyEntry.isEntry) {
+                showLogoutConfirmation();
+                return;
+            }
+
+            // Otherwise, navigate to the page in our history
+            const navItems = document.querySelectorAll(".sidebar-nav .nav-item");
+            let pageFound = false;
+
+            navItems.forEach(item => {
+                if (item.dataset.cleanUrl === historyEntry.url) {
+                    pageFound = true;
+                    // Update active state
+                    document.querySelectorAll(".sidebar-nav .nav-item").forEach(i => i.classList.remove("active"));
+                    item.classList.add("active");
+
+                    // Update page title
+                    const pageTitle = document.getElementById("page-title");
+                    pageTitle.textContent = historyEntry.title;
+
+                    // Load the cached content
+                    const url = item.dataset.url;
+                    const contentArea = document.getElementById("content-area");
+
+                    if (pageCache[url]) {
+                        contentArea.innerHTML = pageCache[url].html;
+                        fadeInContent(contentArea);
+                    } else {
+                        fetchAndCache(url, true, item.dataset.cleanUrl, historyEntry.title);
+                    }
+                }
+            });
+
+            // If page not found (shouldn't happen), go to home
+            if (!pageFound) {
+                // Fall back to home
+                const homeItem = document.querySelector('.nav-item[data-clean-url="{% url 'student_dashboard' %}"]');
+                if (homeItem) {
+                    homeItem.click();
+                }
+            }
+        });
+
+        function showLogoutConfirmation() {
+            Swal.fire({
+                title: "Do you want to log out?",
+                text: "You'll need to log in again to access the student dashboard.",
+                icon: "question",
+                background: "#1e1e1e",
+                color: "#fff",
+                showCancelButton: true,
+                confirmButtonColor: "#007bff",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Log out',
+                cancelButtonText: "Stay here",
+            }).then(result => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: "Logging out...",
+                        background: "#1e1e1e",
+                        color: "#fff",
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                            setTimeout(() => (window.location.href = "{% url 'logout' %}"), 600);
+                        },
+                    });
+                } else {
+                    // User chose to stay, push the current state back
+                    window.history.pushState({
+                        index: currentHistoryIndex,
+                        isEntry: currentHistoryIndex === 0
+                    }, "", historyStack[currentHistoryIndex].url);
                 }
             });
         }
@@ -233,41 +369,6 @@
                                     setTimeout(() => (window.location.href = logoutUrl), 600);
                                 },
                             });
-                        }
-                    });
-                });
-            }
-
-            // ✅ Back Button Logout Confirmation
-            if (window.history && window.history.pushState) {
-                window.history.pushState({ page: "student_dashboard" }, "", window.location.href);
-
-                window.addEventListener("popstate", function () {
-                    Swal.fire({
-                        title: "Do you want to log out?",
-                        text: "You’ll need to log in again to access the student dashboard.",
-                        icon: "question",
-                        background: "#1e1e1e",
-                        color: "#fff",
-                        showCancelButton: true,
-                        confirmButtonColor: "#007bff",
-                        cancelButtonColor: "#6c757d",
-                        confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Log out',
-                        cancelButtonText: "Stay here",
-                    }).then(result => {
-                        if (result.isConfirmed) {
-                            Swal.fire({
-                                title: "Logging out...",
-                                background: "#1e1e1e",
-                                color: "#fff",
-                                allowOutsideClick: false,
-                                didOpen: () => {
-                                    Swal.showLoading();
-                                    setTimeout(() => (window.location.href = "{% url 'logout' %}"), 600);
-                                },
-                            });
-                        } else {
-                            window.history.pushState({ page: "student_dashboard" }, "", window.location.href);
                         }
                     });
                 });
