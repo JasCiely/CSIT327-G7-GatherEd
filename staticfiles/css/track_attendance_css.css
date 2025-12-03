@@ -35,6 +35,7 @@
     gap: 20px;
     margin-bottom: 30px;
     align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
     /* Use a dedicated padding/margin if this isn't handled by the card container */
     padding: 20px 0 0;
     border-top: 1px solid var(--border-color);
@@ -78,6 +79,31 @@
 }
 
 .btn-secondary.start-button:disabled {
+    background-color: var(--border-color);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+/* Download CSV Button */
+.btn-download-csv {
+    background-color: var(--secondary-color); /* Purple color for distinction */
+    color: white;
+    font-weight: 700;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-download-csv:hover:not(:disabled) {
+    background-color: #5a4fd6; /* Darker shade on hover */
+}
+
+.btn-download-csv:disabled {
     background-color: var(--border-color);
     color: var(--text-muted);
     cursor: not-allowed;

@@ -21,6 +21,11 @@
             <option value="{{ event.id }}" data-status="{{ event.status|default:'SCHEDULED' }}">{{ event.title }}</option>
             {% endfor %}
         </select>
+        
+        <!-- Download CSV Button (initially hidden) -->
+        <button id="download-csv-btn" class="btn-download-csv hidden">
+            <i class="fas fa-file-csv"></i> Download CSV
+        </button>
     </div>
 
     <div id="status-control-message" class="alert-message hidden"></div>
@@ -248,6 +253,13 @@ $(document).ready(function() {
     eventSelect.on('change', function() {
         const selectedEventId = $(this).val();
         updateAttendanceDisplay(selectedEventId);
+        
+        // Show/hide download button based on event selection
+        if (selectedEventId) {
+            $('#download-csv-btn').removeClass('hidden');
+        } else {
+            $('#download-csv-btn').addClass('hidden');
+        }
     });
 
     $('#attendance-list-area').on('click', '.btn-mark-status', function() {
@@ -329,6 +341,18 @@ $(document).ready(function() {
                 }
             }
         });
+    });
+
+    // Handle CSV download button click
+    $('#download-csv-btn').on('click', function() {
+        const eventId = eventSelect.val();
+        if (!eventId) {
+            alert('Please select an event first.');
+            return;
+        }
+        
+        // Redirect to the CSV download URL
+        window.location.href = `api/download-attendance-csv/${eventId}/`;
     });
 });
 </script>

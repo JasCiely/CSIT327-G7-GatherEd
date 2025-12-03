@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from datetime import datetime, timedelta
 import json
+import csv
+from io import StringIO
 # Assuming these models are correctly linked in your project structure
 from apps.admin_dashboard_page.models import Event
 from apps.student_dashboard_page.models import Registration
@@ -238,3 +240,47 @@ def record_attendance(request):
         # Log the error for debugging
         print(f"Error recording attendance: {e}")
         return JsonResponse({'error': 'Failed to save attendance due to server error.'}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def download_attendance_csv(request, event_id):
+    """
+    API to download attendance records for an event as CSV.
+    Includes all attendees regardless of their status.
+    """
+    try:
+        # Authorize: Check if the user owns the event
+        event = get_object_or_404(
+            Event.objects.filter(admin__user=request.user),
+            pk=event_id
+        )
+    except Event.DoesNotExist:
+        return HttpResponseForbidden("Event not found or unauthorized.")
+    
+    # Get all registration records for the event
+    registration_records = Registration.objects.filter(event=event).select_related('student')
+    
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{event.title}_attendance.csv"'
+    
+    # Create CSV writer
+    writer = csv.writer(response)
+    
+    # Write header
+    writer.writerow(['Student Name', 'Student ID/Email', 'Status', 'Registered At', 'Attended At', 'Absent Marked At', 'Cancelled At'])
+    
+    # Write data rows
+    for record in registration_records:
+        writer.writerow([
+            record.student.name,
+            record.student.cit_id,
+            record.get_status_display(),  # Human readable status
+            record.registered_at.strftime('%Y-%m-%d %H:%M:%S') if record.registered_at else '',
+            record.attended_at.strftime('%Y-%m-%d %H:%M:%S') if record.attended_at else '',
+            record.absent_marked_at.strftime('%Y-%m-%d %H:%M:%S') if record.absent_marked_at else '',
+            record.cancelled_at.strftime('%Y-%m-%d %H:%M:%S') if record.cancelled_at else '',
+        ])
+    
+    return response
