@@ -403,8 +403,8 @@ html {
 .events-table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: auto; /* Allows content to influence width */
-
+    /* set predictable columns so long text wraps */
+    table-layout: fixed;
     background-color: var(--background-medium);
     border-radius: 8px;
     overflow: hidden;
@@ -414,71 +414,48 @@ html {
 .events-table thead th {
     background-color: var(--primary-color);
     color: var(--background-dark);
-    padding: 15px 20px;
+    padding: 11px 15px;
     text-align: left;
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.9em;
+    font-size: 0.7em; /* compact header */
     border-bottom: 2px solid var(--border-color);
 }
 
-.events-table tbody td {
-    padding: 12px 20px;
+/* Ensure table cells wrap long content */
+.events-table tbody td,
+.events-table tbody th,
+.events-table td,
+.events-table th {
+    padding: 12px 16px;
     border-bottom: 1px solid var(--border-color-light);
     color: var(--text-light);
-    font-size: 0.95em;
+    font-size: 0.8em;
     vertical-align: middle;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
-/* Zebra striping */
-.events-table tbody tr:nth-child(even) {
-    background-color: var(--background-medium);
+/* Compact event-detail page styles (add if you render detail here) */
+.event-detail-page {
+    max-width: 1100px;
+    margin: 16px auto;
+    padding: 16px;
+    background-color: var(--background-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 16px;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    color: var(--text-light);
+    box-sizing: border-box;
 }
-.events-table tbody tr:nth-child(odd) {
-    background-color: var(--background-light);
-}
-
-/* Hover effect */
-.events-table tbody tr:hover {
-    background-color: var(--primary-color-light);
-    cursor: pointer;
-}
-
-.events-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-
-/* Optional: Mobile View (Adjusted to account for 4 columns) */
-@media (max-width: 768px) {
-    .events-table thead {
-        display: none;
-    }
-    .events-table, .events-table tbody, .events-table tr, .events-table td {
-        display: block;
-        width: 100%;
-    }
-    .events-table tr {
-        margin-bottom: 15px;
-        border: 1px solid var(--border-color-light);
-        border-radius: 8px;
-    }
-    .events-table td {
-        text-align: right;
-        padding-left: 50%;
-        position: relative;
-    }
-    .events-table td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 0;
-        width: 50%;
-        padding-left: 20px;
-        font-weight: 600;
-        text-align: left;
-        color: var(--text-muted);
-    }
-}
+.event-detail-title { font-size: 1.15rem; font-weight:700; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.event-detail-description { font-size:0.92rem; white-space:pre-wrap; word-break:break-word; max-height:420px; overflow:auto; }
+.event-detail-side img { width:100%; height:auto; object-fit:cover; border-radius:6px; max-height:220px; }
 
 .message-container {
     width: 90%;
