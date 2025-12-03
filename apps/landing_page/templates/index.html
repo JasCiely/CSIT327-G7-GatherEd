@@ -5,42 +5,796 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GatherEd: Centralized School Event Management</title>
     {% load static %}
-
-    <!-- Fonts and icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/index_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        :root {
+            --primary-color: #00A9FF;
+            --secondary-color: #2F93FF;
+            --background-dark: #121212;
+            --background-medium: #1F1F1F;
+            --text-light: #E0E0E0;
+            --text-muted: #BDBDBD;
+            --border-color: #333;
+            --gradient-primary: linear-gradient(135deg, #00A9FF 0%, #2F93FF 100%);
+            --gradient-dark: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+            --card-hover-shadow: rgba(0, 169, 255, 0.2);
+        }
 
-    <!-- Prevent caching -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--background-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Force full width on all containers */
+        body, header, main, section, footer {
+            max-width: 100vw !important;
+            width: 100vw !important;
+            overflow-x: hidden;
+        }
+
+        /* Header Navigation - True Edge to Edge */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100vw;
+            left: 0;
+            right: 0;
+            background: rgba(18, 18, 18, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            padding: 1.2rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            transition: all 0.3s ease;
+        }
+
+        header.scrolled {
+            padding: 0.8rem 0;
+            background: rgba(18, 18, 18, 0.98);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0 6rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-light);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 0.85rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            border: none;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 169, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 169, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid rgba(0, 169, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 169, 255, 0.1);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 169, 255, 0.2);
+        }
+
+        .btn-login {
+            background: transparent;
+            color: var(--text-light);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-login:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section - True Full Width */
+        #hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 0;
+            margin-top: 80px;
+            width: 100vw;
+        }
+
+        #hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 0% 30%, rgba(0, 169, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 70%, rgba(47, 147, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(0, 169, 255, 0.05) 0%, transparent 60%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            padding: 8rem 6rem;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            max-width: 900px;
+            letter-spacing: -1.5px;
+        }
+
+        .hero-content p {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            max-width: 700px;
+            line-height: 1.7;
+            font-weight: 400;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* All Sections - True Full Width */
+        section {
+            width: 100vw;
+            padding: 8rem 6rem;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .section-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        section h2 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-align: center;
+            color: var(--text-light);
+            letter-spacing: -0.5px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 4rem;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        /* Features Section */
+        #features {
+            background: var(--background-medium);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+            width: 100%;
+        }
+
+        .feature-card {
+            background: rgba(31, 31, 31, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 3rem 2.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary-color);
+            box-shadow: 0 20px 40px var(--card-hover-shadow);
+        }
+
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            color: white;
+            box-shadow: 0 8px 20px rgba(0, 169, 255, 0.3);
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        /* How It Works Section */
+        #how-it-works {
+            background: var(--background-dark);
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+        }
+
+        .step-card {
+            background: rgba(31, 31, 31, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 3rem;
+            position: relative;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+            box-shadow: 0 15px 30px rgba(0, 169, 255, 0.2);
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 6px 15px rgba(0, 169, 255, 0.4);
+        }
+
+        .step-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        .step-content p {
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        /* CTA Section */
+        #cta-bottom {
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #cta-bottom::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 80% 20%, rgba(0, 169, 255, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(47, 147, 255, 0.08) 0%, transparent 40%);
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-content h2 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .cta-content p {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            line-height: 1.7;
+        }
+
+        .btn-cta {
+            padding: 1.2rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            min-width: 200px;
+        }
+
+        /* Contact Section */
+        #contact {
+            background: var(--background-medium);
+        }
+
+        .contact-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: start;
+        }
+
+        .contact-info h3 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--text-light);
+        }
+
+        .contact-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .contact-detail {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .contact-detail i {
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            width: 24px;
+        }
+
+        .contact-form {
+            background: rgba(31, 31, 31, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 3rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .contact-form h3 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--text-light);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            background: var(--background-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 169, 255, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .btn-full-width {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* Footer - True Edge to Edge */
+        footer {
+            background: #0A0A0A;
+            padding: 5rem 6rem 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100vw;
+            box-sizing: border-box;
+        }
+
+        .footer-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: start;
+        }
+
+        .footer-brand {
+            max-width: 400px;
+        }
+
+        .footer-brand .logo {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-brand p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .footer-links {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .footer-copyright {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding-top: 3rem;
+            margin-top: 3rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            grid-column: 1 / -1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1400px) {
+            .nav-container,
+            .hero-content,
+            section {
+                padding-left: 4rem;
+                padding-right: 4rem;
+            }
+
+            footer {
+                padding: 4rem 4rem 2rem;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .nav-container,
+            .hero-content,
+            section {
+                padding-left: 3rem;
+                padding-right: 3rem;
+            }
+
+            .hero-content h1 {
+                font-size: 3.5rem;
+            }
+
+            section h2 {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .nav-container,
+            .hero-content,
+            section {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+
+            .nav-links {
+                gap: 2rem;
+            }
+
+            .contact-container {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .footer-brand {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1.5rem;
+                padding: 1rem 2rem;
+            }
+
+            #hero {
+                margin-top: 140px;
+            }
+
+            .hero-content {
+                padding: 4rem 2rem;
+            }
+
+            .hero-content h1 {
+                font-size: 2.8rem;
+            }
+
+            .hero-content p {
+                font-size: 1.1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .feature-grid,
+            .steps-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-container,
+            .hero-content,
+            section {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+
+            .hero-content h1 {
+                font-size: 2.2rem;
+            }
+
+            section h2 {
+                font-size: 2rem;
+            }
+
+            .feature-card,
+            .step-card,
+            .contact-form {
+                padding: 2rem;
+            }
+
+            footer {
+                padding: 3rem 1.5rem 2rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-content,
+        .feature-card,
+        .step-card,
+        .contact-form {
+            animation: fadeInUp 0.8s ease;
+        }
+
+        /* Smooth scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gradient-primary);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+
+        /* Grid lines background for hero */
+        .grid-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.5;
+            z-index: 1;
+        }
+
+        /* Remove any body margin/padding that might cause gaps */
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Ensure no horizontal scrollbar unless necessary */
+        main {
+            width: 100vw;
+            overflow-x: hidden;
+        }
+    </style>
 </head>
 <body>
 
-<!-- ================= Strong Back-Button Fix ================= -->
-<script>
-(function() {
-    // Clear session storage
-    sessionStorage.clear();
-
-    // Prevent back button from showing cached pages
-    window.history.pushState(null, document.title, window.location.href);
-    window.addEventListener('popstate', function (event) {
-        // Always redirect back button to index
-        window.location.replace("{% url 'index' %}");
-    });
-
-    // Remove this page from history
-    window.history.replaceState({}, document.title, window.location.href);
-})();
-</script>
-
 <header>
-    <nav>
+    <div class="nav-container">
         <div class="logo">
             <i class="fas fa-calendar-check"></i> GatherEd
         </div>
@@ -50,75 +804,98 @@
             <li><a href="#contact">Contact</a></li>
         </ul>
         <div class="auth-buttons">
-            <a href="{% url 'login' %}" class="btn btn-login">Login</a>
-            <a href="{% url 'register_choice' %}" class="btn btn-primary">Sign Up</a>
+            <a href="{% url 'login' %}" class="btn btn-login">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+            <a href="{% url 'register_choice' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Sign Up
+            </a>
         </div>
-    </nav>
+    </div>
 </header>
 
 <main>
     <!-- Hero Section -->
     <section id="hero">
+        <div class="grid-lines"></div>
         <div class="hero-content">
-            <h1>Simplify School Event & Club Management</h1>
-            <p>Tired of lost sign-up sheets? GatherEd provides a centralized platform for seamless event organization, communication, and attendance tracking for your school community.</p>
+            <h1>Revolutionize Campus Event Management</h1>
+            <p>Experience the future of school event organization with our all-in-one platform designed to streamline processes, boost engagement, and simplify administration for educational institutions.</p>
             <div class="cta-buttons">
-                <a href="{% url 'register_choice' %}" class="btn btn-primary">Get Started Now</a>
-                <a href="#features" class="btn btn-secondary">Learn More <i class="fas fa-arrow-right"></i></a>
+                <a href="{% url 'register_choice' %}" class="btn btn-primary">
+                    <i class="fas fa-play-circle"></i> Start Your Journey
+                </a>
+                <a href="#features" class="btn btn-secondary">
+                    <i class="fas fa-search"></i> Discover Features
+                </a>
             </div>
         </div>
     </section>
 
     <!-- Features Section -->
     <section id="features">
-        <h2>Core Features</h2>
-        <div class="feature-grid">
-            <div class="feature-card">
-                <i class="fas fa-check-circle icon"></i>
-                <h3>Digital Sign-Ups</h3>
-                <p>Move beyond paper forms with a reliable, digital system that automatically records student participation.</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-chart-bar icon"></i>
-                <h3>Attendance Tracking</h3>
-                <p>Effortlessly track attendance for any event or club meeting, giving administrators accurate data and insights.</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-bullhorn icon"></i>
-                <h3>Instant Communication</h3>
-                <p>Send real-time updates and announcements to all participants, ensuring no one misses a beat.</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-users icon"></i>
-                <h3>Club Management</h3>
-                <p>Empower club leaders to manage their own events, members, and communications from a dedicated dashboard.</p>
+        <div class="section-inner">
+            <h2>Transform Your Event Management</h2>
+            <p class="section-subtitle">Powerful tools designed to simplify every aspect of campus event organization and participation</p>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <h3>Smart Registration</h3>
+                    <p>Digital sign-ups with automated tracking, real-time updates, and seamless integration across all campus events.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Advanced Analytics</h3>
+                    <p>Comprehensive insights into attendance patterns, engagement metrics, and participation trends for data-driven decisions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-broadcast-tower"></i>
+                    </div>
+                    <h3>Instant Communication</h3>
+                    <p>Automated notifications, reminders, and announcements to keep everyone informed and engaged in real-time.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3>Secure Platform</h3>
+                    <p>Role-based access controls, encrypted data, and enterprise-grade security for complete peace of mind.</p>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- How It Works -->
     <section id="how-it-works">
-        <h2>How GatherEd Works</h2>
-        <div class="steps-container">
-            <div class="step-card">
-                <div class="step-number">1</div>
-                <div class="step-content">
-                    <h3>Create an Event</h3>
-                    <p>Administrators or club leaders can quickly create and publish a new event with all the necessary details.</p>
+        <div class="section-inner">
+            <h2>Effortless Three-Step Process</h2>
+            <p class="section-subtitle">From concept to completion, our platform makes event management simple and efficient</p>
+            <div class="steps-container">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Create & Customize</h3>
+                        <p>Design your event with custom details, schedules, capacity limits, and automated registration workflows.</p>
+                    </div>
                 </div>
-            </div>
-            <div class="step-card">
-                <div class="step-number">2</div>
-                <div class="step-content">
-                    <h3>Students Sign Up</h3>
-                    <p>Students can easily discover and sign up for events and clubs from a single, intuitive dashboard.</p>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Engage & Participate</h3>
+                        <p>Students discover and register for events with ease while organizers manage participation in real-time.</p>
+                    </div>
                 </div>
-            </div>
-            <div class="step-card">
-                <div class="step-number">3</div>
-                <div class="step-content">
-                    <h3>Gathered Data</h3>
-                    <p>Attendance and participation records are automatically stored, providing a transparent and structured history.</p>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Analyze & Optimize</h3>
+                        <p>Generate detailed reports, track engagement metrics, and gain insights to improve future events.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -127,83 +904,203 @@
     <!-- Call to Action -->
     <section id="cta-bottom">
         <div class="cta-content">
-            <h2>Ready to Revolutionize Your School's Events?</h2>
-            <p>Improve efficiency and student engagement with a centralized platform designed for the modern school.</p>
-            <a href="{% url 'register_choice' %}" class="btn btn-primary">Join GatherEd</a>
+            <h2>Join the Future of Campus Events</h2>
+            <p>Be part of the growing community of educational institutions transforming their event management with GatherEd.</p>
+            <a href="{% url 'register_choice' %}" class="btn btn-primary btn-cta">
+                <i class="fas fa-rocket"></i> Get Started Now
+            </a>
         </div>
     </section>
 
     <!-- Contact Section -->
     <section id="contact">
-        <h2>Get In Touch</h2>
-        <p class="section-description">We'd love to hear from you! Send us a message or find us on social media.</p>
-        <div class="contact-grid">
-            <div class="contact-info">
-                <h3>Reach Out Directly</h3>
-                <p><i class="fas fa-envelope"></i> support@gathered.edu</p>
-                <p><i class="fas fa-phone"></i> +1 (555) 123-4567</p>
-                <p><i class="fas fa-map-marker-alt"></i> 123 School Ave, Learning City, ST 98765</p>
+        <div class="section-inner">
+            <h2>Connect With Us</h2>
+            <p class="section-subtitle">Have questions or need assistance? Our team is ready to help you get started</p>
+            <div class="contact-container">
+                <div class="contact-info">
+                    <h3>Reach Out Directly</h3>
+                    <div class="contact-details">
+                        <div class="contact-detail">
+                            <i class="fas fa-envelope"></i>
+                            <span>support@gathered.edu</span>
+                        </div>
+                        <div class="contact-detail">
+                            <i class="fas fa-phone"></i>
+                            <span>+1 (555) 123-4567</span>
+                        </div>
+                        <div class="contact-detail">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>123 Innovation Drive, Tech City</span>
+                        </div>
+                        <div class="contact-detail">
+                            <i class="fas fa-clock"></i>
+                            <span>Support: Mon-Fri, 8AM-6PM EST</span>
+                        </div>
+                    </div>
+                </div>
+                <form class="contact-form">
+                    <h3>Send Your Message</h3>
+                    <div class="form-group">
+                        <label for="contact-name">Full Name</label>
+                        <input type="text" id="contact-name" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-email">Email Address</label>
+                        <input type="email" id="contact-email" placeholder="your.email@institution.edu" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-subject">Subject</label>
+                        <input type="text" id="contact-subject" placeholder="How can we assist you?" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-message">Your Message</label>
+                        <textarea id="contact-message" placeholder="Tell us about your needs and questions..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full-width">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </button>
+                </form>
             </div>
-            <form class="contact-form">
-                <h3>Send Us a Message</h3>
-                <div class="form-group">
-                    <label for="contact-name">Your Name</label>
-                    <input type="text" id="contact-name" name="name" placeholder="John Doe" required>
-                </div>
-                <div class="form-group">
-                    <label for="contact-email">Your Email</label>
-                    <input type="email" id="contact-email" name="email" placeholder="john.doe@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="contact-subject">Subject</label>
-                    <input type="text" id="contact-subject" name="subject" placeholder="Question about features" required>
-                </div>
-                <div class="form-group">
-                    <label for="contact-message">Message</label>
-                    <textarea id="contact-message" name="message" rows="6" placeholder="Your message here..." required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary btn-full-width">Send Message</button>
-            </form>
         </div>
     </section>
 </main>
 
 <footer>
-    <div class="footer-content">
+    <div class="footer-container">
         <div class="footer-brand">
             <div class="logo">GatherEd</div>
-            <p>Your central hub for school events.</p>
+            <p>Empowering educational institutions with modern event management solutions for the digital age.</p>
         </div>
         <div class="footer-links">
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Service</a>
-            <a href="#contact">Support</a>
+            <a href="#contact">Get Support</a>
+            <a href="#features">Platform Features</a>
         </div>
-    </div>
-    <div class="footer-copyright">
-        &copy; 2025 GatherEd. All rights reserved.
+        <div class="footer-copyright">
+            &copy; 2025 GatherEd. All rights reserved. Designed for CIT University & Educational Institutions
+        </div>
     </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Header scroll effect
+    const header = document.querySelector('header');
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 50) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+    });
+
+    // Smooth scroll for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            if(this.getAttribute('href') === '#') return;
+
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+
+            if(targetElement) {
+                e.preventDefault();
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Toast notifications
     {% if messages %}
         {% for message in messages %}
-            var bgColor = "linear-gradient(to right, #6c757d, #5a6268)";
-            {% if message.tags == 'success' %} bgColor = "linear-gradient(to right, #28a745, #218838)"; {% endif %}
-            {% if message.tags == 'error' %} bgColor = "linear-gradient(to right, #D63129, #C22C25)"; {% endif %}
+            var bgColor = "linear-gradient(135deg, #4B5563, #374151)";
+            {% if message.tags == 'success' %} bgColor = "var(--gradient-primary)"; {% endif %}
+            {% if message.tags == 'error' %} bgColor = "linear-gradient(135deg, #ff4757, #ff3838)"; {% endif %}
+
             Toastify({
                 text: "{{ message|escapejs }}",
                 duration: 4000,
                 close: true,
                 gravity: "top",
                 position: "right",
-                style: { background: bgColor, borderRadius: "8px", boxShadow: "0 3px 6px rgba(0,0,0,0.2)" },
-                offset: { x: 10, y: 60 }
+                style: {
+                    background: bgColor,
+                    borderRadius: "8px",
+                    box-shadow: "0 8px 20px rgba(0,0,0,0.3)",
+                    color: '#FFFFFF',
+                    fontSize: '14px',
+                    padding: '14px 20px',
+                    fontWeight: '500'
+                },
+                offset: { x: 20, y: 70 }
             }).showToast();
         {% endfor %}
     {% endif %}
+
+    // Form submission handler
+    const contactForm = document.querySelector('.contact-form');
+    if(contactForm) {
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            Toastify({
+                text: "Thank you for your message! Our team will contact you within 24 hours.",
+                duration: 4000,
+                close: true,
+                gravity: "top",
+                position: "right",
+                style: {
+                    background: "var(--gradient-primary)",
+                    borderRadius: "8px",
+                    box-shadow: "0 8px 20px rgba(0,0,0,0.3)",
+                    color: '#FFFFFF',
+                    fontSize: '14px',
+                    padding: '14px 20px',
+                    fontWeight: '500'
+                },
+                offset: { x: 20, y: 70 }
+            }).showToast();
+            contactForm.reset();
+        });
+    }
+
+    // Back-button prevention
+    sessionStorage.clear();
+    window.history.pushState(null, document.title, window.location.href);
+    window.addEventListener('popstate', function (event) {
+        window.location.replace("{% url 'index' %}");
+    });
+    window.history.replaceState({}, document.title, window.location.href);
+
+    // Add parallax effect to hero
+    window.addEventListener('scroll', function() {
+        const scrolled = window.pageYOffset;
+        const hero = document.getElementById('hero');
+        if(hero) {
+            const rate = scrolled * -0.5;
+            hero.style.backgroundPosition = `calc(50% + ${rate}px) calc(50% + ${rate * 0.5}px)`;
+        }
+    });
+
+    // Force full width on all elements
+    function forceFullWidth() {
+        document.querySelectorAll('header, main, section, footer').forEach(el => {
+            el.style.width = '100vw';
+            el.style.maxWidth = '100vw';
+            el.style.marginLeft = '0';
+            el.style.marginRight = '0';
+            el.style.paddingLeft = '0';
+            el.style.paddingRight = '0';
+        });
+    }
+
+    // Run on load and resize
+    forceFullWidth();
+    window.addEventListener('resize', forceFullWidth);
 });
 </script>
 </body>

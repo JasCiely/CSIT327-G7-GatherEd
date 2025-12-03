@@ -13,6 +13,32 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
     <style>
+        :root {
+            --primary-color: #00A9FF;
+            --secondary-color: #2F93FF;
+            --background-dark: #121212;
+            --background-medium: #1F1F1F;
+            --text-light: #E0E0E0;
+            --text-muted: #BDBDBD;
+            --border-color: #333;
+            --card-hover-shadow: rgba(0, 169, 255, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--background-dark);
+            overflow: hidden;
+            height: 100vh;
+        }
+
         .password-wrapper {
             position: relative;
             display: flex;
@@ -33,7 +59,7 @@
             background: none;
             border: none;
             cursor: pointer;
-            color: #666;
+            color: var(--text-muted);
             padding: 0;
             width: 30px;
             height: 30px;
@@ -44,7 +70,7 @@
         }
 
         .toggle-eye:hover {
-            color: #333;
+            color: var(--text-light);
         }
 
         .toggle-eye i {
@@ -54,34 +80,446 @@
         .form-group.password-container {
             position: relative;
         }
+
+        /* Two Grid Layout - Swapped */
+        .two-grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Now Login Form */
+        .left-panel {
+            background: var(--background-dark);
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            max-height: 100vh;
+        }
+
+        .auth-box {
+            background: var(--background-medium);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-box .logo {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-light);
+        }
+
+        .auth-box .logo i {
+            color: var(--primary-color);
+        }
+
+        .auth-box h2 {
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--background-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 169, 255, 0.1);
+        }
+
+        /* Button */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 169, 255, 0.2);
+        }
+
+        .auth-footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Right Panel - Now Branding & Description */
+        .right-panel {
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .right-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 169, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(47, 147, 255, 0.05) 0%, transparent 50%);
+        }
+
+        .right-panel-content {
+            position: relative;
+            z-index: 1;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .brand-logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .brand-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .brand-subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .features-list {
+            background: rgba(31, 31, 31, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .features-list h3 {
+            color: var(--text-light);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .features-list h3 i {
+            color: var(--primary-color);
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .feature-item i {
+            color: var(--primary-color);
+            margin-top: 3px;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+
+        .feature-text strong {
+            color: var(--text-light);
+            display: block;
+            margin-bottom: 3px;
+            font-size: 0.9rem;
+        }
+
+        .feature-text span {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .testimonial-card {
+            background: rgba(31, 31, 31, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            color: var(--text-light);
+            margin-bottom: 12px;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .testimonial-author {
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .testimonial-author i {
+            color: var(--primary-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .two-grid-container {
+                grid-template-columns: 1fr;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .left-panel {
+                padding: 30px 20px;
+                height: auto;
+                order: 2;
+            }
+
+            .right-panel {
+                padding: 30px 20px;
+                height: auto;
+                max-height: 50vh;
+                overflow: auto;
+                order: 1;
+            }
+
+            .auth-box {
+                padding: 25px 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .left-panel {
+                padding: 25px 15px;
+            }
+
+            .right-panel {
+                padding: 25px 15px;
+                max-height: 40vh;
+            }
+
+            .auth-box {
+                padding: 20px 15px;
+            }
+
+            .brand-title {
+                font-size: 1.6rem;
+            }
+
+            .brand-logo-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
+            }
+
+            .features-list,
+            .testimonial-card {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-box h2 {
+                font-size: 1.3rem;
+            }
+
+            .auth-box .logo {
+                font-size: 1.3rem;
+            }
+
+            .form-group input {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+
+            .btn-primary {
+                padding: 12px 20px;
+                font-size: 0.95rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-box">
-            <div class="logo">
-                <i class="fas fa-calendar-check"></i> GatherEd
-            </div>
-            <h2>Log In to Your Account</h2>
-            <form action="{% url 'login' %}" method="post">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" placeholder="john.doe@school.edu" required>
+    <div class="two-grid-container">
+        <!-- Left Panel: Login Form -->
+        <div class="left-panel">
+            <div class="auth-box">
+                <div class="logo">
+                    <i class="fas fa-sign-in-alt"></i> Welcome Back
                 </div>
-                <div class="form-group password-container">
-                    <label for="password">Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="password" name="password" class="password-input" required>
-                        <button type="button" class="toggle-eye" id="togglePassword">
-                            <i class="fas fa-eye"></i>
-                        </button>
+
+                <h2>Log In to Your Account</h2>
+
+                <form action="{% url 'login' %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="john.doe@cit.edu" required>
+                    </div>
+                    <div class="form-group password-container">
+                        <label for="password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password" name="password" class="password-input" required>
+                            <button type="button" class="toggle-eye" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Log In
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="{% url 'register_choice' %}">Sign Up</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Branding & Description -->
+        <div class="right-panel">
+            <div class="right-panel-content">
+                <div class="brand-logo">
+                    <div class="brand-logo-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <div class="brand-title">GatherEd</div>
+                        <div class="brand-subtitle">Student Event Management Platform</div>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-full-width">Log In</button>
-            </form>
-            <div class="auth-footer">
-                <p>Don't have an account? <a href="{% url 'register_choice' %}">Sign Up</a></p>
+
+                <div class="features-list">
+                    <h3><i class="fas fa-star"></i> Why Use GatherEd?</h3>
+
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-text">
+                            <strong>Easy Event Discovery</strong>
+                            <span>Find and join student events that match your interests</span>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-text">
+                            <strong>Simplified Registration</strong>
+                            <span>Sign up for events with just a few clicks</span>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-text">
+                            <strong>Track Your Activities</strong>
+                            <span>Keep records of all events you've attended</span>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-text">
+                            <strong>Connect with Peers</strong>
+                            <span>Engage with other students at campus events</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-card">
+                    <p class="testimonial-text">
+                        "GatherEd has made it so easy to find and participate in campus events. I've discovered amazing activities I wouldn't have known about otherwise!"
+                    </p>
+                    <div class="testimonial-author">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Mark Davis, CIT University Student</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -89,38 +527,69 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Toastify messages
             {% if messages %}
                 {% for message in messages %}
-                    var messageType = "{{ message.tags }}";
-                    var backgroundColor;
-                    switch(messageType) {
-                        case 'success':
-                            backgroundColor = 'linear-gradient(to right, #28a745, #218838)';
-                            break;
-                        case 'error':
-                            backgroundColor = 'linear-gradient(to right, #dc3545, #c82333)';
-                            break;
-                        case 'info':
-                            backgroundColor = 'linear-gradient(to right, #17a2b8, #138496)';
-                            break;
-                        case 'warning':
-                            backgroundColor = 'linear-gradient(to right, #ffc107, #e0a800)';
-                            break;
-                        default:
-                            backgroundColor = 'linear-gradient(to right, #6c757d, #5a6268)';
-                            break;
-                    }
-                    Toastify({
-                        text: "{{ message|escapejs }}",
-                        duration: 5000,
-                        newWindow: true,
-                        close: true,
-                        gravity: "top",
-                        position: "right",
-                        stopOnFocus: true,
-                        style: { background: backgroundColor },
-                    }).showToast();
+                    {% if 'success' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #00A9FF, #2F93FF)',
+                                color: '#121212'
+                            },
+                        }).showToast();
+                    {% elif 'error' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #ff4757, #ff3838)',
+                                color: '#ffffff'
+                            },
+                        }).showToast();
+                    {% elif 'warning' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #ffa502, #ff7f00)',
+                                color: '#121212'
+                            },
+                        }).showToast();
+                    {% elif 'info' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #2F93FF, #1e86ff)',
+                                color: '#ffffff'
+                            },
+                        }).showToast();
+                    {% else %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #6B7280, #4B5563)',
+                                color: '#ffffff'
+                            },
+                        }).showToast();
+                    {% endif %}
                 {% endfor %}
             {% endif %}
 
