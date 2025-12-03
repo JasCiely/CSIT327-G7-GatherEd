@@ -15,16 +15,16 @@
 <div class="student-dashboard-overview">
 
     <div class="welcome-card">
-        <h2>Welcome back, {{ user_display_name }}!</h2>
-        <p class="subtitle">Here’s an overview of your GatherEd activity.</p>
+        <h2>Welcome, {{ user_display_name }}!</h2>
+        <p class="subtitle">Here's an overview of your GatherEd activity.</p>
     </div>
 
     <div class="stat-grid">
         <div class="card attended">
-            <i class="fas fa-calendar-check card-icon"></i>
+            <i class="fas fa-calendar-alt card-icon"></i>
             <div class="card-content">
-                <p class="card-label">Events Attended</p>
-                <h3 class="card-value">{{ events_attended_count }}</h3>
+                <p class="card-label">Total Registered Events</p>
+                <h3 class="card-value">{{ total_registered_events }}</h3>
             </div>
         </div>
 
@@ -32,15 +32,15 @@
             <i class="fas fa-user-check card-icon"></i>
             <div class="card-content">
                 <p class="card-label">Total Attendance Recorded</p>
-                <h3 class="card-value">{{ total_registered_count }}</h3>
+                <h3 class="card-value">{{ total_attendance_recorded }}</h3>
             </div>
         </div>
 
         <div class="card feedback">
-            <i class="fas fa-comment-dots card-icon"></i>
+            <i class="fas fa-times-circle card-icon"></i>
             <div class="card-content">
-                <p class="card-label">Total Feedback Sent</p>
-                <h3 class="card-value">{{ upcoming_events_count }}</h3>
+                <p class="card-label">Total Cancelled Events</p>
+                <h3 class="card-value">{{ total_cancel_events }}</h3>
             </div>
         </div>
     </div>
@@ -53,29 +53,22 @@
                 <div class="event-details-group">
                     <h4 class="event-title">{{ next_event.title }}</h4>
                     <p class="event-details">
-                        <i class="fas fa-calendar-day"></i> **Date:** {{ next_event.date|date:"F j, Y" }}
+                        <i class="fas fa-calendar-day"></i> Date: {{ next_event.date|date:"F j, Y" }}
+                        {% if next_event.start_time %}
+                            at {{ next_event.start_time|time:"g:i A" }}
+                        {% endif %}
                     </p>
                     <p class="event-school">
-                        <i class="fas fa-map-marker-alt"></i> **Location:** {{ next_event.location }}
+                        <i class="fas fa-map-marker-alt"></i> Location: {{ next_event.location }}
                     </p>
                 </div>
-                <a href="javascript:void(0);"
-                    onclick="loadContent('{% url 'event_list' %}?is_ajax=true', document.querySelector('[data-clean-url=\'{% url 'event_list' %}\']'))"
-                    class="btn-view-event">
-                    View Details
-                </a>
             </div>
         {% else %}
             <div class="next-event-card no-event-card">
                 <div class="event-details-group">
                     <h4 class="event-title">No Upcoming Events Found</h4>
-                    <p class="event-details no-event">You don’t have any upcoming registered events in your schedule.</p>
+                    <p class="event-details no-event">You don't have any upcoming registered events in your schedule.</p>
                 </div>
-                <a href="javascript:void(0);"
-                    onclick="loadContent('{% url 'event_list' %}?is_ajax=true', document.querySelector('[data-clean-url=\'{% url 'event_list' %}\']'))"
-                    class="btn-view-event">
-                    Browse Events
-                </a>
             </div>
         {% endif %}
     </div>
