@@ -10,4 +10,7 @@ urlpatterns = [
 
     # API endpoint to record/update attendance
     path('api/record-attendance/', views.record_attendance, name='record_attendance'),
+    
+    # CSV download endpoint for event attendance
+    path('api/download-attendance-csv/<uuid:event_id>/', views.download_attendance_csv, name='download_attendance_csv'),
 ]
