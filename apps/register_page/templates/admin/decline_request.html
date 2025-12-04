@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decline Request - GatherEd</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .decline-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            border-left: 4px solid #DC2626;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .decline-icon {
+            font-size: 60px;
+            color: #DC2626;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #DC2626;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .info-box {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 10px 0;
+            resize: vertical;
+            min-height: 100px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #DC2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-decline {
+            background: #DC2626;
+            color: white;
+        }
+        .btn-cancel {
+            background: #e2e8f0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="decline-box">
+        <div class="decline-icon">❌</div>
+        <h1>Decline Access Code Request</h1>
+
+        <div class="info-box">
+            <p><strong>Requester:</strong> {{ access_request.name }}</p>
+            <p><strong>Email:</strong> {{ access_request.email }}</p>
+            <p><strong>Organization:</strong> {{ access_request.organization_name }}</p>
+            <p><strong>Message:</strong> {{ access_request.message|default:"No message provided" }}</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <label for="decline_reason">
+                <strong>Reason for Declining:</strong>
+                <small style="color: #666;">This will be sent to the requester</small>
+            </label>
+            <textarea
+                id="decline_reason"
+                name="decline_reason"
+                placeholder="Please provide a clear reason why this request is being declined..."
+                required></textarea>
+
+            <div class="btn-group">
+                <a href="{% url 'access_code_request_list' %}" class="btn btn-cancel">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-decline">
+                    Decline Request & Send Email
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

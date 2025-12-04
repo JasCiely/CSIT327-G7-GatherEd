@@ -11,41 +11,435 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/register_css.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #00A9FF;
+            --secondary-color: #2F93FF;
+            --background-dark: #121212;
+            --background-medium: #1F1F1F;
+            --text-light: #E0E0E0;
+            --text-muted: #BDBDBD;
+            --border-color: #333;
+            --card-hover-shadow: rgba(0, 169, 255, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--background-dark);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Two Grid Layout */
+        .two-grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Branding */
+        .left-panel {
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 169, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(47, 147, 255, 0.05) 0%, transparent 50%);
+        }
+
+        .brand-content {
+            position: relative;
+            z-index: 1;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .brand-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .brand-logo-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 169, 255, 0.2);
+        }
+
+        .brand-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .brand-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        .back-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 12px 24px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+
+        .back-home:hover {
+            background-color: rgba(0, 169, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Right Panel - Choice Selection */
+        .right-panel {
+            background: var(--background-dark);
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            max-height: 100vh;
+        }
+
+        .auth-box {
+            background: var(--background-medium);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-box .logo {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-light);
+        }
+
+        .auth-box .logo i {
+            color: var(--primary-color);
+        }
+
+        .auth-box h2 {
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 35px;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        /* Choice Cards */
+        .choice-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 2rem 0;
+        }
+
+        .choice-card {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background-color: var(--background-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .choice-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px var(--card-hover-shadow);
+            background-color: rgba(31, 31, 31, 0.8);
+        }
+
+        .choice-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .choice-card:hover .choice-icon {
+            transform: scale(1.1);
+        }
+
+        .choice-icon i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .choice-card h3 {
+            margin-bottom: 8px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .choice-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .choice-arrow {
+            margin-left: auto;
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .choice-card:hover .choice-arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .auth-footer {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .two-grid-container {
+                grid-template-columns: 1fr;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .left-panel {
+                padding: 30px 20px;
+                height: auto;
+                max-height: 40vh;
+                overflow: auto;
+            }
+
+            .right-panel {
+                padding: 20px;
+                height: auto;
+            }
+
+            .auth-box {
+                padding: 30px 20px;
+            }
+
+            .brand-logo-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 2rem;
+            }
+
+            .brand-title {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .left-panel {
+                padding: 25px 15px;
+                max-height: 35vh;
+            }
+
+            .right-panel {
+                padding: 15px;
+            }
+
+            .auth-box {
+                padding: 25px 15px;
+            }
+
+            .choice-card {
+                padding: 15px;
+            }
+
+            .choice-icon {
+                width: 50px;
+                height: 50px;
+                margin-right: 15px;
+            }
+
+            .choice-icon i {
+                font-size: 1.5rem;
+            }
+
+            .choice-card h3 {
+                font-size: 1.1rem;
+            }
+
+            .choice-card p {
+                font-size: 0.85rem;
+            }
+
+            .brand-title {
+                font-size: 1.8rem;
+            }
+
+            .brand-subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-box h2 {
+                font-size: 1.5rem;
+            }
+
+            .auth-box .logo {
+                font-size: 1.5rem;
+            }
+
+            .brand-title {
+                font-size: 1.6rem;
+            }
+
+            .brand-logo-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.8rem;
+            }
+
+            .brand-subtitle {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-box">
-            <div class="logo">
-                <i class="fas fa-calendar-check"></i> GatherEd
-            </div>
-            <h2>Join as...</h2>
+    <div class="two-grid-container">
+        <!-- Left Panel: Branding -->
+        <div class="left-panel">
+            <div class="brand-content">
+                <div class="brand-logo">
+                    <div class="brand-logo-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <div class="brand-title">GatherEd</div>
+                        <div class="brand-subtitle">Your Gateway to Campus Events and Activities</div>
+                    </div>
+                </div>
 
-            <div class="choice-container">
-                <a href="{% url 'register_student' %}" class="choice-card">
-                    <div class="choice-icon">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                    <h3>Student</h3>
-                    <p>Join events, participate in activities, and track your involvement</p>
-                    <div class="choice-arrow">
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-                </a>
-
-                <a href="{% url 'register_administrator' %}" class="choice-card">
-                    <div class="choice-icon">
-                        <i class="fas fa-users-cog"></i>
-                    </div>
-                    <h3>Organizer</h3>
-                    <p>Create and manage events for your organization</p>
-                    <div class="choice-arrow">
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
+                <a href="{% url 'login' %}" class="back-home">
+                    <i class="fas fa-arrow-left"></i> Back to Login
                 </a>
             </div>
+        </div>
 
-            <div class="auth-footer">
-                <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
+        <!-- Right Panel: Choice Selection -->
+        <div class="right-panel">
+            <div class="auth-box">
+                <div class="logo">
+                    <i class="fas fa-user-plus"></i> Join GatherEd
+                </div>
+                <h2>Choose Your Role</h2>
+
+                <div class="choice-container">
+                    <a href="{% url 'register_student' %}" class="choice-card">
+                        <div class="choice-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div>
+                            <h3>Student</h3>
+                            <p>Join events, participate in activities, and track your involvement</p>
+                        </div>
+                        <div class="choice-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </a>
+
+                    <a href="{% url 'pre_admin_register' %}" class="choice-card">
+                        <div class="choice-icon">
+                            <i class="fas fa-users-cog"></i>
+                        </div>
+                        <div>
+                            <h3>Organizer</h3>
+                            <p>Create and manage events for your organization</p>
+                        </div>
+                        <div class="choice-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
+                </div>
             </div>
         </div>
     </div>

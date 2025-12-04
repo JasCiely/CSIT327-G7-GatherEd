@@ -12,16 +12,44 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <style>
+        :root {
+            --primary-color: #00A9FF;
+            --secondary-color: #2F93FF;
+            --background-dark: #121212;
+            --background-medium: #1F1F1F;
+            --text-light: #E0E0E0;
+            --text-muted: #BDBDBD;
+            --border-color: #333;
+            --card-hover-shadow: rgba(0, 169, 255, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--background-dark);
+            overflow: hidden;
+            height: 100vh;
+        }
+
         .password-wrapper {
             position: relative;
             display: flex;
             align-items: center;
         }
+
         .password-input {
             width: 100%;
             padding-right: 40px;
             box-sizing: border-box;
         }
+
         .toggle-eye {
             position: absolute;
             right: 10px;
@@ -30,7 +58,7 @@
             background: none;
             border: none;
             cursor: pointer;
-            color: #666;
+            color: var(--text-muted);
             padding: 0;
             width: 30px;
             height: 30px;
@@ -39,15 +67,19 @@
             justify-content: center;
             z-index: 1;
         }
+
         .toggle-eye:hover {
-            color: #333;
+            color: var(--text-light);
         }
+
         .toggle-eye i {
             font-size: 16px;
         }
+
         .form-group.password-container {
             position: relative;
         }
+
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -55,140 +87,717 @@
             text-decoration: none;
             margin-bottom: 1rem;
             font-weight: 500;
-            align-self: flex-start; /* Added to align left */
+            align-self: flex-start;
         }
+
         .back-link i {
             margin-right: 0.5rem;
         }
+
         .back-link:hover {
             text-decoration: underline;
         }
+
         .password-hint {
             color: var(--text-muted);
             font-size: 0.8rem;
             margin-top: 0.25rem;
             display: block;
         }
-        /* Added container for back link alignment */
+
         .back-link-container {
             display: flex;
             justify-content: flex-start;
             width: 100%;
         }
+
+        .form-group.disabled {
+            opacity: 0.9;
+        }
+
+        .form-group.disabled input,
+        .form-group.disabled select,
+        .form-group.disabled .organization-display-box {
+            background-color: #2a2a2a !important;
+            cursor: not-allowed !important;
+            border-color: #444 !important;
+            color: var(--text-muted) !important;
+        }
+
+        .form-group.disabled input:focus,
+        .form-group.disabled select:focus {
+            box-shadow: none !important;
+            border-color: #444 !important;
+        }
+
+        .prefilled-info {
+            background-color: rgba(0, 169, 255, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .prefilled-info p {
+            margin: 5px 0;
+            color: var(--text-light);
+        }
+
+        .prefilled-note {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: block;
+            font-style: italic;
+        }
+
+        .organization-display-box {
+            width: 100%;
+            padding: 14px 16px;
+            background-color: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-size: 1rem;
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+        }
+
+        .readonly-input {
+            background-color: #2a2a2a !important;
+            cursor: not-allowed !important;
+            border-color: #444 !important;
+            color: var(--text-muted) !important;
+        }
+
+        .readonly-input:focus {
+            box-shadow: none !important;
+            border-color: #444 !important;
+        }
+
+        /* Two Grid Layout */
+        .two-grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Left Panel */
+        .left-panel {
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 169, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(47, 147, 255, 0.05) 0%, transparent 50%);
+        }
+
+        .left-panel-content {
+            position: relative;
+            z-index: 1;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .brand-logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .brand-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .brand-subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .features-list {
+            background: rgba(31, 31, 31, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .features-list h3 {
+            color: var(--text-light);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .features-list h3 i {
+            color: var(--primary-color);
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .feature-item i {
+            color: var(--primary-color);
+            margin-top: 3px;
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+
+        .feature-text strong {
+            color: var(--text-light);
+            display: block;
+            margin-bottom: 3px;
+            font-size: 0.9rem;
+        }
+
+        .feature-text span {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .testimonial-card {
+            background: rgba(31, 31, 31, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            color: var(--text-light);
+            margin-bottom: 12px;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .testimonial-author {
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .testimonial-author i {
+            color: var(--primary-color);
+        }
+
+        /* Right Panel */
+        .right-panel {
+            background: var(--background-dark);
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            max-height: 100vh;
+        }
+
+        .auth-box {
+            background: var(--background-medium);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+
+        /* Hide scrollbar */
+        .auth-box::-webkit-scrollbar {
+            width: 0;
+            display: none;
+        }
+
+        .auth-box {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .auth-box .logo {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-light);
+        }
+
+        .auth-box .logo i {
+            color: var(--primary-color);
+        }
+
+        .auth-box h2 {
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Side-by-side form layout */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--background-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 169, 255, 0.1);
+        }
+
+        /* Button */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 169, 255, 0.2);
+        }
+
+        .auth-footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .two-grid-container {
+                grid-template-columns: 1fr;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .left-panel {
+                padding: 30px 20px;
+                height: auto;
+                max-height: 50vh;
+                overflow: auto;
+            }
+
+            .right-panel {
+                padding: 20px;
+                height: auto;
+            }
+
+            .auth-box {
+                padding: 25px 20px;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .left-panel {
+                padding: 25px 15px;
+                max-height: 40vh;
+            }
+
+            .right-panel {
+                padding: 15px;
+            }
+
+            .auth-box {
+                padding: 20px 15px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .brand-title {
+                font-size: 1.6rem;
+            }
+
+            .brand-logo-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
+            }
+
+            .features-list,
+            .testimonial-card {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-box h2 {
+                font-size: 1.3rem;
+            }
+
+            .auth-box .logo {
+                font-size: 1.3rem;
+            }
+
+            .form-group input,
+            .form-group select {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+
+            .btn-primary {
+                padding: 12px 20px;
+                font-size: 0.95rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-box">
-            <div class="back-link-container">
-                <a href="{% url 'register_choice' %}" class="back-link">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-            </div>
-            <div class="logo">
-                <i class="fas fa-users-cog"></i> GatherEd Organizer
-            </div>
-            <h2>Organizer Registration</h2>
-
-            <form action="{% url 'register_administrator' %}" method="post">
-                {% csrf_token %}
-
-                <div class="form-group">
-                    <label for="name">Full Name</label>
-                    <input type="text" id="name" name="name" placeholder="John Doe" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="employee_id">Employee ID</label>
-                    <input type="text" id="employee_id" name="cit_id" placeholder="Enter Employee ID" inputmode="numeric" maxlength="15" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="organization_name">Organization Affiliation</label>
-                    <select id="organization_name" name="organization_name" required>
-                        <option value="" disabled selected>Select Organization</option>
-                        <optgroup label="NON-DEPARTMENTAL ORGANIZATION">
-                            <option value="RACMC-CIT">Rotaract Club of Metro Cebu - CIT Chapter</option>
-                            <option value="DOST SA CIT-U">DOST SA CIT-U</option>
-                            <option value="CRCY">College Red Cross Youth</option>
-                            <option value="EDS">Elite Debate Society</option>
-                            <option value="HONSOC">CIT-U Honor Society</option>
-                            <option value="CIT-U SPRCY">Senior Plus Red Cross Youth</option>
-                            <option value="WEL">Wildcats Esports League</option>
-                            <option value="CFC">CIT-U Christian Fellowship</option>
-                            <option value="REAVO">Radio/Rescue Emergency Assistance Volunteer Organization</option>
-                            <option value="JJC CIT-U">CIT University Junior Jaycees</option>
-                            <option value="TTSP">The Technologian Student Press</option>
-                            <option value="TQ">The Technologian Quills</option>
-                            <option value="PFCIT-U SHS">SHS Peer Facilitators Program</option>
-                        </optgroup>
-                        <optgroup label="DEPARTMENTAL ORGANIZATION">
-                            <option value="CASEPsychSoc">PsychSoc (Psychology Society)</option>
-                            <option value="YEACIT-U">Young Educators Association</option>
-                            <option value="CELSA">Communication and English Language Students Association</option>
-                            <option value="CAMVAS">Creative Alliance of Multimedia and Visual Arts Student</option>
-                            <option value="CCJJCC">Junior Criminology Council</option>
-                            <option value="CCSCSS">Computer Students' Society</option>
-                            <option value="CEAJPIChE CIT-U">Junior Philippine Institute of Chemical Engineers</option>
-                            <option value="UAPSA">United Architects of the Philippines Student Auxiliary</option>
-                            <option value="JPSME">Junior Philippine Society of Mechanical Engineers</option>
-                            <option value="IIEE-CSC CIT-U">Institute of Integrated Electrical Engineers - CSC</option>
-                            <option value="ICpEP.SE">Institute of Computer Engineers Student Edition</option>
-                            <option value="IECEP CIT-U SC">Institute of Electronics Engineers of the Philippines</option>
-                            <option value="IEC">Industrial Engineering Council</option>
-                            <option value="ACIP - CITU SC">American Concrete Institute Philippines - SC</option>
-                            <option value="PICE CIT-U SC">Philippine Institute of Civil Engineers - SC</option>
-                            <option value="PSEM-VSC">Philippine Society of Mining Engineers - VSC</option>
-                            <option value="CMBAJAHTEX">Junior Association of Hospitality and Tourism Executives</option>
-                            <option value="JFINEX - CITU">Junior Financial Executives - CIT University Chapter</option>
-                            <option value="JPMAP">Junior People Management Association of the Philippines</option>
-                            <option value="IMA">Institute of Management Accountants</option>
-                            <option value="JPIA">Junior Philippine Institute of Accountants</option>
-                        </optgroup>
-                        <optgroup label="SENIOR HIGH SCHOOL">
-                            <option value="CNAHSHASBO">Health Alliance Student Body Organization</option>
-                            <option value="NCES">Nursing Community Extension Services</option>
-                            <option value="SHS DC">Senior High School Dance Club</option>
-                            <option value="YAS">Young Artist Society</option>
-                            <option value="GTCIT-U SHS">SHS GleeTechs</option>
-                            <option value="WCC">WILDCATS CHESS CLUB</option>
-                        </optgroup>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" placeholder="john.doe@cit.edu" required>
-                </div>
-
-                <div class="form-group password-container">
-                    <label for="password">Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="password" name="password" class="password-input" required>
-                        <button type="button" class="toggle-eye" id="togglePassword">
-                            <i class="fas fa-eye"></i>
-                        </button>
+    <div class="two-grid-container">
+        <!-- Left Panel: Branding & Features -->
+        <div class="left-panel">
+            <div class="left-panel-content">
+                <div class="brand-logo">
+                    <div class="brand-logo-icon">
+                        <i class="fas fa-users-cog"></i>
                     </div>
-                    <small class="password-hint">Must be at least 8 characters with uppercase, lowercase, and number</small>
-                </div>
-
-                <div class="form-group password-container">
-                    <label for="confirm_password">Confirm Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="confirm_password" name="confirm_password" class="password-input" required>
-                        <button type="button" class="toggle-eye" id="toggleConfirmPassword">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                    <div>
+                        <div class="brand-title">GatherEd</div>
+                        <div class="brand-subtitle">Organizer Portal</div>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-full-width">
-                    <i class="fas fa-users-cog"></i> Create Organizer Account
-                </button>
-            </form>
+                <div class="features-list">
+                    <h3><i class="fas fa-star"></i> Why Join as an Organizer?</h3>
 
-            <div class="auth-footer">
-                <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-text">
+                            <strong>Manage Events</strong>
+                            <span>Create and oversee student events with ease</span>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-text">
+                            <strong>Team Collaboration</strong>
+                            <span>Work seamlessly with your organization members</span>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-text">
+                            <strong>Attendance Tracking</strong>
+                            <span>Monitor participation and engagement metrics</span>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="feature-text">
+                            <strong>Resource Management</strong>
+                            <span>Schedule venues and manage event resources</span>
+                        </div>
+                    </div>
+
+                    <!-- Removed: Communication Tools feature -->
+                </div>
+
+                <div class="testimonial-card">
+                    <p class="testimonial-text">
+                        "GatherEd transformed how our organization manages events. The platform made coordination 50% more efficient and increased student participation significantly."
+                    </p>
+                    <div class="testimonial-author">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Sarah Johnson, Event Coordinator</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Registration Form -->
+        <div class="right-panel">
+            <div class="auth-box">
+                <div class="back-link-container">
+                    <a href="{% url 'register_choice' %}" class="back-link">
+                        <i class="fas fa-arrow-left"></i> Back to Registration Options
+                    </a>
+                </div>
+
+                <div class="logo">
+                    <i class="fas fa-user-plus"></i> Create Organizer Account
+                </div>
+
+                <h2>Organizer Registration</h2>
+
+                <!-- Show prefilled info message -->
+                {% if name or email or organization_full %}
+                <div class="prefilled-info">
+                    <p><strong>✅ Access Code Verified!</strong></p>
+                    <p>Your information from the access code request has been pre-filled and cannot be changed.</p>
+                </div>
+                {% endif %}
+
+                <form action="{% url 'register_administrator' %}" method="post">
+                    {% csrf_token %}
+
+                    <!-- Hidden field for organization name (full name) -->
+                    {% if organization_full %}
+                        <input type="hidden" name="organization_name" value="{{ organization_full }}">
+                    {% endif %}
+
+                    <!-- Side-by-side inputs for Name and Employee ID -->
+                    <div class="form-row">
+                        <!-- Name Field -->
+                        <div class="form-group {% if name %}disabled{% endif %}">
+                            <label for="name">Full Name</label>
+                            <input type="text"
+                                   id="name"
+                                   name="name"
+                                   placeholder="John Doe"
+                                   {% if name %}value="{{ name }}" readonly class="readonly-input"{% else %}required{% endif %}>
+                            {% if name %}
+                                <small class="prefilled-note">Pre-filled from access code</small>
+                            {% endif %}
+                        </div>
+
+                        <!-- Employee ID Field - Now non-editable when pre-filled -->
+                        <div class="form-group {% if cit_id %}disabled{% endif %}">
+                            <label for="cit_id">Employee ID</label>
+                            <input type="text"
+                                   id="cit_id"
+                                   name="cit_id"
+                                   placeholder="e.g., 123-456-789"
+                                   {% if cit_id %}value="{{ cit_id }}" readonly class="readonly-input"{% else %}required{% endif %}
+                                   inputmode="numeric"
+                                   maxlength="15"
+                                   pattern="[0-9-]+"
+                                   title="Enter your employee ID (numbers and dashes only)">
+                            {% if cit_id %}
+                                <small class="prefilled-note">Pre-filled from access code</small>
+                            {% else %}
+                                <small class="prefilled-note">Enter your employee ID (numbers and dashes only)</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Organization Field - Full Width -->
+                    <div class="form-group full-width {% if organization_full %}disabled{% endif %}">
+                        <label for="organization_name">Organization Affiliation</label>
+
+                        {% if organization_full %}
+                            <!-- Show the FULL organization name in a display box (read-only) -->
+                            <div class="organization-display-box">
+                                {{ organization_full }}
+                            </div>
+                            <input type="hidden" name="organization_name" value="{{ organization_full }}">
+                        {% else %}
+                            <!-- Show dropdown for new registrations without prefilled data -->
+                            <select id="organization_name" name="organization_name" required>
+                                <option value="" disabled selected>Select Organization</option>
+                                <optgroup label="NON-DEPARTMENTAL ORGANIZATION">
+                                    <option value="RACMC-CIT">Rotaract Club of Metro Cebu - CIT Chapter</option>
+                                    <option value="DOST SA CIT-U">DOST SA CIT-U</option>
+                                    <option value="CRCY">College Red Cross Youth</option>
+                                    <option value="EDS">Elite Debate Society</option>
+                                    <option value="HONSOC">CIT-U Honor Society</option>
+                                    <option value="CIT-U SPRCY">Senior Plus Red Cross Youth</option>
+                                    <option value="WEL">Wildcats Esports League</option>
+                                    <option value="CFC">CIT-U Christian Fellowship</option>
+                                    <option value="REAVO">Radio/Rescue Emergency Assistance Volunteer Organization</option>
+                                    <option value="JJC CIT-U">CIT University Junior Jaycees</option>
+                                    <option value="TTSP">The Technologian Student Press</option>
+                                    <option value="TQ">The Technologian Quills</option>
+                                    <option value="PFCIT-U SHS">SHS Peer Facilitators Program</option>
+                                </optgroup>
+                                <optgroup label="DEPARTMENTAL ORGANIZATION">
+                                    <option value="CASEPsychSoc">PsychSoc (Psychology Society)</option>
+                                    <option value="YEACIT-U">Young Educators Association</option>
+                                    <option value="CELSA">Communication and English Language Students Association</option>
+                                    <option value="CAMVAS">Creative Alliance of Multimedia and Visual Arts Student</option>
+                                    <option value="CCJJCC">Junior Criminology Council</option>
+                                    <option value="CCSCSS">Computer Students' Society</option>
+                                    <option value="CEAJPIChE CIT-U">Junior Philippine Institute of Chemical Engineers</option>
+                                    <option value="UAPSA">United Architects of the Philippines Student Auxiliary</option>
+                                    <option value="JPSME">Junior Philippine Society of Mechanical Engineers</option>
+                                    <option value="IIEE-CSC CIT-U">Institute of Integrated Electrical Engineers - CSC</option>
+                                    <option value="ICpEP.SE">Institute of Computer Engineers Student Edition</option>
+                                    <option value="IECEP CIT-U SC">Institute of Electronics Engineers of the Philippines</option>
+                                    <option value="IEC">Industrial Engineering Council</option>
+                                    <option value="ACIP - CITU SC">American Concrete Institute Philippines - SC</option>
+                                    <option value="PICE CIT-U SC">Philippine Institute of Civil Engineers - SC</option>
+                                    <option value="PSEM-VSC">Philippine Society of Mining Engineers - VSC</option>
+                                    <option value="CMBAJAHTEX">Junior Association of Hospitality and Tourism Executives</option>
+                                    <option value="JFINEX - CITU">Junior Financial Executives - CIT University Chapter</option>
+                                    <option value="JPMAP">Junior People Management Association of the Philippines</option>
+                                    <option value="IMA">Institute of Management Accountants</option>
+                                    <option value="JPIA">Junior Philippine Institute of Accountants</option>
+                                </optgroup>
+                                <optgroup label="SENIOR HIGH SCHOOL">
+                                    <option value="CNAHSHASBO">Health Alliance Student Body Organization</option>
+                                    <option value="NCES">Nursing Community Extension Services</option>
+                                    <option value="SHS DC">Senior High School Dance Club</option>
+                                    <option value="YAS">Young Artist Society</option>
+                                    <option value="GTCIT-U SHS">SHS GleeTechs</option>
+                                    <option value="WCC">WILDCATS CHESS CLUB</option>
+                                </optgroup>
+                            </select>
+                        {% endif %}
+
+                        {% if organization_full %}
+                            <small class="prefilled-note">This field is pre-filled from your access code request and cannot be changed</small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email Field - Full Width -->
+                    <div class="form-group full-width {% if email %}disabled{% endif %}">
+                        <label for="email">Email Address</label>
+                        <input type="email"
+                               id="email"
+                               name="email"
+                               placeholder="john.doe@cit.edu"
+                               {% if email %}value="{{ email }}" readonly class="readonly-input"{% else %}required{% endif %}>
+                        {% if email %}
+                            <small class="prefilled-note">This field is pre-filled from your access code request and cannot be changed</small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Side-by-side Password Fields -->
+                    <div class="form-row">
+                        <!-- Password Field -->
+                        <div class="form-group password-container">
+                            <label for="password">Password</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="password" name="password" class="password-input" required>
+                                <button type="button" class="toggle-eye" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="password-hint">8+ chars with uppercase, lowercase, number</small>
+                        </div>
+
+                        <!-- Confirm Password Field -->
+                        <div class="form-group password-container">
+                            <label for="confirm_password">Confirm Password</label>
+                            <div class="password-wrapper">
+                                <input type="password" id="confirm_password" name="confirm_password" class="password-input" required>
+                                <button type="button" class="toggle-eye" id="toggleConfirmPassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-users-cog"></i> Create Organizer Account
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
+                </div>
             </div>
         </div>
     </div>
@@ -198,21 +807,77 @@
         document.addEventListener("DOMContentLoaded", () => {
             {% if messages %}
                 {% for message in messages %}
-                    Toastify({
-                        text: "{{ message|escapejs }}",
-                        duration: 4000,
-                        gravity: "top",
-                        position: "right",
-                        close: true,
-                        style: { background: 'linear-gradient(to right, #D63129, #C22C25' },
-                    }).showToast();
+                    {% if 'success' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #00A9FF, #2F93FF)',
+                                color: '#121212'
+                            },
+                        }).showToast();
+                    {% elif 'error' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #ff4757, #ff3838)',
+                                color: '#ffffff'
+                            },
+                        }).showToast();
+                    {% elif 'warning' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #ffa502, #ff7f00)',
+                                color: '#121212'
+                            },
+                        }).showToast();
+                    {% elif 'info' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #2F93FF, #1e86ff)',
+                                color: '#ffffff'
+                            },
+                        }).showToast();
+                    {% else %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #6B7280, #4B5563)',
+                                color: '#ffffff'
+                            },
+                        }).showToast();
+                    {% endif %}
                 {% endfor %}
             {% endif %}
 
-            // Allow only numbers and hyphens for employee ID
-            document.getElementById('employee_id').addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9-]/g, '');
-            });
+            // Allow only numbers and hyphens for employee ID (when editable)
+            const employeeIdInput = document.getElementById('cit_id');
+            if (employeeIdInput && !employeeIdInput.readOnly) {
+                employeeIdInput.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9-]/g, '');
+                });
+            }
 
             function toggleVisibility(btnId, inputId) {
                 const btn = document.getElementById(btnId);
@@ -228,6 +893,69 @@
 
             toggleVisibility('togglePassword', 'password');
             toggleVisibility('toggleConfirmPassword', 'confirm_password');
+
+            // Prevent editing of readonly fields
+            document.querySelectorAll('input[readonly]').forEach(field => {
+                field.addEventListener('focus', function(e) {
+                    this.blur();
+                });
+
+                field.addEventListener('keydown', function(e) {
+                    e.preventDefault();
+                });
+
+                field.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                });
+
+                field.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                });
+            });
+
+            // Also prevent editing for organization display box
+            const orgDisplayBox = document.querySelector('.organization-display-box');
+            if (orgDisplayBox) {
+                orgDisplayBox.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                });
+            }
+
+            // Validate Employee ID format on form submission (only when editable)
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const employeeIdInput = document.getElementById('cit_id');
+                    // Only validate if the field is editable (not pre-filled)
+                    if (employeeIdInput && !employeeIdInput.readOnly) {
+                        if (!employeeIdInput.value.trim()) {
+                            e.preventDefault();
+                            Toastify({
+                                text: "Employee ID is required!",
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                style: {
+                                    background: "linear-gradient(135deg, #ff4757, #ff3838)",
+                                }
+                            }).showToast();
+                            employeeIdInput.focus();
+                        } else if (!/^[0-9-]+$/.test(employeeIdInput.value)) {
+                            e.preventDefault();
+                            Toastify({
+                                text: "Employee ID can only contain numbers and dashes (-)!",
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                style: {
+                                    background: "linear-gradient(135deg, #ff4757, #ff3838)",
+                                }
+                            }).showToast();
+                            employeeIdInput.focus();
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>

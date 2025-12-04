@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<!-- templates/request_access_code.html -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Access Code - GatherEd</title>
+    {% load static %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/register_css.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        :root {
+            --primary-color: #00A9FF;
+            --secondary-color: #2F93FF;
+            --background-dark: #121212;
+            --background-medium: #1F1F1F;
+            --text-light: #E0E0E0;
+            --text-muted: #BDBDBD;
+            --border-color: #333;
+            --card-hover-shadow: rgba(0, 169, 255, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--text-light);
+            background-color: var(--background-dark);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Two Grid Layout */
+        .two-grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Request Form */
+        .left-panel {
+            background: var(--background-dark);
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            max-height: 100vh;
+        }
+
+        .request-box {
+            background: var(--background-medium);
+            padding: 40px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Hide scrollbar */
+        .request-box::-webkit-scrollbar {
+            width: 0;
+            display: none;
+        }
+
+        .request-box {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--primary-color);
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .back-link i {
+            margin-right: 8px;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .request-title {
+            color: var(--text-light);
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .request-title i {
+            color: var(--primary-color);
+        }
+
+        .request-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        /* Form Styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group label i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--background-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 169, 255, 0.1);
+        }
+
+        .form-group select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2300A9FF' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 8px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Button */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 169, 255, 0.2);
+        }
+
+        /* Right Panel - Information */
+        .right-panel {
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .right-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(0, 169, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(47, 147, 255, 0.05) 0%, transparent 50%);
+        }
+
+        .brand-content {
+            position: relative;
+            z-index: 1;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .brand-logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .brand-title {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .brand-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+        }
+
+        .process-info {
+            background: rgba(31, 31, 31, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .process-info h3 {
+            color: var(--text-light);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .process-info h3 i {
+            color: var(--primary-color);
+        }
+
+        .process-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .step-text strong {
+            color: var(--text-light);
+            display: block;
+            margin-bottom: 3px;
+            font-size: 0.95rem;
+        }
+
+        .step-text span {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .info-note {
+            background: rgba(0, 169, 255, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            margin-top: 25px;
+        }
+
+        .info-note p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .info-note i {
+            color: var(--primary-color);
+            margin-right: 8px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .two-grid-container {
+                grid-template-columns: 1fr;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .left-panel {
+                padding: 30px 20px;
+                height: auto;
+                order: 2;
+            }
+
+            .right-panel {
+                padding: 30px 20px;
+                height: auto;
+                max-height: 50vh;
+                overflow: auto;
+                order: 1;
+            }
+
+            .request-box {
+                padding: 30px 20px;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .left-panel {
+                padding: 25px 15px;
+            }
+
+            .right-panel {
+                padding: 25px 15px;
+                max-height: 40vh;
+            }
+
+            .request-box {
+                padding: 25px 15px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .brand-title {
+                font-size: 1.8rem;
+            }
+
+            .brand-logo-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.8rem;
+            }
+
+            .process-info {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .request-title {
+                font-size: 1.5rem;
+            }
+
+            .brand-title {
+                font-size: 1.6rem;
+            }
+
+            .brand-subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="two-grid-container">
+        <!-- Left Panel: Request Form -->
+        <div class="left-panel">
+            <div class="request-box">
+                <a href="{% url 'pre_admin_register' %}" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to Access Code
+                </a>
+
+                <h2 class="request-title">
+                    <i class="fas fa-envelope-open-text"></i> Request Access Code
+                </h2>
+                <p class="request-subtitle">
+                    Fill out this form to request an access code for your organization.
+                    Our administrators will review your request within 1-2 business days.
+                </p>
+
+                <form action="{% url 'request_access_code' %}" method="post">
+                    {% csrf_token %}
+
+                    <!-- Name and Employee ID side by side -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">
+                                <i class="fas fa-user"></i>
+                                Full Name
+                            </label>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                placeholder="John Doe"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="employee_id">
+                                <i class="fas fa-id-card"></i>
+                                Employee ID
+                            </label>
+                            <input
+                                type="text"
+                                id="employee_id"
+                                name="cit_id"
+                                placeholder="Enter Employee ID"
+                                inputmode="numeric"
+                                maxlength="15"
+                                required
+                            >
+                            <small>Numbers and hyphens only</small>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group full-width">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i>
+                            Email Address
+                        </label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="john.doe@cit.edu"
+                            required
+                        >
+                        <small>Must be a valid @cit.edu email address</small>
+                    </div>
+
+                    <!-- Organization -->
+                    <div class="form-group full-width">
+                        <label for="organization_name">
+                            <i class="fas fa-users"></i>
+                            Organization Affiliation
+                        </label>
+                        <select id="organization_name" name="organization_name" required>
+                            <option value="" disabled selected>Select Organization</option>
+                            <optgroup label="NON-DEPARTMENTAL ORGANIZATION">
+                                <option value="RACMC-CIT">Rotaract Club of Metro Cebu - CIT Chapter</option>
+                                <option value="DOST SA CIT-U">DOST SA CIT-U</option>
+                                <option value="CRCY">College Red Cross Youth</option>
+                                <option value="EDS">Elite Debate Society</option>
+                                <option value="HONSOC">CIT-U Honor Society</option>
+                                <option value="CIT-U SPRCY">Senior Plus Red Cross Youth</option>
+                                <option value="WEL">Wildcats Esports League</option>
+                                <option value="CFC">CIT-U Christian Fellowship</option>
+                                <option value="REAVO">Radio/Rescue Emergency Assistance Volunteer Organization</option>
+                                <option value="JJC CIT-U">CIT University Junior Jaycees</option>
+                                <option value="TTSP">The Technologian Student Press</option>
+                                <option value="TQ">The Technologian Quills</option>
+                                <option value="PFCIT-U SHS">SHS Peer Facilitators Program</option>
+                            </optgroup>
+                            <optgroup label="DEPARTMENTAL ORGANIZATION">
+                                <option value="CASEPsychSoc">PsychSoc (Psychology Society)</option>
+                                <option value="YEACIT-U">Young Educators Association</option>
+                                <option value="CELSA">Communication and English Language Students Association</option>
+                                <option value="CAMVAS">Creative Alliance of Multimedia and Visual Arts Student</option>
+                                <option value="CCJJCC">Junior Criminology Council</option>
+                                <option value="CCSCSS">Computer Students' Society</option>
+                                <option value="CEAJPIChE CIT-U">Junior Philippine Institute of Chemical Engineers</option>
+                                <option value="UAPSA">United Architects of the Philippines Student Auxiliary</option>
+                                <option value="JPSME">Junior Philippine Society of Mechanical Engineers</option>
+                                <option value="IIEE-CSC CIT-U">Institute of Integrated Electrical Engineers - CSC</option>
+                                <option value="ICpEP.SE">Institute of Computer Engineers Student Edition</option>
+                                <option value="IECEP CIT-U SC">Institute of Electronics Engineers of the Philippines</option>
+                                <option value="IEC">Industrial Engineering Council</option>
+                                <option value="ACIP - CITU SC">American Concrete Institute Philippines - SC</option>
+                                <option value="PICE CIT-U SC">Philippine Institute of Civil Engineers - SC</option>
+                                <option value="PSEM-VSC">Philippine Society of Mining Engineers - VSC</option>
+                                <option value="CMBAJAHTEX">Junior Association of Hospitality and Tourism Executives</option>
+                                <option value="JFINEX - CITU">Junior Financial Executives - CIT University Chapter</option>
+                                <option value="JPMAP">Junior People Management Association of the Philippines</option>
+                                <option value="IMA">Institute of Management Accountants</option>
+                                <option value="JPIA">Junior Philippine Institute of Accountants</option>
+                            </optgroup>
+                            <optgroup label="SENIOR HIGH SCHOOL">
+                                <option value="CNAHSHASBO">Health Alliance Student Body Organization</option>
+                                <option value="NCES">Nursing Community Extension Services</option>
+                                <option value="SHS DC">Senior High School Dance Club</option>
+                                <option value="YAS">Young Artist Society</option>
+                                <option value="GTCIT-U SHS">SHS GleeTechs</option>
+                                <option value="WCC">WILDCATS CHESS CLUB</option>
+                            </optgroup>
+                        </select>
+                        <small>Select your organization from the list</small>
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="form-group full-width">
+                        <label for="message">
+                            <i class="fas fa-comment-alt"></i>
+                            Additional Information (Optional)
+                        </label>
+                        <textarea
+                            id="message"
+                            name="message"
+                            rows="4"
+                            placeholder="Provide any additional information about your request, such as your role in the organization or specific needs..."
+                        ></textarea>
+                        <small>Tell us why you need access to create an organizer account</small>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i> Submit Request
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Panel: Information -->
+        <div class="right-panel">
+            <div class="brand-content">
+                <div class="brand-logo">
+                    <div class="brand-logo-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div>
+                        <div class="brand-title">GatherEd</div>
+                        <div class="brand-subtitle">Access Code Request</div>
+                    </div>
+                </div>
+
+                <div class="process-info">
+                    <h3><i class="fas fa-info-circle"></i> Request Process</h3>
+
+                    <div class="process-step">
+                        <div class="step-number">1</div>
+                        <div class="step-text">
+                            <strong>Fill Out Form</strong>
+                            <span>Provide your details including Employee ID and organization</span>
+                        </div>
+                    </div>
+
+                    <div class="process-step">
+                        <div class="step-number">2</div>
+                        <div class="step-text">
+                            <strong>Administrator Review</strong>
+                            <span>Our team will verify your organization affiliation</span>
+                        </div>
+                    </div>
+
+                    <div class="process-step">
+                        <div class="step-number">3</div>
+                        <div class="step-text">
+                            <strong>Receive Access Code</strong>
+                            <span>Get your unique 6-digit code via email</span>
+                        </div>
+                    </div>
+
+                    <div class="process-step">
+                        <div class="step-number">4</div>
+                        <div class="step-text">
+                            <strong>Complete Registration</strong>
+                            <span>Use the code to register as an organizer</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-note">
+                    <p>
+                        <i class="fas fa-shield-alt"></i>
+                        <strong>Security Notice:</strong> All information provided is encrypted and only used for verification purposes. Your Employee ID helps us confirm your affiliation with the selected organization.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            {% if messages %}
+                {% for message in messages %}
+                    {% if 'success' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #00A9FF, #2F93FF)',
+                                color: '#121212'
+                            },
+                        }).showToast();
+                    {% elif 'error' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #ff4757, #ff3838)',
+                                color: '#ffffff'
+                            },
+                        }).showToast();
+                    {% elif 'warning' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #ffa502, #ff7f00)',
+                                color: '#121212'
+                            },
+                        }).showToast();
+                    {% elif 'info' in message.tags %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #2F93FF, #1e86ff)',
+                                color: '#ffffff'
+                            },
+                        }).showToast();
+                    {% else %}
+                        Toastify({
+                            text: "{{ message|escapejs }}",
+                            duration: 4000,
+                            gravity: "top",
+                            position: "right",
+                            close: true,
+                            style: {
+                                background: 'linear-gradient(135deg, #6B7280, #4B5563)',
+                                color: '#ffffff'
+                            },
+                        }).showToast();
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            // Focus on first input
+            const nameInput = document.getElementById('name');
+            if (nameInput) {
+                nameInput.focus();
+            }
+
+            // Allow only numbers and hyphens for employee ID
+            const employeeIdInput = document.getElementById('employee_id');
+            if (employeeIdInput) {
+                employeeIdInput.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9-]/g, '');
+                });
+            }
+
+            // Email validation for @cit.edu domain
+            const emailInput = document.getElementById('email');
+            if (emailInput) {
+                emailInput.addEventListener('blur', function() {
+                    const email = this.value.trim();
+                    if (email && !email.endsWith('@cit.edu')) {
+                        this.style.borderColor = '#ff4757';
+                        this.style.boxShadow = '0 0 0 3px rgba(255, 71, 87, 0.2)';
+                    } else {
+                        this.style.borderColor = '';
+                        this.style.boxShadow = '';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

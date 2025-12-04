@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- templates/register_student.html -->
+<!-- templates/pre_admin_register.html -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Sign Up - GatherEd</title>
+    <title>Organizer Registration Access - GatherEd</title>
     {% load static %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,87 +39,13 @@
             height: 100vh;
         }
 
-        .password-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .password-input {
-            width: 100%;
-            padding-right: 40px;
-            box-sizing: border-box;
-        }
-
-        .toggle-eye {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--text-muted);
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-        }
-
-        .toggle-eye:hover {
-            color: var(--text-light);
-        }
-
-        .toggle-eye i {
-            font-size: 16px;
-        }
-
-        .form-group.password-container {
-            position: relative;
-        }
-
-        .back-link-container {
-            display: flex;
-            justify-content: flex-start;
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-            align-self: flex-start;
-        }
-
-        .back-link i {
-            margin-right: 0.5rem;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-
-        .password-hint {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            margin-top: 0.25rem;
-            display: block;
-        }
-
-        /* Wide Layout Container */
-        .wide-layout-container {
+        /* Two Grid Layout */
+        .two-grid-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
             height: 100vh;
             max-height: 100vh;
             overflow: hidden;
-            gap: 0;
         }
 
         /* Left Panel - Branding */
@@ -233,7 +159,7 @@
             font-size: 0.9rem;
         }
 
-        /* Right Panel - Registration Form */
+        /* Right Panel - Access Code Form */
         .right-panel {
             background: var(--background-dark);
             padding: 30px;
@@ -244,90 +170,115 @@
             max-height: 100vh;
         }
 
-        .auth-box {
+        .access-box {
             background: var(--background-medium);
             padding: 40px;
             border-radius: 15px;
             border: 1px solid var(--border-color);
             width: 100%;
-            max-width: 600px; /* Wider than before */
+            max-width: 500px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            max-height: 90vh;
-            overflow-y: auto;
         }
 
-        /* Hide scrollbar */
-        .auth-box::-webkit-scrollbar {
-            width: 0;
-            display: none;
-        }
-
-        .auth-box {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        .auth-box .logo {
-            font-size: 1.8rem;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            color: var(--text-light);
-        }
-
-        .auth-box .logo i {
+        .access-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
             color: var(--primary-color);
+            display: flex;
+            justify-content: center;
         }
 
-        .auth-box h2 {
+        .access-title {
             color: var(--text-light);
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
             font-size: 1.8rem;
             font-weight: 600;
         }
 
-        /* Side-by-side form layout for wide display */
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+        .access-subtitle {
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .access-note {
+            background-color: rgba(0, 169, 255, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .access-note p {
+            margin: 5px 0;
+            color: var(--text-light);
+        }
+
+        /* Back Link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: var(--primary-color);
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .back-link i {
+            margin-right: 0.5rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* OTP Style Input */
+        .otp-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .otp-input {
+            width: 60px;
+            height: 70px;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            background-color: var(--background-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+        }
+
+        .otp-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 169, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .otp-input.filled {
+            border-color: var(--primary-color);
+            background-color: rgba(0, 169, 255, 0.1);
         }
 
         .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group.full-width {
-            grid-column: 1 / -1;
+            margin-bottom: 25px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             color: var(--text-muted);
             font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 14px 16px;
-            background: var(--background-dark);
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            color: var(--text-light);
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 169, 255, 0.1);
+            font-size: 0.95rem;
         }
 
         /* Button */
@@ -336,7 +287,7 @@
             color: white;
             border: none;
             padding: 16px 32px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             border-radius: 10px;
             cursor: pointer;
@@ -344,8 +295,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            margin-top: 20px;
+            gap: 10px;
+            margin-top: 10px;
             width: 100%;
         }
 
@@ -354,28 +305,57 @@
             box-shadow: 0 10px 20px rgba(0, 169, 255, 0.2);
         }
 
-        .auth-footer {
+        /* Request Link */
+        .request-link-container {
             margin-top: 25px;
             padding-top: 25px;
             border-top: 1px solid var(--border-color);
             text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
         }
 
-        .auth-footer a {
+        .request-link {
+            display: inline-flex;
+            align-items: center;
             color: var(--primary-color);
             text-decoration: none;
             font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background-color: rgba(0, 169, 255, 0.1);
         }
 
-        .auth-footer a:hover {
-            text-decoration: underline;
+        .request-link i {
+            margin-right: 8px;
+        }
+
+        .request-link:hover {
+            background-color: rgba(0, 169, 255, 0.2);
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        /* Info Section */
+        .info-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .info-section p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .info-section i {
+            color: var(--primary-color);
+            margin-right: 8px;
         }
 
         /* Responsive Design */
         @media (max-width: 1024px) {
-            .wide-layout-container {
+            .two-grid-container {
                 grid-template-columns: 1fr;
                 height: auto;
                 min-height: 100vh;
@@ -393,10 +373,8 @@
                 height: auto;
             }
 
-            .auth-box {
+            .access-box {
                 padding: 30px 20px;
-                max-width: 500px;
-                max-height: none;
             }
         }
 
@@ -410,13 +388,18 @@
                 padding: 15px;
             }
 
-            .auth-box {
+            .access-box {
                 padding: 25px 15px;
             }
 
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 15px;
+            .otp-container {
+                gap: 10px;
+            }
+
+            .otp-input {
+                width: 50px;
+                height: 60px;
+                font-size: 1.8rem;
             }
 
             .brand-title {
@@ -435,22 +418,18 @@
         }
 
         @media (max-width: 480px) {
-            .auth-box h2 {
+            .access-box h2 {
                 font-size: 1.5rem;
             }
 
-            .auth-box .logo {
-                font-size: 1.5rem;
+            .otp-container {
+                gap: 8px;
             }
 
-            .form-group input {
-                padding: 12px 14px;
-                font-size: 0.95rem;
-            }
-
-            .btn-primary {
-                padding: 14px 24px;
-                font-size: 1rem;
+            .otp-input {
+                width: 45px;
+                height: 55px;
+                font-size: 1.6rem;
             }
 
             .brand-title {
@@ -464,126 +443,119 @@
     </style>
 </head>
 <body>
-    <div class="wide-layout-container">
-        <!-- Left Panel: Branding & Benefits -->
+    <div class="two-grid-container">
+        <!-- Left Panel: Branding & Information -->
         <div class="left-panel">
             <div class="brand-content">
                 <div class="brand-logo">
                     <div class="brand-logo-icon">
-                        <i class="fas fa-user-graduate"></i>
+                        <i class="fas fa-users-cog"></i>
                     </div>
                     <div>
                         <div class="brand-title">GatherEd</div>
-                        <div class="brand-subtitle">Student Registration</div>
+                        <div class="brand-subtitle">Organizer Access Portal</div>
                     </div>
                 </div>
 
                 <div class="features-list">
-                    <h3><i class="fas fa-star"></i> Student Benefits</h3>
+                    <h3><i class="fas fa-shield-alt"></i> Secure Access System</h3>
 
                     <div class="feature-item">
                         <i class="fas fa-check-circle"></i>
                         <div class="feature-text">
-                            <strong>Discover Campus Events</strong>
-                            <span>Find and join student activities that interest you</span>
+                            <strong>Verified Access Only</strong>
+                            <span>Only authorized organization representatives can register</span>
                         </div>
                     </div>
 
                     <div class="feature-item">
                         <i class="fas fa-check-circle"></i>
                         <div class="feature-text">
-                            <strong>Easy Event Registration</strong>
-                            <span>Sign up for events with just a few clicks</span>
+                            <strong>One-Time Codes</strong>
+                            <span>Each access code can only be used once for security</span>
                         </div>
                     </div>
 
                     <div class="feature-item">
                         <i class="fas fa-check-circle"></i>
                         <div class="feature-text">
-                            <strong>Track Your Participation</strong>
-                            <span>Keep records of all events you've attended</span>
+                            <strong>Organization Validation</strong>
+                            <span>Codes verify your organization affiliation automatically</span>
                         </div>
                     </div>
 
                     <div class="feature-item">
                         <i class="fas fa-check-circle"></i>
                         <div class="feature-text">
-                            <strong>Build Your Campus Network</strong>
-                            <span>Connect with fellow students and organizations</span>
+                            <strong>Secure Process</strong>
+                            <span>All codes are encrypted and securely managed</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Panel: Registration Form -->
+        <!-- Right Panel: Access Code Form -->
         <div class="right-panel">
-            <div class="auth-box">
-                <div class="back-link-container">
-                    <a href="{% url 'register_choice' %}" class="back-link">
-                        <i class="fas fa-arrow-left"></i> Back to Role Selection
-                    </a>
+            <div class="access-box">
+                <a href="{% url 'register_choice' %}" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Back to Role Selection
+                </a>
+
+                <div class="access-icon">
+                    <i class="fas fa-key"></i>
                 </div>
 
-                <div class="logo">
-                    <i class="fas fa-user-graduate"></i> Student Registration
+                <h2 class="access-title">Organizer Access Code</h2>
+                <p class="access-subtitle">
+                    Enter the 6-digit access code provided by your organization
+                </p>
+
+                <div class="access-note">
+                    <p><strong>🔒 Security Note:</strong> This code is required to verify your organization affiliation</p>
                 </div>
 
-                <h2>Create Student Account</h2>
-
-                <form action="{% url 'register_student' %}" method="post">
+                <form action="{% url 'pre_admin_register' %}" method="post" id="accessForm">
                     {% csrf_token %}
 
-                    <!-- Name and Student ID side by side -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="name">Full Name</label>
-                            <input type="text" id="name" name="name" placeholder="John Doe" required>
-                        </div>
+                    <input type="hidden" name="access_code" id="fullAccessCode">
 
-                        <div class="form-group">
-                            <label for="student_id">Student ID</label>
-                            <input type="text" id="student_id" name="cit_id" placeholder="Enter Student ID" inputmode="numeric" maxlength="15" required>
-                        </div>
-                    </div>
-
-                    <!-- Email (full width) -->
-                    <div class="form-group full-width">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" placeholder="john.doe@cit.edu" required>
-                    </div>
-
-                    <!-- Passwords side by side -->
-                    <div class="form-row">
-                        <div class="form-group password-container">
-                            <label for="password">Password</label>
-                            <div class="password-wrapper">
-                                <input type="password" id="password" name="password" class="password-input" required>
-                                <button type="button" class="toggle-eye" id="togglePassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            <small class="password-hint">8+ characters with uppercase, lowercase, number</small>
-                        </div>
-
-                        <div class="form-group password-container">
-                            <label for="confirm_password">Confirm Password</label>
-                            <div class="password-wrapper">
-                                <input type="password" id="confirm_password" name="confirm_password" class="password-input" required>
-                                <button type="button" class="toggle-eye" id="toggleConfirmPassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
+                    <div class="form-group">
+                        <label>Enter 6-Digit Access Code</label>
+                        <div class="otp-container">
+                            <input type="text" class="otp-input" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]">
+                            <input type="text" class="otp-input" maxlength="1" data-index="2" inputmode="numeric" pattern="[0-9]">
+                            <input type="text" class="otp-input" maxlength="1" data-index="3" inputmode="numeric" pattern="[0-9]">
+                            <input type="text" class="otp-input" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]">
+                            <input type="text" class="otp-input" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]">
+                            <input type="text" class="otp-input" maxlength="1" data-index="6" inputmode="numeric" pattern="[0-9]">
                         </div>
                     </div>
 
                     <button type="submit" class="btn-primary">
-                        <i class="fas fa-user-plus"></i> Create Student Account
+                        <i class="fas fa-check-circle"></i> Verify Access Code
                     </button>
                 </form>
 
-                <div class="auth-footer">
-                    <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
+                <div class="request-link-container">
+                    <a href="{% url 'request_access_code' %}" class="request-link">
+                        <i class="fas fa-envelope"></i> Request an Access Code
+                    </a>
+                </div>
+
+                <div class="info-section">
+                    <p>
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Need an access code?</strong>
+                    </p>
+                    <p>
+                        Contact your organization head or submit a request.
+                        You'll receive the code via email once approved.
+                    </p>
+                    <p style="margin-top: 10px; font-size: 0.85rem; opacity: 0.7;">
+                        <i class="fas fa-lock"></i>
+                        Access codes expire after verification
+                    </p>
                 </div>
             </div>
         </div>
@@ -658,25 +630,98 @@
                 {% endfor %}
             {% endif %}
 
-            // Allow only numbers and hyphens for student ID
-            document.getElementById('student_id').addEventListener('input', function() {
-                this.value = this.value.replace(/[^0-9-]/g, '');
+            // OTP Input Handling
+            const otpInputs = document.querySelectorAll('.otp-input');
+            const fullAccessCodeInput = document.getElementById('fullAccessCode');
+
+            // Focus on first input
+            otpInputs[0].focus();
+
+            // Handle input for each OTP box
+            otpInputs.forEach((input, index) => {
+                // Only allow numbers
+                input.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+
+                    // Add filled class
+                    if (this.value.length > 0) {
+                        this.classList.add('filled');
+                    } else {
+                        this.classList.remove('filled');
+                    }
+
+                    // Auto-focus next input
+                    if (this.value.length === 1 && index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    }
+
+                    // Update hidden input
+                    updateFullAccessCode();
+                });
+
+                // Handle backspace
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && this.value.length === 0 && index > 0) {
+                        otpInputs[index - 1].focus();
+                    }
+                });
+
+                // Handle paste
+                input.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pastedText = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+
+                    // Fill all inputs with pasted numbers
+                    for (let i = 0; i < Math.min(pastedText.length, otpInputs.length); i++) {
+                        otpInputs[i].value = pastedText[i];
+                        otpInputs[i].classList.add('filled');
+                    }
+
+                    // Focus on next empty input or last
+                    const emptyIndex = Array.from(otpInputs).findIndex(input => input.value === '');
+                    if (emptyIndex !== -1) {
+                        otpInputs[emptyIndex].focus();
+                    } else {
+                        otpInputs[otpInputs.length - 1].focus();
+                    }
+
+                    updateFullAccessCode();
+                });
             });
 
-            function toggleVisibility(btnId, inputId) {
-                const btn = document.getElementById(btnId);
-                const input = document.getElementById(inputId);
-                const icon = btn.querySelector('i');
-                btn.addEventListener('click', () => {
-                    const show = input.type === 'password';
-                    input.type = show ? 'text' : 'password';
-                    icon.classList.toggle('fa-eye');
-                    icon.classList.toggle('fa-eye-slash');
+            function updateFullAccessCode() {
+                let code = '';
+                otpInputs.forEach(input => {
+                    code += input.value;
                 });
+                fullAccessCodeInput.value = code;
             }
 
-            toggleVisibility('togglePassword', 'password');
-            toggleVisibility('toggleConfirmPassword', 'confirm_password');
+            // Form validation
+            document.getElementById('accessForm').addEventListener('submit', function(e) {
+                const code = fullAccessCodeInput.value;
+
+                if (code.length !== 6) {
+                    e.preventDefault();
+                    Toastify({
+                        text: "Please enter a complete 6-digit access code",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        close: true,
+                        style: {
+                            background: 'linear-gradient(135deg, #ffa502, #ff7f00)',
+                            color: '#121212'
+                        },
+                    }).showToast();
+
+                    // Focus first empty input
+                    const emptyIndex = Array.from(otpInputs).findIndex(input => input.value === '');
+                    if (emptyIndex !== -1) {
+                        otpInputs[emptyIndex].focus();
+                    }
+                }
+            });
         });
     </script>
 </body>
