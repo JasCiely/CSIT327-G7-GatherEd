@@ -5,7 +5,6 @@ Django settings for gather_ed project.
 import os
 from pathlib import Path
 import dj_database_url
-from django.contrib import staticfiles
 from dotenv import load_dotenv
 
 # Load environment variables from .env (for local dev)
@@ -146,14 +145,28 @@ LOGIN_REDIRECT_URL = 'events:dashboard'
 LOGOUT_REDIRECT_URL = 'events:login'
 
 # =====================
-# EMAIL (SendGrid API - NO SMTP)
+# EMAIL CONFIGURATION (SendGrid SMTP)
 # =====================
-# Console backend for development - emails print to terminal
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'jasminecielyp@gmail.com'
+if DEBUG:
+    # In development, print emails to console
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    print("📧 EMAIL MODE: Development (emails printed to console)")
+else:
+    # In production, use SendGrid SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.sendgrid.net'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'apikey'
+    EMAIL_HOST_PASSWORD = os.getenv('SENDGRID_API_KEY')
 
-# Note: We're NOT using SMTP at all. SendGrid API is used directly in utils.py
-# No EMAIL_HOST, EMAIL_PORT, etc. needed
+    if not EMAIL_HOST_PASSWORD:
+        print("⚠️ WARNING: SENDGRID_API_KEY not found. Emails will not be sent.")
+    else:
+        print("📧 EMAIL MODE: Production (SendGrid SMTP)")
+
+DEFAULT_FROM_EMAIL = 'GatherEd <gathered.cit.edu@gmail.com>'
+EMAIL_TIMEOUT = 30  # seconds
 
 # =====================
 # SUPABASE KEYS
