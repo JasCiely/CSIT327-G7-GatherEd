@@ -22,13 +22,17 @@
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background-color: rgba(0, 0, 0, 0.8);
         display: flex; justify-content: center; align-items: center; z-index: 1000;
+        overflow: hidden;
     }
     .custom-modal-content {
         background-color: var(--background-dark); color: var(--text-light);
         border: 1px solid var(--border-color); border-radius: 10px;
         box-shadow: 0 4px 20px rgba(0, 169, 255, 0.2);
-        width: 90%; max-width: 450px; padding: 30px; text-align: center;
+        width: 90%; max-width: 450px; padding: 0; text-align: center;
         animation: fadeIn 0.3s ease-out;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
     }
     .loading-modal-style {
         max-width: 300px; padding: 40px 30px; border-color: var(--primary-color);
@@ -78,13 +82,14 @@
         padding: 20px 30px; border-bottom: 1px solid var(--border-color);
         display: flex; justify-content: space-between; align-items: center;
         background-color: var(--background-light);
+        flex-shrink: 0;
     }
     .modal-title-bar h2 { margin: 0; color: var(--text-light); font-size: 1.5rem; }
 
-    .form-content-wrapper { padding: 30px; background-color: var(--background-dark); }
+    .form-content-wrapper { padding: 30px; background-color: var(--background-dark); overflow-y: auto; max-height: calc(90vh - 120px); }
 
-    .edit-form-layout { display: flex; gap: 30px; flex-wrap: wrap; }
-    .form-column { flex: 1; min-width: 280px; }
+    .edit-form-layout { display: flex; gap: 30px; flex-wrap: wrap; flex-grow: 1; }
+    .form-column { flex: 1; min-width: 280px; display: flex; flex-direction: column; }
 
     /* General Input Styling */
     .form-column input:not([type="checkbox"]), .form-column textarea, .form-column select {
@@ -93,6 +98,7 @@
         width: 100%; padding: 10px; border-radius: 6px; box-sizing: border-box;
     }
     .form-column label { display: block; margin-top: 15px; margin-bottom: 5px; color: var(--text-light); }
+    .form-column textarea { flex-grow: 1; resize: vertical; min-height: 100px; }
 
     /* CRITICAL FIX: Two-Column Grid for Time fields only */
     .time-group-row {
@@ -126,6 +132,7 @@
         margin-top: 20px;
         padding-top: 10px;
         border-top: 1px solid var(--border-color);
+        flex-grow: 1;
     }
     .registration-control-group label {
         font-weight: 600;
@@ -142,6 +149,7 @@
 
     .schedule-time-field {
         padding-left: 30px; /* Indent this field slightly */
+        flex-grow: 1;
     }
     .schedule-time-field label {
         color: var(--text-muted);
@@ -175,12 +183,18 @@
         .schedule-time-field {
              padding-left: 0;
         }
+        .custom-modal-content {
+            max-height: 95vh;
+        }
+        .form-content-wrapper {
+            max-height: calc(95vh - 100px);
+        }
     }
 
     .form-actions {
         display: flex; gap: 15px; justify-content: flex-end;
         padding: 20px 30px; border-top: 1px solid var(--border-color);
-        margin-top: 20px;
+        margin-top: auto;
         background-color: var(--background-light);
     }
     .btn-cancel-event {
@@ -216,10 +230,12 @@
     <form id="edit-event-form-{{ event.id }}"
           method="POST"
           action="{% url 'modify_event_root' event_id=event.id %}"
-          onsubmit="handleEditFormSubmit(event, this)">
+          onsubmit="handleEditFormSubmit(event, this)"
+          enctype="multipart/form-data"
+          style="display: flex; flex-direction: column; height: 100%;">
         {% csrf_token %}
 
-        <div class="edit-form-layout">
+        <div class="edit-form-layout" style="flex-grow: 1;">
             <div class="form-column column-left">
                 <h3>Basic Information</h3>
 
@@ -232,9 +248,18 @@
                 <label for="event-location">Location/Venue</label>
                 <input type="text" id="event-location" name="location" value="{{ event.location }}" placeholder="e.g., Auditorium or Online Link">
 
+                <label for="event-image">Event Picture (Optional)</label>
+                <input type="file" id="event-image" name="event_image" accept="image/*">
+                {% if event.picture_url %}
+                <div class="current-image-preview">
+                    <small>Current Image:</small>
+                    <img src="{{ event.picture_url }}" alt="Current Event Image" style="max-width: 200px; max-height: 200px; margin-top: 10px; border-radius: 5px;">
+                </div>
+                {% endif %}
+
             </div>
 
-            <div class="form-column column-right">
+            <div class="form-column column-right" style="display: flex; flex-direction: column;">
                 <h3>Logistics & Schedule</h3>
 
                 <label for="max-attendees">Max Attendees (0 for unlimited)</label>
@@ -256,7 +281,7 @@
                     </div>
                 </div>
 
-                <div class="registration-control-group">
+                <div class="registration-control-group" style="display: flex; flex-direction: column; flex-grow: 1;">
                     <label for="manual-status">Admin Registration Status Override</label>
 
                     {% if is_completed %}
@@ -274,17 +299,17 @@
                     </select>
                 </div>
 
-                <div id="manual-time-limit-container" class="schedule-time-field" style="display: {% if event.manual_status_override and event.manual_status_override != 'AUTO' and event.manual_status_override != 'ONGOING' %}block{% else %}none{% endif %};">
+                <div id="manual-time-limit-container" class="schedule-time-field" style="display: none; flex-grow: 1; flex-direction: column;">
                     <label>Override Limit Date & Time (Optional):</label>
                     <small>The selected status will apply until this date and time.</small>
 
-                    <div class="manual-close-datetime-group">
-                         <div class="schedule-field">
+                    <div class="manual-close-datetime-group" style="flex-grow: 1;">
+                         <div class="schedule-field" style="flex-grow: 1;">
                             <label for="manual-close-date">Date</label>
                             <input type="date" id="manual-close-date" name="manual_close_date" value="{{ current_manual_close_date|default:'' }}"
                                    {% if is_completed %}disabled{% endif %}>
                          </div>
-                         <div class="schedule-field">
+                         <div class="schedule-field" style="flex-grow: 1;">
                             <label for="manual-close-time">Time</label>
                             <input type="time" id="manual-close-time" name="manual_close_time" value="{{ current_manual_close_time|default:'' }}"
                                    {% if is_completed %}disabled{% endif %}>
@@ -382,8 +407,15 @@ $(document).ready(function() {
         $('#custom-form-modal').remove();
     });
 
-    // Initial call to ensure visibility is correct on load
-    toggleManualTimeLimit(document.getElementById('manual-status'));
+    // Set initial visibility for manual time limit container
+    const manualStatusSelect = document.getElementById('manual-status');
+    const container = document.getElementById('manual-time-limit-container');
+    const selectedValue = manualStatusSelect.value;
+    
+    // Show the date/time inputs only if a Manual status is selected (OPEN_MANUAL or CLOSED_MANUAL)
+    if (selectedValue === 'OPEN_MANUAL' || selectedValue === 'CLOSED_MANUAL') {
+        container.style.display = 'block';
+    }
 });
 
 // REVISED JavaScript function to toggle the date and time limit fields visibility
@@ -500,7 +532,7 @@ function handleEditFormSubmit(e, form) {
     }
 
     const $form = $(form);
-    const formData = $form.serialize();
+    const formData = new FormData(form); // Use FormData to handle file uploads
     const actionUrl = $form.attr('action') + '?is_ajax=true';
 
     // 🚀 SHOW LOADING SPINNER
@@ -510,6 +542,8 @@ function handleEditFormSubmit(e, form) {
         url: actionUrl,
         method: 'POST',
         data: formData,
+        processData: false, // Prevent jQuery from processing the data
+        contentType: false, // Prevent jQuery from setting content type
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRFToken': getCookie('csrftoken')

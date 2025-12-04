@@ -20,6 +20,12 @@
         {{ event.name }}
     </h4>
 
+    {% if event.picture_url %}
+    <div style="margin-bottom: 15px; text-align: center;">
+        <img src="{{ event.picture_url }}" alt="{{ event.name }}" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
+    </div>
+    {% endif %}
+
     <div style="font-size: 0.95rem; line-height: 1.6;">
         <p><strong>Date:</strong> {{ event.date }}</p>
         <p><strong>Time:</strong> {{ event.start_time }} - {{ event.end_time }}</p>
