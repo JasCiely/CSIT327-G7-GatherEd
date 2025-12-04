@@ -216,7 +216,8 @@
     <form id="edit-event-form-{{ event.id }}"
           method="POST"
           action="{% url 'modify_event_root' event_id=event.id %}"
-          onsubmit="handleEditFormSubmit(event, this)">
+          onsubmit="handleEditFormSubmit(event, this)"
+          enctype="multipart/form-data">
         {% csrf_token %}
 
         <div class="edit-form-layout">
@@ -231,6 +232,15 @@
 
                 <label for="event-location">Location/Venue</label>
                 <input type="text" id="event-location" name="location" value="{{ event.location }}" placeholder="e.g., Auditorium or Online Link">
+
+                <label for="event-image">Event Picture (Optional)</label>
+                <input type="file" id="event-image" name="event_image" accept="image/*">
+                {% if event.picture_url %}
+                <div class="current-image-preview">
+                    <small>Current Image:</small>
+                    <img src="{{ event.picture_url }}" alt="Current Event Image" style="max-width: 200px; max-height: 200px; margin-top: 10px; border-radius: 5px;">
+                </div>
+                {% endif %}
 
             </div>
 
@@ -274,7 +284,7 @@
                     </select>
                 </div>
 
-                <div id="manual-time-limit-container" class="schedule-time-field" style="display: {% if event.manual_status_override and event.manual_status_override != 'AUTO' and event.manual_status_override != 'ONGOING' %}block{% else %}none{% endif %};">
+                <div id="manual-time-limit-container" class="schedule-time-field" style="display: none;">
                     <label>Override Limit Date & Time (Optional):</label>
                     <small>The selected status will apply until this date and time.</small>
 
@@ -382,8 +392,15 @@ $(document).ready(function() {
         $('#custom-form-modal').remove();
     });
 
-    // Initial call to ensure visibility is correct on load
-    toggleManualTimeLimit(document.getElementById('manual-status'));
+    // Set initial visibility for manual time limit container
+    const manualStatusSelect = document.getElementById('manual-status');
+    const container = document.getElementById('manual-time-limit-container');
+    const selectedValue = manualStatusSelect.value;
+    
+    // Show the date/time inputs only if a Manual status is selected (OPEN_MANUAL or CLOSED_MANUAL)
+    if (selectedValue === 'OPEN_MANUAL' || selectedValue === 'CLOSED_MANUAL') {
+        container.style.display = 'block';
+    }
 });
 
 // REVISED JavaScript function to toggle the date and time limit fields visibility
@@ -500,7 +517,7 @@ function handleEditFormSubmit(e, form) {
     }
 
     const $form = $(form);
-    const formData = $form.serialize();
+    const formData = new FormData(form); // Use FormData to handle file uploads
     const actionUrl = $form.attr('action') + '?is_ajax=true';
 
     // 🚀 SHOW LOADING SPINNER
@@ -510,6 +527,8 @@ function handleEditFormSubmit(e, form) {
         url: actionUrl,
         method: 'POST',
         data: formData,
+        processData: false, // Prevent jQuery from processing the data
+        contentType: false, // Prevent jQuery from setting content type
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRFToken': getCookie('csrftoken')

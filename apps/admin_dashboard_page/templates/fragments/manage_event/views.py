@@ -1,5 +1,6 @@
 import datetime
 import traceback
+import os
 from uuid import UUID
 
 from django.http import HttpResponse, JsonResponse
@@ -9,6 +10,8 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db import transaction
+
+from apps.utils.supabase_utils import upload_file_to_supabase
 
 from apps.admin_dashboard_page.models import Event
 from apps.student_dashboard_page.models import Registration
@@ -177,6 +180,7 @@ def fetch_single_event(event_id):
             'manual_close_date': event.manual_close_date,
             'manual_close_time': event.manual_close_time,
             'current_registrations': current_regs,
+            'picture_url': event.picture_url,
         }
     except Exception:
         traceback.print_exc()
@@ -201,6 +205,7 @@ def _fetch_single_event(event_id):
             'manual_status_override': event.manual_status_override or 'AUTO',
             'manual_close_date': (event.manual_close_date.strftime('%Y-%m-%d') if event.manual_close_date else ''),
             'manual_close_time': (event.manual_close_time.isoformat() if event.manual_close_time else ''),
+            'picture_url': event.picture_url,
         }
 
         registration_status = determine_registration_status(data)
@@ -223,6 +228,7 @@ def _fetch_single_event(event_id):
             'event_status': event_status,
             'manual_close_date': data.get('manual_close_date', ''),
             'manual_close_time': data.get('manual_close_time', ''),
+            'picture_url': data.get('picture_url'),
         }
 
     except Exception:
@@ -395,6 +401,20 @@ def modify_event_root(request, event_id):
             'manual_close_time': manual_close_time,
         }
 
+        # Handle event image upload
+        event_image = request.FILES.get('event_image')
+        picture_url = event.picture_url  # Keep existing picture URL by default
+        
+        if event_image:
+            file_ext = os.path.splitext(event_image.name)[1]
+            # Create a path unique to the admin and event for organization
+            file_path = f"events/{admin_profile.id}/{event.id}{file_ext}"
+            
+            picture_url = upload_file_to_supabase(event_image, file_path)
+            
+            if not picture_url:
+                return JsonResponse({'success': False, 'error': 'Failed to upload event image to storage.'}, status=500)
+
         timing_post = get_detailed_event_timing(
             update_fields['date'], update_fields['start_time'], update_fields['end_time'],
             manual_close_date, manual_close_time
@@ -458,6 +478,7 @@ def modify_event_root(request, event_id):
 
                 event.max_attendees = update_fields['max_attendees']
                 event.manual_status_override = update_fields['manual_status_override'] or 'AUTO'
+                event.picture_url = picture_url  # Update the picture URL
 
                 if manual_close_date:
                     try:
@@ -535,6 +556,7 @@ def modify_event_root(request, event_id):
                 'max_attendees': event.max_attendees,
                 'manual_status_override': event.manual_status_override,
                 'current_registrations': Registration.objects.filter(event=event).exclude(status='CANCELLED').count(),
+                'picture_url': event.picture_url,
             },
             'current_date': date_str,
             'current_start_time': start_time_str,
