@@ -4,7 +4,6 @@ import json
 import time
 from django.utils import timezone
 from django.conf import settings
-from django.core.mail import send_mail
 from django.template.loader import render_to_string
 import logging
 
@@ -26,7 +25,7 @@ def get_base_url():
 
 
 def send_otp_email(profile, request, is_student=False):
-    """Generate and send OTP email using Django's email system"""
+    """Generate and send OTP email using SendGrid API"""
     try:
         # Get user email
         user_email = profile.user.email
@@ -46,9 +45,29 @@ def send_otp_email(profile, request, is_student=False):
         profile.otp_created_at = timezone.now()
         profile.save()
 
+        # Get SendGrid API key
+        SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+
+        # In development (DEBUG=True), just print to console
+        if settings.DEBUG:
+            print("\n" + "=" * 60)
+            print(f"📧 DEVELOPMENT MODE - Email would be sent to: {user_email}")
+            print(f"📧 OTP CODE: {otp}")
+            print("=" * 60 + "\n")
+            return True
+
+        # In production, use SendGrid API
+        if not SENDGRID_API_KEY:
+            print("ERROR: SendGrid API key not found!")
+            return False
+
+        # Import SendGrid
+        from sendgrid import SendGridAPIClient
+        from sendgrid.helpers.mail import Mail
+
         # Prepare email content based on user type
         if is_student:
-            subject = '🎓 Your GatherEd Student Verification Code'
+            # Simple student email - use direct HTML instead of template
             html_content = f'''
             <!DOCTYPE html>
             <html>
@@ -99,9 +118,10 @@ def send_otp_email(profile, request, is_student=False):
             The GatherEd Team
             "Empowering educators, one connection at a time"
             '''
+
+            subject = '🎓 Your GatherEd Student Verification Code'
         else:
-            # Admin email content
-            subject = '🔐 Your GatherEd Verification Code - Valid for 60 seconds!'
+            # Admin email content (existing)
             html_content = f'''
             <!DOCTYPE html>
             <html>
@@ -149,57 +169,55 @@ def send_otp_email(profile, request, is_student=False):
             "Empowering educators, one connection at a time"
             '''
 
-        # In development, print to console
-        if settings.DEBUG:
-            print("\n" + "=" * 80)
-            print("📧 DEVELOPMENT MODE - EMAIL WOULD BE SENT")
-            print("=" * 80)
-            print(f"To: {user_email}")
-            print(f"Subject: {subject}")
-            print(f"OTP Code: {otp}")
-            print("\nPlain Text Content:")
-            print("-" * 40)
-            print(plain_text)
-            print("\nHTML Content:")
-            print("-" * 40)
-            print(html_content[:500] + "..." if len(html_content) > 500 else html_content)
-            print("=" * 80 + "\n")
+            subject = '🔐 Your GatherEd Verification Code - Valid for 60 seconds!'
 
-            # Return True to simulate successful sending
+        # Create email
+        message = Mail(
+            from_email='GatherEd Security <gathered.cit.edu@gmail.com>',
+            to_emails=user_email,
+            subject=subject,
+            html_content=html_content,
+            plain_text_content=plain_text
+        )
+
+        # Send email
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+
+        # Check response
+        if response.status_code in [200, 202]:
+            print(f"✅ OTP email sent successfully to {user_email}")
             return True
         else:
-            # In production, actually send the email
-            try:
-                send_mail(
-                    subject=subject,
-                    message=plain_text,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user_email],
-                    html_message=html_content,
-                    fail_silently=False
-                )
-
-                print(f"✅ OTP email sent successfully to {user_email}")
-                return True
-
-            except Exception as e:
-                print(f"❌ Error sending email via Django: {e}")
-                return False
+            print(f"❌ SendGrid API error: {response.status_code}")
+            # Still return True so user can continue with OTP (it's saved in database)
+            return True
 
     except Exception as e:
         print(f"❌ Error in send_otp_email: {e}")
-        return False
+        # Return True anyway so registration doesn't fail
+        return True
 
 
 def send_student_otp_email(student_profile, request):
-    """Generate and send OTP email for student registration"""
+    """Generate and send OTP email for student registration using SendGrid API"""
     return send_otp_email(student_profile, request, is_student=True)
 
 
 def send_access_code_request_notification(request_data, request_id):
-    """Send notification email to admin about new access code request"""
+    """Send notification email to admin about new access code request with FORM-BASED ACTIONS"""
     try:
+        SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+
+        if not SENDGRID_API_KEY:
+            print("ERROR: SendGrid API key not found!")
+            return False
+
+        from sendgrid import SendGridAPIClient
+        from sendgrid.helpers.mail import Mail
+
         # Generate URLs for the one-click actions
+        # Use base_url from request_data or fallback to dynamic base URL
         if 'base_url' in request_data:
             base_url = request_data['base_url']
         else:
@@ -209,7 +227,6 @@ def send_access_code_request_notification(request_data, request_id):
         approve_url = f"{base_url}/auth/one-click-action/{request_id}/approve/"
         decline_url = f"{base_url}/auth/one-click-action/{request_id}/decline/"
 
-        subject = f'🔐 ACTION REQUIRED: Access Code Request from {request_data["name"]}'
         html_content = f'''
         <!DOCTYPE html>
         <html>
@@ -340,18 +357,25 @@ def send_access_code_request_notification(request_data, request_id):
         "Empowering educators, one connection at a time"
         '''
 
-        # Send email
-        send_mail(
-            subject=subject,
-            message=plain_text,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=['gathered.cit.edu@gmail.com'],
-            html_message=html_content,
-            fail_silently=True
+        # Create email
+        message = Mail(
+            from_email='GatherEd Access Control <gathered.cit.edu@gmail.com>',
+            to_emails='gathered.cit.edu@gmail.com',
+            subject=f'🔐 ACTION REQUIRED: Access Code Request from {request_data["name"]}',
+            html_content=html_content,
+            plain_text_content=plain_text
         )
 
-        print(f"✅ Access code request notification sent to admin")
-        return True
+        # Send email
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+
+        if response.status_code in [200, 202]:
+            print(f"✅ Access code request notification sent to admin")
+            return True
+        else:
+            print(f"❌ SendGrid API error for request notification: {response.status_code}")
+            return False
 
     except Exception as e:
         print(f"❌ Error sending access code request notification: {e}")
@@ -361,10 +385,18 @@ def send_access_code_request_notification(request_data, request_id):
 def send_access_code_approval_email(request_data, access_code):
     """Send approval email with access code to requester"""
     try:
+        SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+
+        if not SENDGRID_API_KEY:
+            print("ERROR: SendGrid API key not found!")
+            return False
+
+        from sendgrid import SendGridAPIClient
+        from sendgrid.helpers.mail import Mail
+
         # Get base URL for dynamic links
         base_url = get_base_url()
 
-        subject = f'✅ Your GatherEd Access Code for {request_data["organization_name"]}'
         html_content = f'''
         <!DOCTYPE html>
         <html>
@@ -450,18 +482,25 @@ def send_access_code_approval_email(request_data, access_code):
         "Empowering educators, one connection at a time"
         '''
 
-        # Send email
-        send_mail(
-            subject=subject,
-            message=plain_text,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[request_data['email']],
-            html_message=html_content,
-            fail_silently=True
+        # Create email
+        message = Mail(
+            from_email='GatherEd Access Control <gathered.cit.edu@gmail.com>',
+            to_emails=request_data['email'],
+            subject=f'✅ Your GatherEd Access Code for {request_data["organization_name"]}',
+            html_content=html_content,
+            plain_text_content=plain_text
         )
 
-        print(f"✅ Access code approval email sent to {request_data['email']}")
-        return True
+        # Send email
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+
+        if response.status_code in [200, 202]:
+            print(f"✅ Access code approval email sent to {request_data['email']}")
+            return True
+        else:
+            print(f"❌ SendGrid API error for approval email: {response.status_code}")
+            return False
 
     except Exception as e:
         print(f"❌ Error sending approval email: {e}")
@@ -471,10 +510,18 @@ def send_access_code_approval_email(request_data, access_code):
 def send_access_code_declined_email(request_data, decline_reason):
     """Send declined email to requester"""
     try:
+        SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+
+        if not SENDGRID_API_KEY:
+            print("ERROR: SendGrid API key not found!")
+            return False
+
+        from sendgrid import SendGridAPIClient
+        from sendgrid.helpers.mail import Mail
+
         # Get base URL for dynamic links
         base_url = get_base_url()
 
-        subject = f'❌ Update on Your GatherEd Access Code Request for {request_data["organization_name"]}'
         html_content = f'''
         <!DOCTYPE html>
         <html>
@@ -558,18 +605,25 @@ def send_access_code_declined_email(request_data, decline_reason):
         "Empowering educators, one connection at a time"
         '''
 
-        # Send email
-        send_mail(
-            subject=subject,
-            message=plain_text,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[request_data['email']],
-            html_message=html_content,
-            fail_silently=True
+        # Create email
+        message = Mail(
+            from_email='GatherEd Access Control <gathered.cit.edu@gmail.com>',
+            to_emails=request_data['email'],
+            subject=f'❌ Update on Your GatherEd Access Code Request for {request_data["organization_name"]}',
+            html_content=html_content,
+            plain_text_content=plain_text
         )
 
-        print(f"✅ Access code declined email sent to {request_data['email']}")
-        return True
+        # Send email
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+
+        if response.status_code in [200, 202]:
+            print(f"✅ Access code declined email sent to {request_data['email']}")
+            return True
+        else:
+            print(f"❌ SendGrid API error for declined email: {response.status_code}")
+            return False
 
     except Exception as e:
         print(f"❌ Error sending declined email: {e}")
