@@ -10,6 +10,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def get_base_url():
+    """Get base URL dynamically based on environment and settings"""
+    if settings.DEBUG:
+        return 'http://localhost:8000'
+    else:
+        # Get from RENDER_EXTERNAL_HOSTNAME environment variable
+        render_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+        if render_hostname:
+            return f'https://{render_hostname}'
+
+        # Fallback to your main Render URL
+        return 'https://csit327-g7-gathered.onrender.com'
+
+
 def send_otp_email(profile, request, is_student=False):
     """Generate and send OTP email using SendGrid API"""
     try:
@@ -77,7 +91,7 @@ def send_otp_email(profile, request, is_student=False):
                         {otp}
                     </div>
 
-                    <p><strong style="color: #dc2626;">⚠️ This code expires in 10 minutes!</strong></p>
+                    <p><strong style="color: #dc2626;">⚠️ This code expires in 60 seconds!</strong></p>
 
                     <p>Enter this code on the verification page to complete your registration.</p>
 
@@ -96,7 +110,7 @@ def send_otp_email(profile, request, is_student=False):
 
             Your verification code is: {otp}
 
-            This code will expire in 10 minutes for security reasons.
+            This code will expire in 60 seconds for security reasons.
 
             Enter this code on the verification page to complete your registration.
 
@@ -131,7 +145,7 @@ def send_otp_email(profile, request, is_student=False):
                         {otp}
                     </div>
 
-                    <p><strong style="color: #dc2626;">⚠️ This code expires in 10 minutes!</strong></p>
+                    <p><strong style="color: #dc2626;">⚠️ This code expires in 60 seconds!</strong></p>
 
                     <p>Best regards,<br>
                     <strong>The GatherEd Team</strong><br>
@@ -148,14 +162,14 @@ def send_otp_email(profile, request, is_student=False):
 
             Your verification code is: {otp}
 
-            This code will expire in 10 minutes for security reasons.
+            This code will expire in 60 seconds for security reasons.
 
             Best regards,
             The GatherEd Team
             "Empowering educators, one connection at a time"
             '''
 
-            subject = '🔐 Your GatherEd Verification Code - Valid for 10 Minutes!'
+            subject = '🔐 Your GatherEd Verification Code - Valid for 60 seconds!'
 
         # Create email
         message = Mail(
@@ -203,7 +217,12 @@ def send_access_code_request_notification(request_data, request_id):
         from sendgrid.helpers.mail import Mail
 
         # Generate URLs for the one-click actions
-        base_url = request_data.get('base_url', 'http://localhost:8000')
+        # Use base_url from request_data or fallback to dynamic base URL
+        if 'base_url' in request_data:
+            base_url = request_data['base_url']
+        else:
+            base_url = get_base_url()
+
         # IMPORTANT: Use /auth/ prefix as per your main urls.py
         approve_url = f"{base_url}/auth/one-click-action/{request_id}/approve/"
         decline_url = f"{base_url}/auth/one-click-action/{request_id}/decline/"
@@ -375,6 +394,9 @@ def send_access_code_approval_email(request_data, access_code):
         from sendgrid import SendGridAPIClient
         from sendgrid.helpers.mail import Mail
 
+        # Get base URL for dynamic links
+        base_url = get_base_url()
+
         html_content = f'''
         <!DOCTYPE html>
         <html>
@@ -408,7 +430,7 @@ def send_access_code_approval_email(request_data, access_code):
                 <div style="background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
                     <p><strong>⚠️ Important Instructions:</strong></p>
                     <ol style="margin: 10px 0; padding-left: 20px;">
-                        <li>Go to: <a href="http://localhost:8000/register/organizer-access/">Organizer Registration Access</a></li>
+                        <li>Go to: <a href="{base_url}/register/organizer-access/">Organizer Registration Access</a></li>
                         <li>Enter the access code above</li>
                         <li>Complete the organizer registration form</li>
                         <li>Verify your email with the OTP sent to you</li>
@@ -445,7 +467,7 @@ def send_access_code_approval_email(request_data, access_code):
         {access_code}
 
         Important Instructions:
-        1. Go to: http://localhost:8000/register/organizer-access/
+        1. Go to: {base_url}/register/organizer-access/
         2. Enter the access code above
         3. Complete the organizer registration form
         4. Verify your email with the OTP sent to you
@@ -497,6 +519,9 @@ def send_access_code_declined_email(request_data, decline_reason):
         from sendgrid import SendGridAPIClient
         from sendgrid.helpers.mail import Mail
 
+        # Get base URL for dynamic links
+        base_url = get_base_url()
+
         html_content = f'''
         <!DOCTYPE html>
         <html>
@@ -538,7 +563,7 @@ def send_access_code_declined_email(request_data, decline_reason):
                     <h3 style="color: #2F93FF;">Alternative Options:</h3>
                     <p>You can still participate in GatherEd as a student:</p>
                     <div style="text-align: center; margin: 20px 0;">
-                        <a href="http://localhost:8000/register/student/" style="display: inline-block; background: #00A9FF; color: white; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; border: none;">
+                        <a href="{base_url}/register/student/" style="display: inline-block; background: #00A9FF; color: white; padding: 12px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; border: none;">
                             👨‍🎓 Register as Student
                         </a>
                     </div>
@@ -573,7 +598,7 @@ def send_access_code_declined_email(request_data, decline_reason):
 
         Alternative Options:
         You can still participate in GatherEd as a student.
-        Register at: http://localhost:8000/register/student/
+        Register at: {base_url}/register/student/
 
         Best regards,
         The GatherEd Team

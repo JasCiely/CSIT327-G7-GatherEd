@@ -265,7 +265,8 @@ def one_click_approve(request, request_id):
             'cit_id': access_request.cit_id,
             'email': access_request.email,
             'organization_name': access_request.organization_name,
-            'message': access_request.message
+            'message': access_request.message,
+            'base_url': request.build_absolute_uri('/')[:-1]
         }
 
         # Send approval email to requester

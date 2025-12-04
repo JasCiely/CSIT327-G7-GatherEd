@@ -444,7 +444,7 @@
                         <span>Resend attempts used: {{ request.session.otp_resend_count }}/3</span>
                     </div>
                 {% endif %}
-                <p><a href="{% url 'cleanup_and_register' %}" class="back-link" id="back-link">Back to Registration</a></p>
+                <p><a href="{% url 'pre_admin_register' %}" class="back-link" id="back-link">Back to Registration</a></p>
             </div>
         </div>
     </div>
@@ -487,10 +487,10 @@
             const otpForm = document.getElementById('otp-form');
             const backLink = document.getElementById('back-link');
 
-            // Browser back button handling - direct cleanup
+            // Browser back button handling - direct to pre_admin_register
             function handleBrowserBack() {
-                // Redirect to cleanup URL directly without confirmation
-                window.location.href = "{% url 'cleanup_and_register' %}";
+                // Redirect to pre_admin_register page
+                window.location.href = "{% url 'pre_admin_register' %}";
                 return false;
             }
 
